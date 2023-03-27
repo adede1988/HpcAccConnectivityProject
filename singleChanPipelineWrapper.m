@@ -7,9 +7,9 @@
 %% file path management
 
 %local paths: 
-
-codePre = 'C:\Users\dtf8829\Documents\GitHub\';
-datPre = 'C:\Users\dtf8829\Documents\QuestConnect\';
+% 
+% codePre = 'C:\Users\dtf8829\Documents\GitHub\';
+% datPre = 'C:\Users\dtf8829\Documents\QuestConnect\';
 
 %HPC paths: 
 
