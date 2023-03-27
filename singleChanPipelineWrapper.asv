@@ -42,6 +42,6 @@ chanFiles = chanFiles(test);
 idx = idx(test); 
 curChani = find(idx == start);
 
-disp(['going for ' subID ' ' num2str(curChani)] )
+disp(['going for ' subID ' ' num2str(curChani))
 
 singleChanPipeline(chanFiles, curChani); 
