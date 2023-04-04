@@ -76,4 +76,32 @@ else
 end
 
 
+if ~isfield(chanDat, 'ISPCout')
+    disp('working on ISPC')
+    ISPCout = struct; 
+
+
+    %do some ISPC analysis
+
+
+
+
+
+else
+
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 end

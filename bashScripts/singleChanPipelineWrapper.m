@@ -8,7 +8,7 @@ disp(['attempting file: ' num2str(start)])
 %% file path management
 
 %local paths: 
-% 
+
 % codePre = 'C:\Users\dtf8829\Documents\GitHub\';
 % datPre = 'C:\Users\dtf8829\Documents\QuestConnect\';
 
