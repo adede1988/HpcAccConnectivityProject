@@ -1,5 +1,10 @@
 
 
+%github access token: 
+%  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
+
+
+
 %simulated HPC looping input from shell script
 %start = 30;
 
@@ -14,8 +19,8 @@ disp(['attempting file: ' num2str(start)])
 
 %HPC paths: 
 
-codePre = '/rdss/dtf8829/fsmresfiles/dtf8829/GitHub/';
-datPre = '/rdss/dtf8829/fsmresfiles/dtf8829/';
+codePre = '/projects/p31578/dtf8829/';
+datPre = '/projects/p31578/dtf8829/QuestConnect/';
 
 %% set paths
 

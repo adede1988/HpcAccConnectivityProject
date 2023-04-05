@@ -141,7 +141,7 @@ if ~isfield(chanDat, 'ISPCout')
 
         end
     end
-    
+    chanDat.ISPCout = ISPCout; 
     disp('attempting saving')
     save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat'); 
     disp(['save success: ' chanFiles(idx).folder '/' chanFiles(idx).name])
