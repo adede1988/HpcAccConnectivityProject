@@ -9,13 +9,13 @@ disp(['attempting file: ' num2str(start)])
 
 %local paths: 
 
-% codePre = 'C:\Users\dtf8829\Documents\GitHub\';
-% datPre = 'C:\Users\dtf8829\Documents\QuestConnect\';
+% codePre = 'R:\MSS\Johnson_Lab\dtf8829\GitHub\';
+% datPre = 'R:\MSS\Johnson_Lab\dtf8829\';
 
 %HPC paths: 
 
-codePre = '/projects/p31578/dtf8829/';
-datPre = '/projects/p31578/dtf8829/QuestConnect/';
+codePre = '/rdss/dtf8829/fsmresfiles/dtf8829/GitHub/';
+datPre = '/rdss/dtf8829/fsmresfiles/dtf8829/';
 
 %% set paths
 
@@ -43,5 +43,6 @@ idx = idx(test);
 curChani = find(idx == start);
 
 disp(['going for ' subID ' ' num2str(curChani)] )
-
+tic
 singleChanPipeline(chanFiles, curChani); 
+toc

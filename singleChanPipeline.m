@@ -10,6 +10,12 @@ chanDat = load([chanFiles(idx).folder '/' chanFiles(idx).name]).chanDat;
 
 disp(['data loaded: ' chanDat.subID ' ' num2str(chanDat.chi)])
 
+%% needs time points! hard code
+chanDat.enctim = [-1000:3500];
+chanDat.retOtim = [-1000:3000];
+chanDat.retRtim = [-2000:500];
+
+
 %% time frequency decomposition, extract TF summaries for target trial types: 
 % subsequent hit / subsequent miss (encoding data)
 % hit / miss / CR / FA (retrieval locked to onset data)
@@ -31,6 +37,7 @@ if ~isfield(chanDat, 'TFout')
     %clean up
     clear pow
     disp('encoding done')
+
     %RETRIEVAL STIM ONSET: ****************************************************
     pow = abs(getChanTrialTF(chanDat.retOn, frex, numfrex, stds, chanDat.fsample)).^2; %get power time series for all trials/frequencies
     pow = arrayfun(@(x) myChanZscore(pow(:,:,x)), 1:size(pow,3), 'UniformOutput',false ); %z-score
@@ -72,23 +79,77 @@ if ~isfield(chanDat, 'TFout')
     save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat'); 
     disp(['save success: ' chanFiles(idx).folder '/' chanFiles(idx).name])
 else
-    disp('TF already done, exiting')
+    disp('TF already done, skipping')
 end
 
 
 if ~isfield(chanDat, 'ISPCout')
     disp('working on ISPC')
     ISPCout = struct; 
+    %store the downsample index (di) 
+    ISPCout.encdi = 1:20:length(chanDat.enctim);
+    ISPCout.ondi = 1:20:length(chanDat.retOtim); 
+    ISPCout.rtdi = 1:20:length(chanDat.retRtim); 
+    %channels X time X frequencies X ISPC/PPC
+    ISPCout.subMiss = zeros(length(chanFiles), length(ISPCout.encdi), length(frex), 2); 
+    ISPCout.subHit = zeros(length(chanFiles), length(ISPCout.encdi), length(frex), 2); 
+    
+    ISPCout.hit_on = zeros(length(chanFiles), length(ISPCout.ondi), length(frex), 2);
+    ISPCout.cr_on = zeros(length(chanFiles), length(ISPCout.ondi), length(frex), 2);
+    ISPCout.miss_on = zeros(length(chanFiles), length(ISPCout.ondi), length(frex), 2);
+    ISPCout.fa_on = zeros(length(chanFiles), length(ISPCout.ondi), length(frex), 2);
 
 
-    %do some ISPC analysis
+    ISPCout.hit_rt = zeros(length(chanFiles), length(ISPCout.rtdi), length(frex), 2);
+    ISPCout.cr_rt = zeros(length(chanFiles), length(ISPCout.rtdi), length(frex), 2);
+    ISPCout.miss_rt = zeros(length(chanFiles), length(ISPCout.rtdi), length(frex), 2);
+    ISPCout.fa_rt = zeros(length(chanFiles), length(ISPCout.rtdi), length(frex), 2);
 
 
+    %will need to loop channels
+    for chan = 1:length(chanFiles)
+        chan
+        if chan ~= idx %skip self connection
+        chanDat2 = load([chanFiles(chan).folder '/' chanFiles(chan).name]).chanDat; 
+
+        %ENCODING DATA: ***********************************************************
+        ISPCout.subMiss(chan,:,:,:) = getChanISPC(chanDat.enc, chanDat2.enc, ...
+            frex, numfrex, stds, chanDat.fsample, ISPCout.encdi, chanDat.use & chanDat.misses);
+        ISPCout.subHit(chan,:,:,:) = getChanISPC(chanDat.enc, chanDat2.enc, ...
+            frex, numfrex, stds, chanDat.fsample, ISPCout.encdi, chanDat.use & chanDat.hits);
+
+        %RETRIEVAL STIM ONSET: ****************************************************
+        ISPCout.hit_on(chan,:,:,:) = getChanISPC(chanDat.retOn, chanDat2.retOn, ...
+            frex, numfrex, stds, chanDat.fsample, ISPCout.ondi, chanDat.retInfo(:,1)==1);
+        ISPCout.cr_on(chan,:,:,:) = getChanISPC(chanDat.retOn, chanDat2.retOn, ...
+            frex, numfrex, stds, chanDat.fsample, ISPCout.ondi, chanDat.retInfo(:,1)==3);
+        ISPCout.miss_on(chan,:,:,:) = getChanISPC(chanDat.retOn, chanDat2.retOn, ...
+            frex, numfrex, stds, chanDat.fsample, ISPCout.ondi, chanDat.retInfo(:,1)==2);
+        ISPCout.fa_on(chan,:,:,:) = getChanISPC(chanDat.retOn, chanDat2.retOn, ...
+            frex, numfrex, stds, chanDat.fsample, ISPCout.ondi, chanDat.retInfo(:,1)==4);
+        
+        %RETRIEVAL RESPONSE LOCKED: ****************************************************
+        ISPCout.hit_rt(chan,:,:,:) = getChanISPC(chanDat.retRT, chanDat2.retRT, ...
+            frex, numfrex, stds, chanDat.fsample, ISPCout.rtdi, chanDat.retInfo(:,1)==1);
+        ISPCout.cr_rt(chan,:,:,:) = getChanISPC(chanDat.retRT, chanDat2.retRT, ...
+            frex, numfrex, stds, chanDat.fsample, ISPCout.rtdi, chanDat.retInfo(:,1)==3);
+        ISPCout.miss_rt(chan,:,:,:) = getChanISPC(chanDat.retRT, chanDat2.retRT, ...
+            frex, numfrex, stds, chanDat.fsample, ISPCout.rtdi, chanDat.retInfo(:,1)==2);
+        ISPCout.fa_rt(chan,:,:,:) = getChanISPC(chanDat.retRT, chanDat2.retRT, ...
+            frex, numfrex, stds, chanDat.fsample, ISPCout.rtdi, chanDat.retInfo(:,1)==4);
+        
+
+        end
+    end
+    
+    disp('attempting saving')
+    save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat'); 
+    disp(['save success: ' chanFiles(idx).folder '/' chanFiles(idx).name])
 
 
 
 else
-
+    disp('connectivity already done, skipping')
 end
 
 
