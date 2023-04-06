@@ -82,6 +82,7 @@ else
     disp('TF already done, skipping')
 end
 
+%% get ISPC and PPC values 
 
 if ~isfield(chanDat, 'ISPCout')
     disp('working on ISPC')
@@ -90,6 +91,8 @@ if ~isfield(chanDat, 'ISPCout')
     ISPCout.encdi = 1:20:length(chanDat.enctim);
     ISPCout.ondi = 1:20:length(chanDat.retOtim); 
     ISPCout.rtdi = 1:20:length(chanDat.retRtim); 
+    
+    %preallocate: 
     %channels X time X frequencies X ISPC/PPC
     ISPCout.subMiss = zeros(length(chanFiles), length(ISPCout.encdi), length(frex), 2); 
     ISPCout.subHit = zeros(length(chanFiles), length(ISPCout.encdi), length(frex), 2); 
@@ -107,36 +110,57 @@ if ~isfield(chanDat, 'ISPCout')
 
 
     %will need to loop channels
+    %NOTE: all trial types must have at least two trials! 
     for chan = 1:length(chanFiles)
         chan
         if chan ~= idx %skip self connection
         chanDat2 = load([chanFiles(chan).folder '/' chanFiles(chan).name]).chanDat; 
 
         %ENCODING DATA: ***********************************************************
+        if sum(chanDat.use & chanDat.misses)>1
         ISPCout.subMiss(chan,:,:,:) = getChanISPC(chanDat.enc, chanDat2.enc, ...
             frex, numfrex, stds, chanDat.fsample, ISPCout.encdi, chanDat.use & chanDat.misses);
+        end
+        if sum(chanDat.use & chanDat.hits)>1
         ISPCout.subHit(chan,:,:,:) = getChanISPC(chanDat.enc, chanDat2.enc, ...
             frex, numfrex, stds, chanDat.fsample, ISPCout.encdi, chanDat.use & chanDat.hits);
+        end
 
         %RETRIEVAL STIM ONSET: ****************************************************
+        if sum(chanDat.retInfo(:,1)==1) > 1
         ISPCout.hit_on(chan,:,:,:) = getChanISPC(chanDat.retOn, chanDat2.retOn, ...
             frex, numfrex, stds, chanDat.fsample, ISPCout.ondi, chanDat.retInfo(:,1)==1);
+        end
+        if sum(chanDat.retInfo(:,1)==3) > 1
         ISPCout.cr_on(chan,:,:,:) = getChanISPC(chanDat.retOn, chanDat2.retOn, ...
             frex, numfrex, stds, chanDat.fsample, ISPCout.ondi, chanDat.retInfo(:,1)==3);
+        end
+        if sum(chanDat.retInfo(:,1)==2) > 1
         ISPCout.miss_on(chan,:,:,:) = getChanISPC(chanDat.retOn, chanDat2.retOn, ...
             frex, numfrex, stds, chanDat.fsample, ISPCout.ondi, chanDat.retInfo(:,1)==2);
+        end
+        if sum(chanDat.retInfo(:,1)==4) > 1
         ISPCout.fa_on(chan,:,:,:) = getChanISPC(chanDat.retOn, chanDat2.retOn, ...
             frex, numfrex, stds, chanDat.fsample, ISPCout.ondi, chanDat.retInfo(:,1)==4);
+        end
         
         %RETRIEVAL RESPONSE LOCKED: ****************************************************
+        if sum(chanDat.retInfo(:,1)==1) > 1
         ISPCout.hit_rt(chan,:,:,:) = getChanISPC(chanDat.retRT, chanDat2.retRT, ...
             frex, numfrex, stds, chanDat.fsample, ISPCout.rtdi, chanDat.retInfo(:,1)==1);
+        end
+        if sum(chanDat.retInfo(:,1)==3) > 1
         ISPCout.cr_rt(chan,:,:,:) = getChanISPC(chanDat.retRT, chanDat2.retRT, ...
             frex, numfrex, stds, chanDat.fsample, ISPCout.rtdi, chanDat.retInfo(:,1)==3);
+        end
+        if sum(chanDat.retInfo(:,1)==2) > 1
         ISPCout.miss_rt(chan,:,:,:) = getChanISPC(chanDat.retRT, chanDat2.retRT, ...
             frex, numfrex, stds, chanDat.fsample, ISPCout.rtdi, chanDat.retInfo(:,1)==2);
+        end
+        if sum(chanDat.retInfo(:,1)==4) > 1
         ISPCout.fa_rt(chan,:,:,:) = getChanISPC(chanDat.retRT, chanDat2.retRT, ...
             frex, numfrex, stds, chanDat.fsample, ISPCout.rtdi, chanDat.retInfo(:,1)==4);
+        end
         
 
         end
@@ -151,6 +175,128 @@ if ~isfield(chanDat, 'ISPCout')
 else
     disp('connectivity already done, skipping')
 end
+
+
+%% files are getting too large. Need to shrink them by grabbing epoch means for connectivity
+%shrinking is accomplished by averaging across 150ms temporal epochs
+
+if ~isfield(chanDat, 'sizeReduce')
+    disp('shrinking connectivity data')
+    
+    %choose some epochs: 
+    chanDat.encepoch = -450:150:3001;
+    chanDat.onepoch = -450:150:2001; 
+    chanDat.rtepoch = -2000:150:500; 
+    
+    %ENCODING DATA: ***********************************************************
+    %shrink connectivity dat: 
+    tim = chanDat.enctim; 
+    di = chanDat.ISPCout.encdi; 
+    tim = tim(di); 
+    epoch = chanDat.encepoch; 
+    chanDat.ISPCout.subMiss = cell2mat(arrayfun(@(x) ...
+                mean(chanDat.ISPCout.subMiss(:,tim>=epoch(x) & tim < epoch(x+1), :,:), 2),...
+                1:length(epoch)-1 , 'uniformoutput', false));
+    chanDat.ISPCout.subHit = cell2mat(arrayfun(@(x) ...
+                mean(chanDat.ISPCout.subHit(:,tim>=epoch(x) & tim < epoch(x+1), :,:), 2),...
+                1:length(epoch)-1 , 'uniformoutput', false));
+    %shrink power dat: 
+    tim = chanDat.enctim; 
+    chanDat.TFout.subMiss = reshape(cell2mat(arrayfun(@(x) ...
+                mean(chanDat.TFout.subMiss(tim>=epoch(x) & tim < epoch(x+1), :), 1),...
+                1:length(epoch)-1, 'uniformoutput', false )), [length(frex), length(epoch)-1 ])';
+    chanDat.TFout.subHit = reshape(cell2mat(arrayfun(@(x) ...
+                mean(chanDat.TFout.subHit(tim>=epoch(x) & tim < epoch(x+1), :), 1),...
+                1:length(epoch)-1, 'uniformoutput', false )), [length(frex), length(epoch)-1 ])';
+
+
+
+    %RETRIEVAL STIM ONSET: ***********************************************************
+    %shrink connectivity dat: 
+    tim = chanDat.retOtim; 
+    di = chanDat.ISPCout.ondi; 
+    tim = tim(di); 
+    epoch = chanDat.onepoch; 
+    chanDat.ISPCout.hit_on = cell2mat(arrayfun(@(x) ...
+                mean(chanDat.ISPCout.hit_on(:,tim>=epoch(x) & tim < epoch(x+1), :,:), 2),...
+                1:length(epoch)-1 , 'uniformoutput', false));
+    chanDat.ISPCout.cr_on = cell2mat(arrayfun(@(x) ...
+                mean(chanDat.ISPCout.cr_on(:,tim>=epoch(x) & tim < epoch(x+1), :,:), 2),...
+                1:length(epoch)-1 , 'uniformoutput', false));
+    chanDat.ISPCout.miss_on = cell2mat(arrayfun(@(x) ...
+                mean(chanDat.ISPCout.miss_on(:,tim>=epoch(x) & tim < epoch(x+1), :,:), 2),...
+                1:length(epoch)-1 , 'uniformoutput', false));
+    chanDat.ISPCout.fa_on = cell2mat(arrayfun(@(x) ...
+                mean(chanDat.ISPCout.fa_on(:,tim>=epoch(x) & tim < epoch(x+1), :,:), 2),...
+                1:length(epoch)-1 , 'uniformoutput', false));
+    %shrink power dat: 
+    tim = chanDat.retOtim; 
+    chanDat.TFout.hit_on = reshape(cell2mat(arrayfun(@(x) ...
+                mean(chanDat.TFout.hit_on(tim>=epoch(x) & tim < epoch(x+1), :), 1),...
+                1:length(epoch)-1, 'uniformoutput', false )), [length(frex), length(epoch)-1 ])';
+    chanDat.TFout.cr_on = reshape(cell2mat(arrayfun(@(x) ...
+                mean(chanDat.TFout.cr_on(tim>=epoch(x) & tim < epoch(x+1), :), 1),...
+                1:length(epoch)-1, 'uniformoutput', false )), [length(frex), length(epoch)-1 ])';
+    chanDat.TFout.miss_on = reshape(cell2mat(arrayfun(@(x) ...
+                mean(chanDat.TFout.miss_on(tim>=epoch(x) & tim < epoch(x+1), :), 1),...
+                1:length(epoch)-1, 'uniformoutput', false )), [length(frex), length(epoch)-1 ])';
+    chanDat.TFout.fa_on = reshape(cell2mat(arrayfun(@(x) ...
+                mean(chanDat.TFout.fa_on(tim>=epoch(x) & tim < epoch(x+1), :), 1),...
+                1:length(epoch)-1, 'uniformoutput', false )), [length(frex), length(epoch)-1 ])';
+        
+
+    %RETRIEVAL RESPONSE LOCKED: ****************************************************
+    %shrink connectivity dat: 
+    tim = chanDat.retRtim; 
+    di = chanDat.ISPCout.rtdi; 
+    tim = tim(di); 
+    epoch = chanDat.rtepoch; 
+    chanDat.ISPCout.hit_rt = cell2mat(arrayfun(@(x) ...
+                mean(chanDat.ISPCout.hit_rt(:,tim>=epoch(x) & tim < epoch(x+1), :,:), 2),...
+                1:length(epoch)-1 , 'uniformoutput', false));
+    chanDat.ISPCout.cr_rt = cell2mat(arrayfun(@(x) ...
+                mean(chanDat.ISPCout.cr_rt(:,tim>=epoch(x) & tim < epoch(x+1), :,:), 2),...
+                1:length(epoch)-1 , 'uniformoutput', false));
+    chanDat.ISPCout.miss_rt = cell2mat(arrayfun(@(x) ...
+                mean(chanDat.ISPCout.miss_rt(:,tim>=epoch(x) & tim < epoch(x+1), :,:), 2),...
+                1:length(epoch)-1 , 'uniformoutput', false));
+    chanDat.ISPCout.fa_rt = cell2mat(arrayfun(@(x) ...
+                mean(chanDat.ISPCout.fa_rt(:,tim>=epoch(x) & tim < epoch(x+1), :,:), 2),...
+                1:length(epoch)-1 , 'uniformoutput', false));
+    %shrink power dat: 
+    tim = chanDat.retRtim; 
+    chanDat.TFout.hit_rt = reshape(cell2mat(arrayfun(@(x) ...
+                mean(chanDat.TFout.hit_rt(tim>=epoch(x) & tim < epoch(x+1), :), 1),...
+                1:length(epoch)-1, 'uniformoutput', false )), [length(frex), length(epoch)-1 ])';
+    chanDat.TFout.cr_rt = reshape(cell2mat(arrayfun(@(x) ...
+                mean(chanDat.TFout.cr_rt(tim>=epoch(x) & tim < epoch(x+1), :), 1),...
+                1:length(epoch)-1, 'uniformoutput', false )), [length(frex), length(epoch)-1 ])';
+    chanDat.TFout.miss_rt = reshape(cell2mat(arrayfun(@(x) ...
+                mean(chanDat.TFout.miss_rt(tim>=epoch(x) & tim < epoch(x+1), :), 1),...
+                1:length(epoch)-1, 'uniformoutput', false )), [length(frex), length(epoch)-1 ])';
+    chanDat.TFout.fa_rt = reshape(cell2mat(arrayfun(@(x) ...
+                mean(chanDat.TFout.fa_rt(tim>=epoch(x) & tim < epoch(x+1), :), 1),...
+                1:length(epoch)-1, 'uniformoutput', false )), [length(frex), length(epoch)-1 ])';
+
+    chanDat.sizeReduce = true; 
+    disp('attempting saving')
+    save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat'); 
+    disp(['save success: ' chanFiles(idx).folder '/' chanFiles(idx).name])
+
+
+
+else
+    disp('size reduction already done')
+end
+
+
+
+
+
+
+
+
+
 
 
 
