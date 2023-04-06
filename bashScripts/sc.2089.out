@@ -1,0 +1,74 @@
+getting started: 2089
+attempting file: 2089
+going for ECoG33 8
+data loaded: ECoG33 4
+TF already done, skipping
+working on ISPC
+
+chan =
+
+     1
+
+
+chan =
+
+     2
+
+
+chan =
+
+     3
+
+
+chan =
+
+     4
+
+
+chan =
+
+     5
+
+
+chan =
+
+     6
+
+
+chan =
+
+     7
+
+
+chan =
+
+     8
+
+
+chan =
+
+     9
+
+
+chan =
+
+    10
+
+
+chan =
+
+    11
+
+
+chan =
+
+    12
+
+
+chan =
+
+    13
+
+attempting saving
+save success: /projects/p31578/dtf8829/QuestConnect/CHANDAT/chanDat_ECoG33_4.mat
+Elapsed time is 856.196471 seconds.

@@ -1,0 +1,11 @@
+{Error using load
+Unable to read MAT-file
+/projects/p31578/dtf8829/QuestConnect/CHANDAT/chanDat_SD3_49.mat. File might be
+corrupt.
+
+Error in singleChanPipeline (line 113)
+        chanDat2 = load([chanFiles(chan).folder '/' chanFiles(chan).name]).chanDat;
+
+Error in singleChanPipelineWrapper (line 52)
+singleChanPipeline(chanFiles, curChani);
+} 

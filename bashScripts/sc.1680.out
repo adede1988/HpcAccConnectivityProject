@@ -1,0 +1,109 @@
+getting started: 1680
+attempting file: 1680
+going for ECoG25 9
+data loaded: ECoG25 17
+TF already done, skipping
+working on ISPC
+
+chan =
+
+     1
+
+
+chan =
+
+     2
+
+
+chan =
+
+     3
+
+
+chan =
+
+     4
+
+
+chan =
+
+     5
+
+
+chan =
+
+     6
+
+
+chan =
+
+     7
+
+
+chan =
+
+     8
+
+
+chan =
+
+     9
+
+
+chan =
+
+    10
+
+
+chan =
+
+    11
+
+
+chan =
+
+    12
+
+
+chan =
+
+    13
+
+
+chan =
+
+    14
+
+
+chan =
+
+    15
+
+
+chan =
+
+    16
+
+
+chan =
+
+    17
+
+
+chan =
+
+    18
+
+
+chan =
+
+    19
+
+
+chan =
+
+    20
+
+attempting saving
+save success: /projects/p31578/dtf8829/QuestConnect/CHANDAT/chanDat_ECoG25_17.mat
+Elapsed time is 886.477135 seconds.

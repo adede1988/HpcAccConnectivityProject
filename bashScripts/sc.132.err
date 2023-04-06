@@ -1,0 +1,10 @@
+{Error using load
+Cannot read file
+/projects/p31578/dtf8829/QuestConnect/CHANDAT/chanDat_CP26_73.mat.
+
+Error in singleChanPipeline (line 113)
+        chanDat2 = load([chanFiles(chan).folder '/' chanFiles(chan).name]).chanDat;
+
+Error in singleChanPipelineWrapper (line 52)
+singleChanPipeline(chanFiles, curChani);
+} 

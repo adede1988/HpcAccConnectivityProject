@@ -1,0 +1,12 @@
+{Unable to perform assignment because the size of the left side is 201-by-1 and
+the size of the right side is 1-by-0.
+
+Error in getChanISPC (line 57)
+        ispc(:,fi,2) = arrayfun(@(tt) (2/(size(fDat,2)*(size(fDat,2)-1))) * sum(difVals(tt,:)), 1:size(difVals,1) );
+
+Error in singleChanPipeline (line 128)
+        ISPCout.fa_on(chan,:,:,:) = getChanISPC(chanDat.retOn, chanDat2.retOn, ...
+
+Error in singleChanPipelineWrapper (line 52)
+singleChanPipeline(chanFiles, curChani);
+} 
