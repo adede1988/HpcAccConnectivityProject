@@ -6,8 +6,8 @@ clear
 %  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
 
 %code path
-addpath('C:\Users\dtf8829\Documents\GitHub\HpcAccConnectivityProject')
-addpath('C:\Users\dtf8829\Documents\GitHub\myFrequentUse')
+addpath('R:\MSS\Johnson_Lab\dtf8829\GitHub\HpcAccConnectivityProject')
+addpath('R:\MSS\Johnson_Lab\dtf8829\GitHub\myFrequentUse')
 addpath(genpath('C:\Users\dtf8829\Documents\MATLAB\fieldtrip-20230118'))
 
 %% initialize the data structures 
