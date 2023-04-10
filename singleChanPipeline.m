@@ -114,7 +114,7 @@ if ~isfield(chanDat, 'ISPCboot')
     for chan = 1:length(chanFiles)
         tic
 %         chan
-        if chan ~= idx %skip self connection
+        if chan > idx %don't do repeat work! 
         chanDat2 = load([chanFiles(chan).folder '/' chanFiles(chan).name]).chanDat; 
 
         %ENCODING DATA: ***********************************************************
