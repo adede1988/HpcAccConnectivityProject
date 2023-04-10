@@ -21,7 +21,7 @@ chanDat.retRtim = [-2000:500];
 % hit / miss / CR / FA (retrieval locked to onset data)
 % hit / miss / CR / FA (retrieval locked to response data)
 
-if ~isfield(chanDat, 'TFout')
+if ~isfield(chanDat, 'ISPCboot')
     disp('working on TF')
     %to keep size down, don't put large variables into the chanDat struct!
     TFout = struct;
@@ -171,7 +171,7 @@ if ~isfield(chanDat, 'ISPCboot')
     chanDat.ISPCboot = true; 
     chanDat = rmfield(chanDat, 'sizeReduce'); 
     disp('attempting saving')
-    save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat'); 
+%     save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat'); 
     disp(['save success: ' chanFiles(idx).folder '/' chanFiles(idx).name])
 
 
@@ -186,7 +186,7 @@ end
 
 if ~isfield(chanDat, 'sizeReduce')
     disp('shrinking connectivity data')
-    
+    temp = chanDat; 
     %choose some epochs: 
     chanDat.encepoch = -450:150:3001;
     chanDat.onepoch = -450:150:2001; 
