@@ -84,7 +84,7 @@ end
 
 %% get ISPC and PPC values 
 
-if ~isfield(chanDat, 'ISPCout')
+if ~isfield(chanDat, 'ISPCboot')
     disp('working on ISPC')
     ISPCout = struct; 
     %store the downsample index (di) 
@@ -166,6 +166,8 @@ if ~isfield(chanDat, 'ISPCout')
         end
     end
     chanDat.ISPCout = ISPCout; 
+    chanDat.ISPCboot = true; 
+    chanDat = rmfield(chanDat, 'sizeReduce'); 
     disp('attempting saving')
     save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat'); 
     disp(['save success: ' chanFiles(idx).folder '/' chanFiles(idx).name])
