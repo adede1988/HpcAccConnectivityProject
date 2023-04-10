@@ -112,7 +112,8 @@ if ~isfield(chanDat, 'ISPCboot')
     %will need to loop channels
     %NOTE: all trial types must have at least two trials! 
     for chan = 1:length(chanFiles)
-        chan
+        tic
+%         chan
         if chan ~= idx %skip self connection
         chanDat2 = load([chanFiles(chan).folder '/' chanFiles(chan).name]).chanDat; 
 
@@ -164,6 +165,7 @@ if ~isfield(chanDat, 'ISPCboot')
         
 
         end
+        disp(['channel: ' num2str(chan) ' took ' num2str(round(toc/60,1)) ' minutes'])
     end
     chanDat.ISPCout = ISPCout; 
     chanDat.ISPCboot = true; 
