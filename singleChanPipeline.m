@@ -169,7 +169,7 @@ if ~isfield(chanDat, 'ISPCboot')
     end
     chanDat.ISPCout = ISPCout; 
     chanDat.ISPCboot = true; 
-    chanDat = rmfield(chanDat, 'sizeReduce'); 
+%     chanDat = rmfield(chanDat, 'sizeReduce'); 
     disp('attempting saving')
     save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat'); 
     disp(['save success: ' chanFiles(idx).folder '/' chanFiles(idx).name])
