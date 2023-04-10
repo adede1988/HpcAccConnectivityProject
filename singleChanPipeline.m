@@ -94,19 +94,19 @@ if ~isfield(chanDat, 'ISPCboot')
     
     %preallocate: 
     %channels X time X frequencies X ISPC/PPC
-    ISPCout.subMiss = zeros(length(chanFiles), length(ISPCout.encdi), length(frex), 2); 
-    ISPCout.subHit = zeros(length(chanFiles), length(ISPCout.encdi), length(frex), 2); 
+    ISPCout.subMiss = zeros(length(chanFiles), length(ISPCout.encdi), length(frex), 4); 
+    ISPCout.subHit = zeros(length(chanFiles), length(ISPCout.encdi), length(frex), 4); 
     
-    ISPCout.hit_on = zeros(length(chanFiles), length(ISPCout.ondi), length(frex), 2);
-    ISPCout.cr_on = zeros(length(chanFiles), length(ISPCout.ondi), length(frex), 2);
-    ISPCout.miss_on = zeros(length(chanFiles), length(ISPCout.ondi), length(frex), 2);
-    ISPCout.fa_on = zeros(length(chanFiles), length(ISPCout.ondi), length(frex), 2);
+    ISPCout.hit_on = zeros(length(chanFiles), length(ISPCout.ondi), length(frex), 4);
+    ISPCout.cr_on = zeros(length(chanFiles), length(ISPCout.ondi), length(frex), 4);
+    ISPCout.miss_on = zeros(length(chanFiles), length(ISPCout.ondi), length(frex), 4);
+    ISPCout.fa_on = zeros(length(chanFiles), length(ISPCout.ondi), length(frex), 4);
 
 
-    ISPCout.hit_rt = zeros(length(chanFiles), length(ISPCout.rtdi), length(frex), 2);
-    ISPCout.cr_rt = zeros(length(chanFiles), length(ISPCout.rtdi), length(frex), 2);
-    ISPCout.miss_rt = zeros(length(chanFiles), length(ISPCout.rtdi), length(frex), 2);
-    ISPCout.fa_rt = zeros(length(chanFiles), length(ISPCout.rtdi), length(frex), 2);
+    ISPCout.hit_rt = zeros(length(chanFiles), length(ISPCout.rtdi), length(frex), 4);
+    ISPCout.cr_rt = zeros(length(chanFiles), length(ISPCout.rtdi), length(frex), 4);
+    ISPCout.miss_rt = zeros(length(chanFiles), length(ISPCout.rtdi), length(frex), 4);
+    ISPCout.fa_rt = zeros(length(chanFiles), length(ISPCout.rtdi), length(frex), 4);
 
 
     %will need to loop channels
