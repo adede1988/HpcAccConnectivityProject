@@ -6,7 +6,12 @@ numfrex = length(frex);
 stds = linspace(2,5,numfrex);
 
 %% load the data
-chanDat = load([chanFiles(idx).folder '/' chanFiles(idx).name]).chanDat; 
+
+try %try loading the processed file
+    chanDat = load([chanFiles(idx).folder '/' chanFiles(idx).name]).chanDat; 
+catch
+    chanDat = load([chanFiles(idx).folder '/CHANRAW/' chanFiles(idx).name]).chanDat; % go raw if it's not working!
+end
 
 disp(['data loaded: ' chanDat.subID ' ' num2str(chanDat.chi)])
 
@@ -115,7 +120,7 @@ if ~isfield(chanDat, 'ISPCboot')
         tic
 %         chan
         if chan > idx %don't do repeat work! 
-        chanDat2 = load([chanFiles(chan).folder '/' chanFiles(chan).name]).chanDat; 
+        chanDat2 = load([chanFiles(chan).folder '/CHANRAW/' chanFiles(chan).name]).chanDat; 
 
         %ENCODING DATA: ***********************************************************
         if sum(chanDat.use & chanDat.misses)>1
