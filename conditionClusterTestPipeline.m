@@ -6,22 +6,29 @@ frex = logspace(log10(2),log10(80),100);
 numTim = size(cndDat.datForPerm,1); 
 numFrex = size(cndDat.datForPerm,2); 
 
+
+%check if it's connectivity data and select variable!
+datForPerm = cndDat.datForPerm; 
+if length(size(datForPerm))==4
+    datForPerm = squeeze(datForPerm(:,:,3,:)); 
+end
+
 %the data for permutation testing are already available
 
     tObs =   reshape(cell2mat(arrayfun(@(x) ...
                     arrayfun(@(y) ...
-                        getTstat(cndDat.datForPerm(x,y,cndDat.condCode==1), cndDat.datForPerm(x,y,cndDat.condCode==0)), ...
+                        getTstat(datForPerm(x,y,cndDat.condCode==1), datForPerm(x,y,cndDat.condCode==0)), ...
                     1:numFrex),...
                 1:numTim, 'uniformoutput', false)), [ numFrex,numTim]);
 
 
-   perms = zeros([size(tObs),1000]); 
+   perms = zeros([size(tObs),10]); 
 
-          for p = 1:1000
+          for p = 1:10
                 curShuf = randsample(cndDat.condCode, length(cndDat.condCode), false); 
                 perms(:,:,p) =   reshape(cell2mat(arrayfun(@(x) ...
                             arrayfun(@(y) ...
-                                getTstat(cndDat.datForPerm(x,y,curShuf==1), cndDat.datForPerm(x,y,curShuf==0)), ...
+                                getTstat(datForPerm(x,y,curShuf==1), datForPerm(x,y,curShuf==0)), ...
                             1:numFrex),...
                         1:numTim, 'uniformoutput', false)), [numFrex,numTim]);
 
@@ -50,7 +57,7 @@ end
 
     figure('visible', false)
     subplot 231
-    plotVals = mean(cndDat.datForPerm(:,:,cndDat.condCode==1),3)';
+    plotVals = mean(datForPerm(:,:,cndDat.condCode==1),3)';
     imagesc(plotVals)
     sp1Max = max(max(plotVals));
     sp1Min = min(min(plotVals)); 
@@ -78,11 +85,12 @@ end
     ylim([1, 60])
     title(cndDat.pairVar, 'interpreter', 'none')
 
-    allMax = max(abs([sp1Max, sp2Max, sp1Min, sp2Min])); 
+    allMax = max(abs([sp1Max, sp2Max])); 
+    allMin = min([sp1Min, sp2Min]); 
     subplot 231
-    clim([-allMax allMax])
+    clim([allMin allMax])
     subplot 232
-    clim([-allMax allMax])
+    clim([allMin allMax])
 
     subplot 233
     imagesc(plotVals - plotVals2)

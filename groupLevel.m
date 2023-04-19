@@ -3,6 +3,8 @@ clear
 % gathering all data to do group level summary with ROI and epoch
 % specificity
 addpath('R:\MSS\Johnson_Lab\dtf8829\GitHub\myFrequentUse\export_fig_repo')
+addpath('R:\MSS\Johnson_Lab\dtf8829\GitHub\myFrequentUse\')
+addpath('R:\MSS\Johnson_Lab\dtf8829\GitHub\HpcAccConnectivityProject')
 rois = {'dlPFC', 'hip', 'phg', 'acc'}; 
 datFolder  = "C:\Users\dtf8829\Documents\QuestConnect\SUMDAT";
 
@@ -94,27 +96,35 @@ end
 save("C:\Users\dtf8829\Documents\QuestConnect\allDat.mat", "allDat", "-v7.3")
 
 
-%% split conditions for HPC based cluster testing
+%% split conditions for HPC based cluster testing 
+%START HERE IF NOT UPDATING GROUP DATA
+
+load("C:\Users\dtf8829\Documents\QuestConnect\allDat.mat")
 
 varNames = fieldnames(allDat);
 metaNames = varNames(1:14); 
 varNames = varNames(15:end);
 
 for ii = 1:length(varNames)
+    try
     cndDat = struct; 
-    %put all the meta data into the condition file
-    for mi = 1:length(metaNames)
-        cndDat.(metaNames{mi}) = allDat.(metaNames{mi});
-    end
+   
     cndDat.targVar = varNames{ii}; 
     [pairi, pairName] = getPair(varNames{ii}, varNames, ii);
     cndDat.varIdx = ii; 
     cndDat.pairIdx = pairi; 
     cndDat.pairVar = pairName; 
-    [datForPerm, condCode] = getPairedDat(varNames, allDat, ii, pairi); 
+    [datForPerm, condCode, metaDat] = getPairedDat(varNames, allDat, ii, pairi, metaNames); 
+    cndDat.metaDat = metaDat; 
     cndDat.datForPerm = datForPerm; 
     cndDat.condCode = condCode; 
+    cndDat.encepoch = cndDat.metaDat(1).encepoch; 
+    cndDat.rtepoch = cndDat.metaDat(1).rtepoch; 
+    cndDat.onepoch = cndDat.metaDat(1).onepoch; 
     save(['R:\MSS\Johnson_Lab\dtf8829\permDat\' varNames{ii} '.mat'], 'cndDat')
+    catch
+        disp(['no available data for: ' num2str(ii)])
+    end
 
 end
 
