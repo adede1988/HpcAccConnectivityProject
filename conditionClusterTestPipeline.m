@@ -22,9 +22,9 @@ end
                 1:numTim, 'uniformoutput', false)), [ numFrex,numTim]);
 
 
-   perms = zeros([size(tObs),10]); 
+   perms = zeros([size(tObs),1000]); 
 
-          for p = 1:10
+          for p = 1:1000
                 curShuf = randsample(cndDat.condCode, length(cndDat.condCode), false); 
                 perms(:,:,p) =   reshape(cell2mat(arrayfun(@(x) ...
                             arrayfun(@(y) ...
