@@ -17,21 +17,23 @@ disp(['attempting file: ' num2str(start)])
 
 %local paths: 
 
-% pre = 'R:\MSS\Johnson_Lab\dtf8829\';
+% pre = 'R:\MSS\Johnson_Lab\dtf8829\github\';
+% preDat = 'R:\MSS\Johnson_Lab\dtf8829\';
 
 %HPC paths: 
 
 pre = '/projects/p31578/dtf8829/';
+preDat = '/projects/p31578/dtf8829/';
 
 %% set paths
 
-addpath([pre 'github/HpcAccConnectivityProject'])
-addpath(genpath([pre 'github/myFrequentUse']))
+addpath([pre 'HpcAccConnectivityProject'])
+addpath(genpath([pre 'myFrequentUse']))
 
 
 %% initialize 
 
-datFolder = [pre 'permDat']; 
+datFolder = [preDat 'permDat']; 
 datFiles = dir(datFolder); 
 test = cellfun(@(x) contains(x, '.mat'), {datFiles.name});
 datFiles = datFiles(test); 
