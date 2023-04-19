@@ -6,7 +6,7 @@
 
 
 %simulated HPC looping input from shell script
-%start = 30;
+%start = 1;
 
 disp(['attempting file: ' num2str(start)])
 

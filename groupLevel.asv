@@ -112,9 +112,8 @@ for ii = 1:length(varNames)
     cndDat.pairIdx = pairi; 
     cndDat.pairVar = pairName; 
     [datForPerm, condCode] = getPairedDat(varNames, allDat, ii, pairi); 
-    cndDat.datForPerm = datForPerm; 
-    cndDat.condCode = condCode; 
-    save(['R:\MSS\Johnson_Lab\dtf8829\permDat\' varNames{ii} '.mat'], 'cndDat')
+    
+
 
 end
 

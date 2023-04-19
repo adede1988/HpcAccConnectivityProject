@@ -12,10 +12,17 @@ chanFiles = chanFiles([chanFiles.isdir]==false);
 subIDs = cellfun(@(x) split(x, '_'), {chanFiles.name}, 'uniformoutput', false); 
 subIDs = cellfun(@(x) x{2}, subIDs, 'uniformOutput', false);
 
-subIDs_unique = unique(subIDs);
+masterSheet = readtable(['R:\MSS\Johnson_Lab\dtf8829\memDevDat.csv']);
+datFolder = ['R:\MSS\Johnson_Lab\DATA\'];
+task = 'MemDev';
+allDat = getAllDataStruct(datFolder, masterSheet, task);
+
+subIDs_unique = unique({allDat.subID});
 
 
 parfor sub = 1:length(subIDs_unique)
+    try
+        if ~isfile(join([saveFolder '/sumDat_' subIDs_unique{sub} '.mat'],''))
     sub
     subFiles = cellfun(@(x) length(x)>0, strfind({chanFiles.name}, subIDs_unique{sub})); 
     subFiles = chanFiles(subFiles); 
@@ -89,6 +96,10 @@ parfor sub = 1:length(subIDs_unique)
     
 
     parsave(join([saveFolder '/sumDat_' subIDs_unique{sub} '.mat'],''), subDat)
+        end
+    catch
+        disp(['subject failure! ' num2str(sub)])
+    end
 
 end
 
