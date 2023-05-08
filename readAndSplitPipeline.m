@@ -4,9 +4,9 @@ function [] = readAndSplitPipeline(subDat, prefix, regModels, saveFolder, chanFo
 if isfile([saveFolder 'sumDat_' subDat.subID '.mat'])
     subDat = load([saveFolder 'sumDat_' subDat.subID '.mat']).subDat;
 end
-if isfield(subDat, 'chanSplit')
-    return
-end
+% if isfield(subDat, 'chanSplit')
+%     return
+% end
 
 %% load in the data
 
@@ -22,9 +22,9 @@ end
 
 % check for corrected_coords.mat file
 %NOTE: THIS MAY NOT BE NEEDED ANYMORE
-if isfile([subDat.dataDir '\corrected_coords.mat'])
-    dat.elec = load([subDat.dataDir '\corrected_coords.mat']).data_new.elec;
-end
+% if isfile([subDat.dataDir '\corrected_coords.mat'])
+%     dat.elec = load([subDat.dataDir '\corrected_coords.mat']).data_new.elec;
+% end
 
 %get sampling rate
 subDat.fsample = dat.fsample;
@@ -41,6 +41,17 @@ subDat.use = dat.trialinfo(:,1)==1; %trials where participant paid attention
 subDat.hits = dat.trialinfo(:,2)==1; %trials that resulted in a subsequent hit
 subDat.misses = dat.trialinfo(:,2)==2; %trials that resulted in a subsequent miss
 subDat.retInfo = dat2.trialinfo; %store the trial info for retrieval 
+
+%check for RT mistake and eliminate trials which don't pass
+RT = dat2.trialinfo(:,3); 
+trialLengths = cellfun(@(x) size(x,2), dat2.trial);
+errorTrials = find(arrayfun(@(x) RT(x)>trialLengths(x)-subDat.fsample, 1:length(RT)));
+subDat.retUse = ones(size(RT)); 
+subDat.retUse(errorTrials) = 0; 
+
+subDat.retInfo(errorTrials, :) = [];
+
+
 
 
 %% load and assess anatomy
@@ -71,8 +82,8 @@ subDat.retInfo = dat2.trialinfo; %store the trial info for retrieval
 
 if ~isfield(subDat, 'chanSplit')
     allDatEnc = makeAllDat(dat.trial, dat.time); 
-    allDatRetON = makeAllDatRetON(dat2.trial, dat2.time); 
-    allDatRetRT = makeAllDatRetRT(dat2.trial, dat2.time, dat2.trialinfo(:,3));
+    allDatRetON = makeAllDatRetON(dat2.trial, dat2.time, errorTrials); 
+    allDatRetRT = makeAllDatRetRT(dat2.trial, dat2.time, dat2.trialinfo(:,3), errorTrials);
     
     for ch = 1:size(allDatEnc,1)
         if ~subDat.badTrodes %only save if it's a good electrode
@@ -81,7 +92,15 @@ if ~isfield(subDat, 'chanSplit')
             chanDat.retOn = squeeze(allDatRetON(ch,:,:)); %data are in trials X time -1000ms:2000ms
             chanDat.retRT = squeeze(allDatRetRT(ch,:,:)); %data are in trials X time -2000ms:500ms
             chanDat.chi = ch; %note which electrode it is for reference into other structs
-            save([chanFolder 'chanDat_' chanDat.subID '_' num2str(ch) '.mat'], 'chanDat')
+            if ch<10
+                save([chanFolder '\' 'chanDat_' chanDat.subID '_' '00' num2str(ch) '.mat'], 'chanDat')
+            elseif ch<100
+                save([chanFolder '\' 'chanDat_' chanDat.subID '_' '0' num2str(ch) '.mat'], 'chanDat')
+            else
+
+                save([chanFolder '\' 'chanDat_' chanDat.subID '_' num2str(ch) '.mat'], 'chanDat')
+            end
+
         end
 
     end

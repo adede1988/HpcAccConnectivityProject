@@ -32,6 +32,10 @@ for sub = 1:length(subFiles)
     allDat(sub).roimni = subDat.roimni; 
     allDat(sub).roiNote = subDat.roiNote; 
     
+    %behavioral data quality check requiring hit rate above 60% and FA rate
+    %below 40%
+    if norminv(sum(subDat.retInfo(:,1)==1) /sum(subDat.retInfo(:,1)<3)) - norminv(sum(subDat.retInfo(:,1)==4) /sum(subDat.retInfo(:,1)>2)) > 1
+
     %check that it's through the pipeline
     if isfield(subDat, 'ISPCboot')
        
@@ -50,11 +54,47 @@ for sub = 1:length(subFiles)
         for rr = 1:size(roiMat,2)
             fields = fieldnames(subDat.TFout); 
             for fi = 1:length(fields)
+                 %need to do a check for minimum trial count
+                fName = fields{fi}; 
+                if contains(fName, 'hit_')
+                    if sum(subDat.retInfo(:,1)==1)>5
+                        pass = true; 
+                    else
+                        pass = false; 
+                    end
+                elseif contains(fName, 'miss_')
+                    if sum(subDat.retInfo(:,1)==2)>5
+                        pass = true; 
+                    else
+                        pass = false; 
+                    end
+                elseif contains(fName, 'cr_')
+                    if sum(subDat.retInfo(:,1)==3)>5
+                        pass = true; 
+                    else
+                        pass = false; 
+                    end
+                elseif contains(fName, 'fa_')
+                    if sum(subDat.retInfo(:,1)==4)>5
+                        pass = true; 
+                    else
+                        pass = false; 
+                    end
+                elseif contains(fName, 'sub')
+                        pass = true; 
+                end
+
+                if pass
+
+
+
                 cur = subDat.TFout.(fields{fi}); 
                 cur = cur(:,:,subDat.chanorder); 
                 cur = cur(:,:,roiMat(:,rr)==1); 
                 if ~isempty(cur)
                 allDat(sub).([fields{fi} '_' rois{rr}]) = mean(cur,3);
+
+                end
                 end
             end
         end
@@ -65,6 +105,39 @@ for sub = 1:length(subFiles)
                 if rr>=rr2
                 fields = fieldnames(subDat.ISPCout); 
                 for fi = 1:length(fields)
+
+                    %need to do a check for minimum trial count
+                    fName = fields{fi}; 
+                    if contains(fName, 'hit_')
+                        if sum(subDat.retInfo(:,1)==1)>5
+                            pass = true; 
+                        else
+                            pass = false; 
+                        end
+                    elseif contains(fName, 'miss_')
+                        if sum(subDat.retInfo(:,1)==2)>5
+                            pass = true; 
+                        else
+                            pass = false; 
+                        end
+                    elseif contains(fName, 'cr_')
+                        if sum(subDat.retInfo(:,1)==3)>5
+                            pass = true; 
+                        else
+                            pass = false; 
+                        end
+                    elseif contains(fName, 'fa_')
+                        if sum(subDat.retInfo(:,1)==4)>5
+                            pass = true; 
+                        else
+                            pass = false; 
+                        end
+                    elseif contains(fName, 'sub')
+                            pass = true; 
+                    end
+
+                    if pass
+
                     cur = subDat.ISPCout.(fields{fi});
                      % check for error with too many channels in one dimension
                     if size(cur,1) ~= size(cur,5)
@@ -79,8 +152,10 @@ for sub = 1:length(subFiles)
                     cur = quickChanFillIn(cur);
                     cur = cur(subDat.chanorder,:, :,:,subDat.chanorder); 
                     cur = cur(roiMat(:,rr2)==1,:,:,:,roiMat(:,rr)==1); 
-                    if ~isempty(cur)
+                    if ~isempty(cur) && min(size(cur))>0
                     allDat(sub).([fields{fi} '_' rois{rr} '_' rois{rr2}]) = squeeze(mean(cur,[1,5]));
+                    end
+
                     end
                 end
                 end
@@ -90,6 +165,7 @@ for sub = 1:length(subFiles)
 
     end
 
+    end
 
 end
 

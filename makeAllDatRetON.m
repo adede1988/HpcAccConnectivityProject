@@ -1,4 +1,4 @@
-function [allDat] = makeAllDatRetON(trials, times)
+function [allDat] = makeAllDatRetON(trials, times, errorTrials)
 
 
 %channels X time X trials
@@ -6,7 +6,7 @@ allDat = zeros(size(trials{1},1), 4001, length(trials));
 
 for tt = 1:length(trials)
     curTrial = trials{tt}; 
-
+    
     padDat = mirrorPad(curTrial);
 
     curTime = times{tt}; 
@@ -22,7 +22,7 @@ for tt = 1:length(trials)
 
 end
 
-
+allDat(:,:,errorTrials) = []; 
 
 
 

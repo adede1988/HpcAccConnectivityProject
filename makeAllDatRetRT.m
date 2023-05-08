@@ -1,4 +1,4 @@
-function [allDat] = makeAllDatRetRT(trials, times, RT)
+function [allDat] = makeAllDatRetRT(trials, times, RT, errorTrials)
 
 
 %channels X time X trials
@@ -32,7 +32,7 @@ end
 
 
 
-
+allDat(:,:,errorTrials) = []; 
 
 
 

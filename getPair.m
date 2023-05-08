@@ -26,32 +26,28 @@ function [pairi, pairName] = getPair(curVar, varNames, ii)
             splitVar = split(curVar, 'miss');
             temp = varNames; 
             temp{ii} = 'not this one'; 
-            idx = find(cellfun(@(x) contains(x, 'hit') & contains(x, splitVar{2}), temp )); 
-            [~, idxi] = min(abs(idx-ii)); 
-            pairi = idx(idxi);
+            idx = find(cellfun(@(x) strcmp(x, ['hit' splitVar{2}]), temp )); 
+            pairi = idx; 
 
         elseif contains(curVar, 'hit')
             splitVar = split(curVar, 'hit');
             temp = varNames; 
             temp{ii} = 'not this one'; 
-            idx = find(cellfun(@(x) contains(x, 'miss') & contains(x, splitVar{2}), temp )); 
-            [~, idxi] = min(abs(idx-ii)); 
-            pairi = idx(idxi);
+            idx = find(cellfun(@(x) strcmp(x, ['miss' splitVar{2}]), temp )); 
+            pairi = idx;
 
         elseif contains(curVar, 'cr')
             splitVar = split(curVar, 'cr'); 
             temp = varNames; 
             temp{ii} = 'not this one'; 
-            idx = find(cellfun(@(x) contains(x, 'fa') & contains(x, splitVar{2}), temp )); 
-            [~, idxi] = min(abs(idx-ii)); 
-            pairi = idx(idxi);
+            idx = find(cellfun(@(x) strcmp(x, ['fa' splitVar{2}]), temp )); 
+            pairi = idx;
         else
             splitVar = split(curVar, 'fa'); 
             temp = varNames; 
             temp{ii} = 'not this one'; 
-            idx = find(cellfun(@(x) contains(x, 'cr') & contains(x, splitVar{2}), temp )); 
-            [~, idxi] = min(abs(idx-ii)); 
-            pairi = idx(idxi);
+            idx = find(cellfun(@(x) strcmp(x, ['cr' splitVar{2}]), temp )); 
+            pairi = idx;
 
         end
 
