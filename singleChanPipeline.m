@@ -20,23 +20,51 @@ end
 disp(['data loaded: ' chanDat.subID ' ' num2str(chanDat.chi)])
 
 %% needs time points! hard code
-
-chanDat.enctim = [-1000:3500];
-chanDat.retOtim = [-1000:3000];
-chanDat.retRtim = [-2000:500];
+if chanDat.fsample == 1000
+    chanDat.enctim = [-1000:3500];
+    chanDat.retOtim = [-1000:3000];
+    chanDat.retRtim = [-2000:500];
+else
+    step = 1000 / chanDat.fsample; 
+    chanDat.enctim = [-1000:step:3500];
+    chanDat.retOtim = [-1000:step:3000];
+    chanDat.retRtim = [-2000:step:500];
+end
 
 
 
 %% High frequency Broadband 
 
+%note hardcoded baselines: encoding: -450 : -50   ms
+%                          retOn   : -450 : -50   ms
+%                          retRT   : -2000: -1600 ms
+
 % if ~isfield(chanDat, 'HFB')
 
     HFB = struct; 
     %ENCODING DATA: ***********************************************************
+    chanDat.HFBenc = 0; %note if it's a reactive channel, assume not
     pow = abs(getChanTrialTF(chanDat.enc, highfrex, highnumfrex, highstds, chanDat.fsample)).^2; %get power time series for all trials/frequencies
-    pow = arrayfun(@(x) myChanZscore(pow(:,:,x)), 1:size(pow,3), 'UniformOutput',false ); %z-score
+    pow = arrayfun(@(x) myChanZscore(pow(:,:,x), [find(chanDat.enctim>=-450,1), find(chanDat.enctim>=-50,1)] ), 1:size(pow,3), 'UniformOutput',false ); %z-score
     pow = cell2mat(pow); %organize
     pow = reshape(pow, size(pow,1), size(pow,2)/highnumfrex, []); %organize
+    test = mean(pow(:,chanDat.use,:), [2,3]);
+    test = abs(test)>1.96;
+    testidx = find(test);
+    if ~isempty(testidx)
+        breakPoints = [1, find(diff(testidx)>1)]; 
+        if length(breakPoints)==1 && length(testidx)>(.05*chanDat.fsample)
+            chanDat.HFBenc = 1; 
+        else
+            breakPoints = [breakPoints, length(testidx)]; 
+            for bb = 1:length(breakPoints)-1
+                if breakPoints(bb+1) - breakPoints(bb) > (.05*chanDat.fsample)
+                    chanDat.HFBenc = 1; 
+                end
+            end
+
+        end
+    end
     %get mean misses: 
     HFB.subMiss = squeeze(mean(pow(:,chanDat.use & chanDat.misses, :), [3])); 
     %get mean hits: 
@@ -46,10 +74,29 @@ chanDat.retRtim = [-2000:500];
     disp('encoding done')
 
     %RETRIEVAL STIM ONSET: ****************************************************
+    chanDat.HFBretOn = 0; 
     pow = abs(getChanTrialTF(chanDat.retOn, highfrex, highnumfrex, highstds, chanDat.fsample)).^2; %get power time series for all trials/frequencies
-    pow = arrayfun(@(x) myChanZscore(pow(:,:,x)), 1:size(pow,3), 'UniformOutput',false ); %z-score
+    pow = arrayfun(@(x) myChanZscore(pow(:,:,x), [find(chanDat.retOtim>=-450,1), find(chanDat.retOtim>=-50,1)] ), 1:size(pow,3), 'UniformOutput',false ); %z-score
     pow = cell2mat(pow); %organize
     pow = reshape(pow, size(pow,1), size(pow,2)/highnumfrex, []); %organize
+
+    test = mean(pow(:,chanDat.retInfo(:,1)>0 & chanDat.retInfo(:,1)<5,:), [2,3]);
+    test = abs(test)>1.96;
+    testidx = find(test);
+    if ~isempty(testidx)
+        breakPoints = [1, find(diff(testidx)>1)]; 
+        if length(breakPoints)==1 && length(testidx)>(.05*chanDat.fsample)
+            chanDat.HFBretOn = 1; 
+        else
+            breakPoints = [breakPoints, length(testidx)]; 
+            for bb = 1:length(breakPoints)-1
+                if breakPoints(bb+1) - breakPoints(bb) > (.05*chanDat.fsample)
+                    chanDat.HFBretOn = 1; 
+                end
+            end
+
+        end
+    end
     %get mean hit: 
     HFB.hit_on = squeeze(mean(pow(:,chanDat.retInfo(:,1)==1, :), [3])); 
     %get mean CRs: 
@@ -63,10 +110,31 @@ chanDat.retRtim = [-2000:500];
     disp('retrieval 1 done')
     
     %RETRIEVAL RESPONSE LOCKED: ***********************************************
+    chanDat.HFBretRT = 0; 
     pow = abs(getChanTrialTF(chanDat.retRT, highfrex, highnumfrex, highstds, chanDat.fsample)).^2; %get power time series for all trials/frequencies
-    pow = arrayfun(@(x) myChanZscore(pow(:,:,x)), 1:size(pow,3), 'UniformOutput',false ); %z-score
+    pow = arrayfun(@(x) myChanZscore(pow(:,:,x), [find(chanDat.retRtim>=-2000,1), find(chanDat.retRtim>=-1600,1)]), 1:size(pow,3), 'UniformOutput',false ); %z-score
     pow = cell2mat(pow); %organize
     pow = reshape(pow, size(pow,1), size(pow,2)/highnumfrex, []); %organize
+    test = mean(pow(:,chanDat.retInfo(:,1)>0 & chanDat.retInfo(:,1)<5,:), [2,3]);
+    test = abs(test)>1.96;
+    testidx = find(test);
+
+    if ~isempty(testidx)
+        breakPoints = [1, find(diff(testidx)>1)]; 
+        if length(breakPoints)==1 && length(testidx)>(.05*chanDat.fsample)
+            chanDat.HFBretRT = 1; 
+        else
+            breakPoints = [breakPoints, length(testidx)]; 
+            for bb = 1:length(breakPoints)-1
+                if breakPoints(bb+1) - breakPoints(bb) > (.05*chanDat.fsample)
+                    chanDat.HFBretRT = 1; 
+                end
+            end
+
+        end
+    end
+
+
     %get mean hit: 
     HFB.hit_rt = squeeze(mean(pow(:,chanDat.retInfo(:,1)==1, :), [3])); 
     %get mean CRs: 
@@ -78,18 +146,25 @@ chanDat.retRtim = [-2000:500];
     %clean up
     clear pow
     disp('retrieval 2 done')
-
-
+% 
+% 
     chanDat.HFB = HFB; 
     
     clear HFB 
     disp('attempting saving')
     save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat'); 
     disp(['save success: ' chanFiles(idx).folder '/' chanFiles(idx).name])
-
+% 
 % else
 %     disp('HFB already done')
 % end
+
+
+%% check if channel is responsive
+
+
+
+
 
 
 %% time frequency decomposition, extract TF summaries for target trial types: 

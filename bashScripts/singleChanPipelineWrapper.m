@@ -7,6 +7,7 @@
 
 
 %simulated HPC looping input from shell script
+
 %start = 1;
 
 disp(['attempting file: ' num2str(start)])
@@ -52,3 +53,4 @@ disp(['going for ' subID ' ' num2str(curChani)] )
 tic
 singleChanPipeline(chanFiles, curChani); 
 toc
+
