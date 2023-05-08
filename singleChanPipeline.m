@@ -39,7 +39,7 @@ end
 %                          retOn   : -450 : -50   ms
 %                          retRT   : -2000: -1600 ms
 
-% if ~isfield(chanDat, 'HFB')
+if ~isfield(chanDat, 'HFB')
 
     HFB = struct; 
     %ENCODING DATA: ***********************************************************
@@ -154,10 +154,10 @@ end
     disp('attempting saving')
     save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat'); 
     disp(['save success: ' chanFiles(idx).folder '/' chanFiles(idx).name])
-% 
-% else
-%     disp('HFB already done')
-% end
+
+else
+    disp('HFB already done')
+end
 
 
 %% check if channel is responsive
