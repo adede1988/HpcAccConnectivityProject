@@ -29,7 +29,7 @@ chanDat.retRtim = [-2000:500];
 
 %% High frequency Broadband 
 
-if ~isfield(chanDat, 'HFB')
+% if ~isfield(chanDat, 'HFB')
 
     HFB = struct; 
     %ENCODING DATA: ***********************************************************
@@ -87,9 +87,9 @@ if ~isfield(chanDat, 'HFB')
     save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat'); 
     disp(['save success: ' chanFiles(idx).folder '/' chanFiles(idx).name])
 
-else
-    disp('HFB already done')
-end
+% else
+%     disp('HFB already done')
+% end
 
 
 %% time frequency decomposition, extract TF summaries for target trial types: 
