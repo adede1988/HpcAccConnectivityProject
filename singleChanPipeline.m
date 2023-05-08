@@ -38,9 +38,9 @@ if ~isfield(chanDat, 'HFB')
     pow = cell2mat(pow); %organize
     pow = reshape(pow, size(pow,1), size(pow,2)/highnumfrex, []); %organize
     %get mean misses: 
-    HFB.subMiss = squeeze(mean(pow(:,chanDat.use & chanDat.misses, :), [2,3])); 
+    HFB.subMiss = squeeze(mean(pow(:,chanDat.use & chanDat.misses, :), [3])); 
     %get mean hits: 
-    HFB.subHit = squeeze(mean(pow(:,chanDat.use & chanDat.hits, :), [2,3]));
+    HFB.subHit = squeeze(mean(pow(:,chanDat.use & chanDat.hits, :), [3]));
     %clean up
     clear pow
     disp('encoding done')
@@ -51,13 +51,13 @@ if ~isfield(chanDat, 'HFB')
     pow = cell2mat(pow); %organize
     pow = reshape(pow, size(pow,1), size(pow,2)/highnumfrex, []); %organize
     %get mean hit: 
-    HFB.hit_on = squeeze(mean(pow(:,chanDat.retInfo(:,1)==1, :), [2,3])); 
+    HFB.hit_on = squeeze(mean(pow(:,chanDat.retInfo(:,1)==1, :), [3])); 
     %get mean CRs: 
-    HFB.cr_on = squeeze(mean(pow(:,chanDat.retInfo(:,1)==3, :), [2,3]));
+    HFB.cr_on = squeeze(mean(pow(:,chanDat.retInfo(:,1)==3, :), [3]));
     %get mean miss: 
-    HFB.miss_on = squeeze(mean(pow(:,chanDat.retInfo(:,1)==2, :), [2,3]));
+    HFB.miss_on = squeeze(mean(pow(:,chanDat.retInfo(:,1)==2, :), [3]));
     %get mean FA: 
-    HFB.fa_on = squeeze(mean(pow(:,chanDat.retInfo(:,1)==4, :), [2,3]));
+    HFB.fa_on = squeeze(mean(pow(:,chanDat.retInfo(:,1)==4, :), [3]));
     %clean up
     clear pow
     disp('retrieval 1 done')
@@ -68,13 +68,13 @@ if ~isfield(chanDat, 'HFB')
     pow = cell2mat(pow); %organize
     pow = reshape(pow, size(pow,1), size(pow,2)/highnumfrex, []); %organize
     %get mean hit: 
-    HFB.hit_rt = squeeze(mean(pow(:,chanDat.retInfo(:,1)==1, :), [2,3])); 
+    HFB.hit_rt = squeeze(mean(pow(:,chanDat.retInfo(:,1)==1, :), [3])); 
     %get mean CRs: 
-    HFB.cr_rt = squeeze(mean(pow(:,chanDat.retInfo(:,1)==3, :), [2,3]));
+    HFB.cr_rt = squeeze(mean(pow(:,chanDat.retInfo(:,1)==3, :), [3]));
     %get mean miss: 
-    HFB.miss_rt = squeeze(mean(pow(:,chanDat.retInfo(:,1)==2, :), [2,3]));
+    HFB.miss_rt = squeeze(mean(pow(:,chanDat.retInfo(:,1)==2, :), [3]));
     %get mean FA: 
-    HFB.fa_rt = squeeze(mean(pow(:,chanDat.retInfo(:,1)==4, :), [2,3]));
+    HFB.fa_rt = squeeze(mean(pow(:,chanDat.retInfo(:,1)==4, :), [3]));
     %clean up
     clear pow
     disp('retrieval 2 done')
