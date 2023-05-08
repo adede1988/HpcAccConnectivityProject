@@ -52,7 +52,7 @@ end
     test = abs(test)>1.96;
     testidx = find(test);
     if ~isempty(testidx)
-        breakPoints = [1, find(diff(testidx)>1)]; 
+        breakPoints = [1 find(diff(testidx)>1)']; 
         if length(breakPoints)==1 && length(testidx)>(.05*chanDat.fsample)
             chanDat.HFBenc = 1; 
         else
@@ -84,7 +84,7 @@ end
     test = abs(test)>1.96;
     testidx = find(test);
     if ~isempty(testidx)
-        breakPoints = [1, find(diff(testidx)>1)]; 
+        breakPoints = [1 find(diff(testidx)>1)']; 
         if length(breakPoints)==1 && length(testidx)>(.05*chanDat.fsample)
             chanDat.HFBretOn = 1; 
         else
@@ -120,7 +120,7 @@ end
     testidx = find(test);
 
     if ~isempty(testidx)
-        breakPoints = [1, find(diff(testidx)>1)]; 
+        breakPoints = [1 find(diff(testidx)>1)']; 
         if length(breakPoints)==1 && length(testidx)>(.05*chanDat.fsample)
             chanDat.HFBretRT = 1; 
         else
