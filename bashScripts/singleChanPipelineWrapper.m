@@ -17,7 +17,7 @@ disp(['attempting file: ' num2str(start)])
 %local paths: 
 
 % codePre = 'R:\MSS\Johnson_Lab\dtf8829\GitHub\';
-% datPre = 'R:\MSS\Johnson_Lab\dtf8829\';
+% datPre = 'C:\Users\dtf8829\Documents\QuestConnect\';
 
 %HPC paths: 
 

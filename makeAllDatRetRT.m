@@ -1,4 +1,24 @@
-function [allDat] = makeAllDatRetRT(trials, times, RT, errorTrials)
+function [allDat] = makeAllDatRetRT(trials, times, RT, errorTrials, sampRate)
+
+
+
+if sampRate ~= 1000
+    %upsample the data
+    for tt = 1:length(trials)
+            [n,d] = rat(1000 / sampRate);
+            test = resample(trials{tt}', n,d);
+            L = size(test,1); 
+            if L >2501
+                extra = L-2501;
+                test(1:floor(extra/2), :) = []; 
+                test(end-ceil(extra/2)+1:end, :) = []; 
+            end
+            trials{tt} = test'; 
+
+    end
+
+end
+
 
 
 %channels X time X trials

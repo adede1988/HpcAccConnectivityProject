@@ -81,9 +81,9 @@ subDat.retInfo(errorTrials, :) = [];
 %% split the data into channel files
 
 if ~isfield(subDat, 'chanSplit')
-    allDatEnc = makeAllDat(dat.trial, dat.time); 
-    allDatRetON = makeAllDatRetON(dat2.trial, dat2.time, errorTrials); 
-    allDatRetRT = makeAllDatRetRT(dat2.trial, dat2.time, dat2.trialinfo(:,3), errorTrials);
+    allDatEnc = makeAllDat(dat.trial, dat.time, dat.fsample); 
+    allDatRetON = makeAllDatRetON(dat2.trial, dat2.time, errorTrials, dat.fsample); 
+    allDatRetRT = makeAllDatRetRT(dat2.trial, dat2.time, dat2.trialinfo(:,3), errorTrials, dat.fsample);
     
     for ch = 1:size(allDatEnc,1)
         if ~subDat.badTrodes %only save if it's a good electrode

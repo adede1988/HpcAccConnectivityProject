@@ -39,7 +39,7 @@ end
 %                          retOn   : -450 : -50   ms
 %                          retRT   : -2000: -1600 ms
 
-if ~isfield(chanDat, 'HFB')
+% if ~isfield(chanDat, 'HFBenc')
 
     HFB = struct; 
     %ENCODING DATA: ***********************************************************
@@ -50,7 +50,7 @@ if ~isfield(chanDat, 'HFB')
     pow = reshape(pow, size(pow,1), size(pow,2)/highnumfrex, []); %organize
     test = mean(pow(:,chanDat.use,:), [2,3]);
     test = abs(test)>1.96;
-    testidx = find(test);
+    testidx = find(test([find(chanDat.enctim>=-450,1):find(chanDat.enctim>=2500,1)]));
     if ~isempty(testidx)
         breakPoints = [1 find(diff(testidx)>1)']; 
         if length(breakPoints)==1 && length(testidx)>(.05*chanDat.fsample)
@@ -82,7 +82,7 @@ if ~isfield(chanDat, 'HFB')
 
     test = mean(pow(:,chanDat.retInfo(:,1)>0 & chanDat.retInfo(:,1)<5,:), [2,3]);
     test = abs(test)>1.96;
-    testidx = find(test);
+    testidx = find(test([find(chanDat.enctim>=-450,1): find(chanDat.enctim>=2000,1)]));
     if ~isempty(testidx)
         breakPoints = [1 find(diff(testidx)>1)']; 
         if length(breakPoints)==1 && length(testidx)>(.05*chanDat.fsample)
@@ -117,7 +117,7 @@ if ~isfield(chanDat, 'HFB')
     pow = reshape(pow, size(pow,1), size(pow,2)/highnumfrex, []); %organize
     test = mean(pow(:,chanDat.retInfo(:,1)>0 & chanDat.retInfo(:,1)<5,:), [2,3]);
     test = abs(test)>1.96;
-    testidx = find(test);
+    testidx = find(test([find(chanDat.enctim>=-2000,1): find(chanDat.enctim>=300,1)]));
 
     if ~isempty(testidx)
         breakPoints = [1 find(diff(testidx)>1)']; 
@@ -155,9 +155,9 @@ if ~isfield(chanDat, 'HFB')
     save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat'); 
     disp(['save success: ' chanFiles(idx).folder '/' chanFiles(idx).name])
 
-else
-    disp('HFB already done')
-end
+% else
+%     disp('HFB already done')
+% end
 
 
 %% check if channel is responsive
