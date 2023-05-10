@@ -44,21 +44,27 @@ end
     HFB = struct; 
     %ENCODING DATA: ***********************************************************
     chanDat.HFBenc = 0; %note if it's a reactive channel, assume not
-    pow = abs(getChanTrialTF(chanDat.enc, highfrex, highnumfrex, highstds, chanDat.fsample)).^2; %get power time series for all trials/frequencies
-    pow = arrayfun(@(x) myChanZscore(pow(:,:,x), [find(chanDat.enctim>=-450,1), find(chanDat.enctim>=-50,1)] ), 1:size(pow,3), 'UniformOutput',false ); %z-score
+    [pow, mulTim, mulFrex] = getChanMultiTF(chanDat.enc, highfrex, chanDat.fsample, chanDat.enctim); 
+%     powOG = abs(getChanTrialTF(chanDat.enc, highfrex, highnumfrex, highstds, chanDat.fsample)).^2; %get power time series for all trials/frequencies
+%     powOG = arrayfun(@(x) myChanZscore(powOG(:,:,x), [find(chanDat.enctim>=-450,1), find(chanDat.enctim>=-50,1)] ), 1:size(powOG,3), 'UniformOutput',false ); %z-score
+%     powOG = cell2mat(powOG); %organize
+%     powOG = reshape(powOG, size(powOG,1), size(powOG,2)/highnumfrex, []); %organize
+     %get power time series for all trials/frequencies
+    pow = arrayfun(@(x) myChanZscore(pow(:,:,x), [find(mulTim>=-450,1), find(mulTim>=-50,1)] ), 1:size(pow,3), 'UniformOutput',false ); %z-score
+    highnumfrex = length(mulFrex); 
     pow = cell2mat(pow); %organize
     pow = reshape(pow, size(pow,1), size(pow,2)/highnumfrex, []); %organize
     test = mean(pow(:,chanDat.use,:), [2,3]);
     test = abs(test)>1.96;
-    testidx = find(test([find(chanDat.enctim>=-450,1):find(chanDat.enctim>=2500,1)]));
+    testidx = find(test([find(mulTim>=-450,1):find(mulTim>=2500,1)]));
     if ~isempty(testidx)
         breakPoints = [1 find(diff(testidx)>1)']; 
-        if length(breakPoints)==1 && length(testidx)>(.05*chanDat.fsample)
+        if length(breakPoints)==1 && length(testidx)>10
             chanDat.HFBenc = 1; 
         else
             breakPoints = [breakPoints, length(testidx)]; 
             for bb = 1:length(breakPoints)-1
-                if breakPoints(bb+1) - breakPoints(bb) > (.05*chanDat.fsample)
+                if breakPoints(bb+1) - breakPoints(bb) > 10
                     chanDat.HFBenc = 1; 
                 end
             end
@@ -69,28 +75,33 @@ end
     HFB.subMiss = squeeze(mean(pow(:,chanDat.use & chanDat.misses, :), [3])); 
     %get mean hits: 
     HFB.subHit = squeeze(mean(pow(:,chanDat.use & chanDat.hits, :), [3]));
+    %save info about the multi taper
+    HFB.encMulTim = mulTim; 
+    HFB.encFrex = mulFrex; 
     %clean up
     clear pow
     disp('encoding done')
 
+
     %RETRIEVAL STIM ONSET: ****************************************************
     chanDat.HFBretOn = 0; 
-    pow = abs(getChanTrialTF(chanDat.retOn, highfrex, highnumfrex, highstds, chanDat.fsample)).^2; %get power time series for all trials/frequencies
-    pow = arrayfun(@(x) myChanZscore(pow(:,:,x), [find(chanDat.retOtim>=-450,1), find(chanDat.retOtim>=-50,1)] ), 1:size(pow,3), 'UniformOutput',false ); %z-score
+    [pow, mulTim, mulFrex] = getChanMultiTF(chanDat.retOn, highfrex, chanDat.fsample, chanDat.retOtim); 
+    pow = arrayfun(@(x) myChanZscore(pow(:,:,x), [find(mulTim>=-450,1), find(mulTim>=-50,1)] ), 1:size(pow,3), 'UniformOutput',false ); %z-score
     pow = cell2mat(pow); %organize
+    highnumfrex = length(mulFrex); 
     pow = reshape(pow, size(pow,1), size(pow,2)/highnumfrex, []); %organize
 
     test = mean(pow(:,chanDat.retInfo(:,1)>0 & chanDat.retInfo(:,1)<5,:), [2,3]);
     test = abs(test)>1.96;
-    testidx = find(test([find(chanDat.enctim>=-450,1): find(chanDat.enctim>=2000,1)]));
+    testidx = find(test([find(mulTim>=-450,1): find(mulTim>=2000,1)]));
     if ~isempty(testidx)
         breakPoints = [1 find(diff(testidx)>1)']; 
-        if length(breakPoints)==1 && length(testidx)>(.05*chanDat.fsample)
+        if length(breakPoints)==1 && length(testidx)>10
             chanDat.HFBretOn = 1; 
         else
             breakPoints = [breakPoints, length(testidx)]; 
             for bb = 1:length(breakPoints)-1
-                if breakPoints(bb+1) - breakPoints(bb) > (.05*chanDat.fsample)
+                if breakPoints(bb+1) - breakPoints(bb) > 10
                     chanDat.HFBretOn = 1; 
                 end
             end
@@ -105,28 +116,32 @@ end
     HFB.miss_on = squeeze(mean(pow(:,chanDat.retInfo(:,1)==2, :), [3]));
     %get mean FA: 
     HFB.fa_on = squeeze(mean(pow(:,chanDat.retInfo(:,1)==4, :), [3]));
+    %multi taper stats    
+    HFB.onMulTim = mulTim; 
+    HFB.onFrex = mulFrex; 
     %clean up
     clear pow
     disp('retrieval 1 done')
     
     %RETRIEVAL RESPONSE LOCKED: ***********************************************
     chanDat.HFBretRT = 0; 
-    pow = abs(getChanTrialTF(chanDat.retRT, highfrex, highnumfrex, highstds, chanDat.fsample)).^2; %get power time series for all trials/frequencies
-    pow = arrayfun(@(x) myChanZscore(pow(:,:,x), [find(chanDat.retRtim>=-2000,1), find(chanDat.retRtim>=-1600,1)]), 1:size(pow,3), 'UniformOutput',false ); %z-score
+    [pow, mulTim, mulFrex] = getChanMultiTF(chanDat.retRT, highfrex, chanDat.fsample, chanDat.retRtim); 
+    pow = arrayfun(@(x) myChanZscore(pow(:,:,x), [find(mulTim>=-2000,1), find(mulTim>=-1600,1)] ), 1:size(pow,3), 'UniformOutput',false ); %z-score
     pow = cell2mat(pow); %organize
+    highnumfrex = length(mulFrex); 
     pow = reshape(pow, size(pow,1), size(pow,2)/highnumfrex, []); %organize
     test = mean(pow(:,chanDat.retInfo(:,1)>0 & chanDat.retInfo(:,1)<5,:), [2,3]);
     test = abs(test)>1.96;
-    testidx = find(test([find(chanDat.enctim>=-2000,1): find(chanDat.enctim>=300,1)]));
+    testidx = find(test([find(mulTim>=-1600,1): find(mulTim>=300,1)]));
 
     if ~isempty(testidx)
         breakPoints = [1 find(diff(testidx)>1)']; 
-        if length(breakPoints)==1 && length(testidx)>(.05*chanDat.fsample)
+        if length(breakPoints)==1 && length(testidx)>10
             chanDat.HFBretRT = 1; 
         else
             breakPoints = [breakPoints, length(testidx)]; 
             for bb = 1:length(breakPoints)-1
-                if breakPoints(bb+1) - breakPoints(bb) > (.05*chanDat.fsample)
+                if breakPoints(bb+1) - breakPoints(bb) > 10
                     chanDat.HFBretRT = 1; 
                 end
             end
@@ -143,6 +158,9 @@ end
     HFB.miss_rt = squeeze(mean(pow(:,chanDat.retInfo(:,1)==2, :), [3]));
     %get mean FA: 
     HFB.fa_rt = squeeze(mean(pow(:,chanDat.retInfo(:,1)==4, :), [3]));
+     %multi taper stats    
+    HFB.rtMulTim = mulTim; 
+    HFB.rtFrex = mulFrex; 
     %clean up
     clear pow
     disp('retrieval 2 done')
@@ -158,9 +176,6 @@ end
 % else
 %     disp('HFB already done')
 % end
-
-
-%% check if channel is responsive
 
 
 
