@@ -39,7 +39,7 @@ end
 %                          retOn   : -450 : -50   ms
 %                          retRT   : -2000: -1600 ms
 
-% if ~isfield(chanDat, 'HFBenc')
+if ~isfield(chanDat, 'HFBenc')
 
     HFB = struct; 
     %ENCODING DATA: ***********************************************************
@@ -173,9 +173,87 @@ end
     save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat'); 
     disp(['save success: ' chanFiles(idx).folder '/' chanFiles(idx).name])
 
-% else
-%     disp('HFB already done')
-% end
+else
+    disp('HFB already done')
+end
+
+
+%% Lead lag analysis
+x = 5
+if sum(sum(chanDat.roiNote)) == 0 
+    roiMat = chanDat.roimni; 
+else
+    roiMat = chanDat.roiNote; 
+end
+
+chanDat.chansRoi = sum(roiMat,2);
+roiIDX = find(chanDat.chansRoi==1); 
+chanDat.leadLagRoi = roiMat(roiIDX,:);
+if ismember(chanDat.chi, roiIDX)
+
+%look at lead v. lag across + - 200 ms
+%chan X lead/lag X time
+leadLag = struct; 
+encHit = zeros([sum(chanDat.chansRoi==1), 401, size(chanDat.HFB.subHit,1)]);
+encMiss = zeros([sum(chanDat.chansRoi==1), 401, size(chanDat.HFB.subHit,1)]);
+for chan = 1:length(roiIDX)
+    chan
+    chanDat2 = load([chanFiles(roiIDX(chan)).folder '/' chanFiles(roiIDX(chan)).name]).chanDat; 
+
+    % ENCODING DATA! ******************************************************
+    %HITS: 
+    for offSet = -200:200
+        HFB1 = chanDat.HFB.subHit;
+        HFB2 = chanDat2.HFB.subHit; 
+        tim = chanDat.HFB.encMulTim; 
+        if offSet<0
+            HFB2 = [ HFB2(abs(offSet)+1:end, :); zeros([abs(offSet), size(HFB1,2)] )];
+        elseif offSet>0
+            HFB2 = [zeros([abs(offSet), size(HFB1,2)] ); HFB2(1:end -abs(offSet), :)];
+        end
+        
+        encHit(chan, offSet+201, :) = arrayfun(@(x) corr(HFB1(x,:)', HFB2(x,:)'), [1:size(HFB1,1)]);
+        
+    end
+    leadLag.encHit = encHit; 
+
+    %MISSES: 
+    for offSet = -200:200
+        HFB1 = chanDat.HFB.subMiss;
+        HFB2 = chanDat2.HFB.subMiss; 
+        tim = chanDat.HFB.encMulTim; 
+        if offSet<0
+            HFB2 = [ HFB2(abs(offSet)+1:end, :); zeros([abs(offSet), size(HFB1,2)] )];
+        elseif offSet>0
+            HFB2 = [zeros([abs(offSet), size(HFB1,2)] ); HFB2(1:end -abs(offSet), :)];
+        end
+        
+        encMiss(chan, offSet+201, :) = arrayfun(@(x) corr(HFB1(x,:)', HFB2(x,:)'), [1:size(HFB1,1)]);
+        
+    end
+    leadLag.encMiss = encMiss; 
+
+
+
+    
+
+
+
+end
+disp('saving leadlag')
+chanDat.leadLag = leadLag; 
+save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat'); 
+
+
+else
+
+chanDat.leadLag = "no ROI electrodes"; 
+save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat'); 
+
+%THIS CHANNEL IS NOT IN A ROI, so SKIP LEAD LAG! 
+
+
+end
 
 
 
