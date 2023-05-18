@@ -1,9 +1,9 @@
 function [] = readAndSplitPipeline(subDat, prefix, regModels, saveFolder, chanFolder)
 
 %get previous work
-if isfile([saveFolder 'sumDat_' subDat.subID '.mat'])
-    subDat = load([saveFolder 'sumDat_' subDat.subID '.mat']).subDat;
-end
+% if isfile([saveFolder 'sumDat_' subDat.subID '.mat'])
+%     subDat = load([saveFolder 'sumDat_' subDat.subID '.mat']).subDat;
+% end
 % if isfield(subDat, 'chanSplit')
 %     return
 % end
@@ -45,6 +45,12 @@ subDat.retInfo = dat2.trialinfo; %store the trial info for retrieval
 %check for RT mistake and eliminate trials which don't pass
 RT = dat2.trialinfo(:,3); 
 trialLengths = cellfun(@(x) size(x,2), dat2.trial);
+
+% trialLengths = zeros(length(dat2.trial),1); 
+% for ii = 1:length(trialLengths)
+%     trialLengths(ii) = size(dat2.trial{ii},2); 
+% end
+
 errorTrials = find(arrayfun(@(x) RT(x)>trialLengths(x)-subDat.fsample, 1:length(RT)));
 subDat.retUse = ones(size(RT)); 
 subDat.retUse(errorTrials) = 0; 
@@ -74,13 +80,13 @@ subDat.retInfo(errorTrials, :) = [];
     [subDat.roimni, subDat.roiNote] = anatomyPlot(regModels, subDat.elecpos, [subDat.labels(:,3)], roiLab, rois, subDat.subID, -1, 0); 
     
     %save out anatomy checking
-    save([saveFolder 'sumDat_' subDat.subID '.mat'], 'subDat')
+%     save([saveFolder 'sumDat_' subDat.subID '.mat'], 'subDat')
 % end
 
 
 %% split the data into channel files
 
-if ~isfield(subDat, 'chanSplit')
+% if ~isfield(subDat, 'chanSplit')
     allDatEnc = makeAllDat(dat.trial, dat.time, dat.fsample); 
     allDatRetON = makeAllDatRetON(dat2.trial, dat2.time, errorTrials, dat.fsample); 
     allDatRetRT = makeAllDatRetRT(dat2.trial, dat2.time, dat2.trialinfo(:,3), errorTrials, dat.fsample);
@@ -93,12 +99,12 @@ if ~isfield(subDat, 'chanSplit')
             chanDat.retRT = squeeze(allDatRetRT(ch,:,:)); %data are in trials X time -2000ms:500ms
             chanDat.chi = ch; %note which electrode it is for reference into other structs
             if ch<10
-                save([chanFolder '\' 'chanDat_' chanDat.subID '_' '00' num2str(ch) '.mat'], 'chanDat')
+%                 save([chanFolder '\' 'chanDat_' chanDat.subID '_' '00' num2str(ch) '.mat'], 'chanDat')
             elseif ch<100
-                save([chanFolder '\' 'chanDat_' chanDat.subID '_' '0' num2str(ch) '.mat'], 'chanDat')
+%                 save([chanFolder '\' 'chanDat_' chanDat.subID '_' '0' num2str(ch) '.mat'], 'chanDat')
             else
 
-                save([chanFolder '\' 'chanDat_' chanDat.subID '_' num2str(ch) '.mat'], 'chanDat')
+%                 save([chanFolder '\' 'chanDat_' chanDat.subID '_' num2str(ch) '.mat'], 'chanDat')
             end
 
         end
@@ -107,8 +113,8 @@ if ~isfield(subDat, 'chanSplit')
 
     %record that the chan split has been done
     subDat.chanSplit = 1; 
-    save([saveFolder 'sumDat_' subDat.subID '.mat'], 'subDat')
-end
+%     save([saveFolder 'sumDat_' subDat.subID '.mat'], 'subDat')
+% end
 
 
 

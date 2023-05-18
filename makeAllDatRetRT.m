@@ -7,13 +7,9 @@ if sampRate ~= 1000
     for tt = 1:length(trials)
             [n,d] = rat(1000 / sampRate);
             test = resample(trials{tt}', n,d);
-            L = size(test,1); 
-            if L >2501
-                extra = L-2501;
-                test(1:floor(extra/2), :) = []; 
-                test(end-ceil(extra/2)+1:end, :) = []; 
-            end
+            upTim = resample(times{tt}, n,d); 
             trials{tt} = test'; 
+            times{tt} = upTim; 
 
     end
 
@@ -30,7 +26,7 @@ for tt = 1:length(trials)
     padDat = mirrorPad(curTrial);
 
     curTime = round(times{tt}*1000); 
-    onset = find(curTime==RT(tt));
+    onset = find(curTime>=RT(tt),1);
     L = size(curTrial,2);
 
     if isempty(onset) %the experimenter advanced the trial before the subject responded? I don't get it nan it out
@@ -42,7 +38,7 @@ for tt = 1:length(trials)
             allDat(:,:,tt) = padDat(:,L+onset-2000:L+onset+500); 
         catch %likely error is that even padded the data are not long enough! 
             padDat2 = mirrorPad(padDat); 
-            allDat(:,:,tt) = padDat2(:,(L*3)+onset-2000:(L*3)+onset+500);
+            allDat(:,:,tt) = padDat2(:,(L*3)+L+onset-2000:(L*3)+L+onset+500);
         end
 
 
