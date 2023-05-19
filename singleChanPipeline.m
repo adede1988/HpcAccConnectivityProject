@@ -21,13 +21,13 @@ disp(['data loaded: ' chanDat.subID ' ' num2str(chanDat.chi)])
 
 
 %% check for encoding info
-if ~isfield(chanDat, 'encInfo')
-    dataDirPath = split(chanDat.dataDir, 'Johnson_Lab');
-    dat = load(fullfile(['/projects/p31578' dataDirPath{2} '/' chanDat.encDatFn])).data; 
-    chanDat.encInfo = dat.trialinfo; 
-    clear dat
-    save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat')
-end
+% if ~isfield(chanDat, 'encInfo')
+%     dataDirPath = split(chanDat.dataDir, 'Johnson_Lab');
+%     dat = load(fullfile(['/projects/p31578' dataDirPath{2} '/' chanDat.encDatFn])).data; 
+%     chanDat.encInfo = dat.trialinfo; 
+%     clear dat
+%     save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat')
+% end
 
 %% needs time points! hard code
 if chanDat.fsample == 1000
