@@ -108,7 +108,9 @@ end
     [pow, mulTim, mulFrex] = getChanMultiTF(chanDat.encRT, highfrex, chanDat.fsample, chanDat.retRtim); 
     %hack for long RT trials: 
         nanIdx = find(isnan(pow(30,:,1)));
-        pow(:,nanIdx,:) = mean(pow, 2, 'omitnan'); 
+        if ~isempty(nanIdx)
+            pow(:,nanIdx,:) = mean(pow, 2, 'omitnan'); 
+        end
     %
     pow = arrayfun(@(x) myChanZscore(pow(:,:,x), [find(mulTim>=-450,1), find(mulTim>=-50,1)] ), 1:size(pow,3), 'UniformOutput',false ); %z-score
     highnumfrex = length(mulFrex); 
