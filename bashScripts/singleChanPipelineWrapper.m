@@ -51,6 +51,6 @@ curChani = find(idx == start);
 
 disp(['going for ' subID ' ' num2str(curChani)] )
 tic
-singleChanPipeline(chanFiles, curChani); 
+singleChanPipeline(chanFiles, curChani, datPre); 
 toc
 

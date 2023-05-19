@@ -1,4 +1,4 @@
-function [] = singleChanPipeline(chanFiles, idx)
+function [] = singleChanPipeline(chanFiles, idx, datPre)
 
 %% set frequency parameters
 frex = logspace(log10(2),log10(80),100);
@@ -22,7 +22,8 @@ disp(['data loaded: ' chanDat.subID ' ' num2str(chanDat.chi)])
 
 %% check for encoding info
 if ~isfield(chanDat, 'encInfo')
-    dat = load([chanDat.dataDir '/' chanDat.encDatFn]).data; 
+    dataDirPath = split(chanDat.dataDir, 'Johnson_Lab');
+    dat = load([datPre dataDirPath{2} '/' chanDat.encDatFn]).data; 
     chanDat.encInfo = dat.trialinfo; 
     clear dat
     save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat')
