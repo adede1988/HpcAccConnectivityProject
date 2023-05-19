@@ -121,6 +121,8 @@ end
 
 allChanEncDat([allChanEncDat.age]<16) = []; 
 save('R:\MSS\Johnson_Lab\dtf8829\allChanEncDat.mat', 'allChanEncDat', '-v7.3')
+allChanEncDat = load('R:\MSS\Johnson_Lab\dtf8829\allChanEncDat.mat');
+allChanEncDat = allChanEncDat.allChanEncDat; 
 
 %% pull out the ROI specific data
 
@@ -140,55 +142,73 @@ RoiNames = {'dlPFC', 'hip', 'phg', 'acc'};
 
 for rr = 1:4
     curDat = allChanEncDat([allChanEncDat.(RoiNames{rr})] == 1); 
-    allHit = []; 
-    allHitRT = []; 
-    allMiss = []; 
-    allMissRT = []; 
-    for ii = 1:length(curDat)
-        comboHFB = [curDat(ii).HFB.subHit curDat(ii).HFB.subMiss]; 
-        test = mean(comboHFB,2); 
-      
 
-        test = checkForThreshold(test, curDat(ii).HFB.encMulTim, [-450 2500]); %this is getting rid of negatives! 
-        if test
+    %need to get subHit and subMiss RT aligned data, ugh
+    for chan = 1:length(curDat)
+        
 
-        allHit = [allHit curDat(ii).HFB.subHit];
-        allHitRT = [allHitRT; curDat(ii).encInfo(curDat(ii).use & curDat(ii).hits, 4)]; 
-        allMiss = [allMiss curDat(ii).HFB.subMiss]; 
-        allMissRT = [allMissRT; curDat(ii).encInfo(curDat(ii).use & curDat(ii).misses, 4)];
 
-        end
+
+
+
     end
 
-    b2w2r = [[linspace(0,255,128)'; linspace(255,0,128)'], [linspace(0,255,128)'; linspace(255,0,128)'], [linspace(0,255,128)'; linspace(255,0,128)']]/255;
-    b2w2r(129:end, 1) = 1; 
-    b2w2r(1:128, 3) = 1; 
-
-    [sortedRT, order] = sort(allHitRT); 
-    figure
-    subplot 121
-    imagesc(allHit(:,order)')
-    caxis([-7,7])
-    hold on 
-    plot(sortedRT/5 + find(curDat(1).HFB.encMulTim>=0,1), [1:length(sortedRT)], 'color', 'red', 'linewidth', 2)
-    xticks([101:100:size(curDat(1).HFB.subMiss,1)])
-    xticklabels(curDat(1).HFB.encMulTim([101:100:size(curDat(1).HFB.subMiss,1)]))
-    xline(find(curDat(1).HFB.encMulTim>=0,1), '--', 'linewidth', 4, 'color', 'green')
-    title([RoiNames{rr} ' all hit trials'])
-%     colormap(jet)
 
 
-    subplot 122
-    [sortedRT, order] = sort(allMissRT); 
-    imagesc(allMiss(:,order)')
-    caxis([-7,7])
-    hold on 
-    plot(sortedRT/5 + find(curDat(1).HFB.encMulTim>=0,1), [1:length(sortedRT)], 'color', 'red', 'linewidth', 2)
-    xticks([101:100:size(curDat(1).HFB.subMiss,1)])
-    xticklabels(curDat(1).HFB.encMulTim([101:100:size(curDat(1).HFB.subMiss,1)]))
-    xline(find(curDat(1).HFB.encMulTim>=0,1), '--', 'linewidth', 4, 'color', 'green')
-    title([RoiNames{rr} ' all miss trials'])
-%     colormap(jet)
+    %head struct name: curDatSum
+
+    %substructs:
+    %SubHitOn
+    %SubMissOn
+    %HitOn
+    %MissOn
+    %HitRT
+    %MissRT
+    
+    %each substruct will have following fields: 
+    %HFB = time X trials
+    %RT = trials X 1
+    %subID = trials X 1 cellarray
+    %time = time X 1 (ms time relative to onset or RT as the case may be)
+    %peakLat = trials X 1   %maximum deflection point between t=0 and RT
+    %threshCross = trials X 1
+    %amp = trials X 1            %summed total above threshold
+
+
+    %vectors of RT for
+    %subHit_rt
+    %subMiss_rt
+    %hitOn_rt
+    %missOn_rt
+    %hitRT_rt
+    %missRT_rt
+
+    %cellarray vectors of SubID for all trials
+    %
+
+    curDatSum = HFBSummary(curDat); 
+
+    %need to add in the subsequent memory RT locked responses 
+    
+
+
+
+
+    plotConditionCompare(curDatSum, [1,2], RoiNames{rr}, linspace(-50,2500, 30))
+    plotConditionCompare(curDatSum, [5,3], RoiNames{rr}, linspace(-50,2000, 30))
+    plotConditionCompare(curDatSum, [9,7], RoiNames{rr}, linspace(-1500,500, 30))
+    
+
+
+
+
+
+
+end
+
+
+  
+%  
 end
 
 
@@ -339,6 +359,30 @@ end
 %% pull out the trial by trial peak time of HFB activity
 
 for rr = 1:4
+    curDat = allChanEncDat([allChanEncDat.(RoiNames{rr})] == 1); 
+    allHit = []; 
+    allHitRT = []; 
+    allMiss = []; 
+    allMissRT = []; 
+    for ii = 1:length(curDat)
+        comboHFB = [curDat(ii).HFB.subHit curDat(ii).HFB.subMiss]; 
+        test = mean(comboHFB,2); 
+      
+
+        test = checkForThreshold(test, curDat(ii).HFB.encMulTim, [-450 2500]);
+        if test
+
+        allHit = [allHit curDat(ii).HFB.subHit];
+        allHitRT = [allHitRT; curDat(ii).encInfo(curDat(ii).use & curDat(ii).hits, 4)]; 
+        allMiss = [allMiss curDat(ii).HFB.subMiss]; 
+        allMissRT = [allMissRT; curDat(ii).encInfo(curDat(ii).use & curDat(ii).misses, 4)];
+
+        end
+    end
+
+
+    %Latency data now on a trial by trial basis 
+
 
 
 
@@ -713,7 +757,35 @@ accEnc = allChanEncDat([allChanEncDat.acc] == 1);
 
 
 
-
+%    b2w2r = [[linspace(0,255,128)'; linspace(255,0,128)'], [linspace(0,255,128)'; linspace(255,0,128)'], [linspace(0,255,128)'; linspace(255,0,128)']]/255;
+%     b2w2r(129:end, 1) = 1; 
+%     b2w2r(1:128, 3) = 1; 
+% 
+%     [sortedRT, order] = sort(allHitRT); 
+%     figure
+%     subplot 121
+%     imagesc(allHit(:,order)')
+%     caxis([-7,7])
+%     hold on 
+%     plot(sortedRT/5 + find(curDat(1).HFB.encMulTim>=0,1), [1:length(sortedRT)], 'color', 'red', 'linewidth', 2)
+%     xticks([101:100:size(curDat(1).HFB.subMiss,1)])
+%     xticklabels(curDat(1).HFB.encMulTim([101:100:size(curDat(1).HFB.subMiss,1)]))
+%     xline(find(curDat(1).HFB.encMulTim>=0,1), '--', 'linewidth', 4, 'color', 'green')
+%     title([RoiNames{rr} ' all hit trials'])
+% %     colormap(jet)
+% 
+% 
+%     subplot 122
+%     [sortedRT, order] = sort(allMissRT); 
+%     imagesc(allMiss(:,order)')
+%     caxis([-7,7])
+%     hold on 
+%     plot(sortedRT/5 + find(curDat(1).HFB.encMulTim>=0,1), [1:length(sortedRT)], 'color', 'red', 'linewidth', 2)
+%     xticks([101:100:size(curDat(1).HFB.subMiss,1)])
+%     xticklabels(curDat(1).HFB.encMulTim([101:100:size(curDat(1).HFB.subMiss,1)]))
+%     xline(find(curDat(1).HFB.encMulTim>=0,1), '--', 'linewidth', 4, 'color', 'green')
+%     title([RoiNames{rr} ' all miss trials'])
+% %     colormap(jet)
 
 
 

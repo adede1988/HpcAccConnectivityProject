@@ -27,7 +27,8 @@ function [curOut] = findDataFromChanRaw(chanFiles, chan, IDs)
     %             phgCheck(ii) = strcmp(curLabs{ii}, 'phg');
     %         end
     
-            rawDat = load([curChan.dataDir '/' curChan.encDatFn]).data; 
+            test = split(curChan.dataDir, ':');
+            rawDat = load(['Z:' test{2} '/' curChan.encDatFn]).data; 
             
             curOut.phgChans = rawDat.elec.label(phgCheck==1);
             

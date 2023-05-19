@@ -19,6 +19,15 @@ end
 
 disp(['data loaded: ' chanDat.subID ' ' num2str(chanDat.chi)])
 
+
+%% check for encoding info
+if ~isfield(chanDat, 'encInfo')
+    dat = load([chanDat.dataDir '/' chanDat.encDatFn]).data; 
+    chanDat.encInfo = dat.trialinfo; 
+    clear dat
+    save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat')
+end
+
 %% needs time points! hard code
 if chanDat.fsample == 1000
     chanDat.enctim = [-1000:3500];
@@ -39,23 +48,38 @@ end
 %                          retOn   : -450 : -50   ms
 %                          retRT   : -2000: -1600 ms
 
-if ~isfield(chanDat, 'HFBenc')
+% if ~isfield(chanDat, 'HFBenc')
 
     HFB = struct; 
     %ENCODING DATA: ***********************************************************
     chanDat.HFBenc = 0; %note if it's a reactive channel, assume not
     [pow, mulTim, mulFrex] = getChanMultiTF(chanDat.enc, highfrex, chanDat.fsample, chanDat.enctim); 
-%     powOG = abs(getChanTrialTF(chanDat.enc, highfrex, highnumfrex, highstds, chanDat.fsample)).^2; %get power time series for all trials/frequencies
-%     powOG = arrayfun(@(x) myChanZscore(powOG(:,:,x), [find(chanDat.enctim>=-450,1), find(chanDat.enctim>=-50,1)] ), 1:size(powOG,3), 'UniformOutput',false ); %z-score
-%     powOG = cell2mat(powOG); %organize
-%     powOG = reshape(powOG, size(powOG,1), size(powOG,2)/highnumfrex, []); %organize
-     %get power time series for all trials/frequencies
     pow = arrayfun(@(x) myChanZscore(pow(:,:,x), [find(mulTim>=-450,1), find(mulTim>=-50,1)] ), 1:size(pow,3), 'UniformOutput',false ); %z-score
     highnumfrex = length(mulFrex); 
     pow = cell2mat(pow); %organize
     pow = reshape(pow, size(pow,1), size(pow,2)/highnumfrex, []); %organize
-    test = mean(pow(:,chanDat.use,:), [2,3]);
-    test = abs(test)>1.96;
+
+    %take the mean across frequencies
+    pow = squeeze(mean(pow, 3)); 
+
+    %can I make an RT aligned set? 
+    pow_align = nan(4000, size(pow,2)); 
+    RTs = chanDat.encInfo(:, 4); 
+    RT_down = 2500 - (round(RTs/5) + 200); 
+
+    for tt = 1:size(pow,2)
+        pow_align(RT_down(tt):RT_down(tt)+size(pow,1)-1, tt) = pow(:,tt); 
+    end
+
+    test = sum(isnan(pow_align),2);
+    RT_tim = [-12495:5:7500];
+    test = find(RT_tim<-2000 | RT_tim>2000);
+    RT_tim(test) = []; 
+    pow_align(test,:) = []; 
+
+    
+    test = mean(pow(:,chanDat.use), 2);
+    test = test>1.96;
     testidx = find(test([find(mulTim>=-450,1):find(mulTim>=2500,1)]));
     if ~isempty(testidx)
         breakPoints = [1 find(diff(testidx)>1)']; 
@@ -72,12 +96,22 @@ if ~isfield(chanDat, 'HFBenc')
         end
     end
     %get mean misses: 
-    HFB.subMiss = squeeze(mean(pow(:,chanDat.use & chanDat.misses, :), [3])); 
+    HFB.subMiss = pow(:,chanDat.use & chanDat.misses); 
     %get mean hits: 
-    HFB.subHit = squeeze(mean(pow(:,chanDat.use & chanDat.hits, :), [3]));
-    %save info about the multi taper
+    HFB.subHit = pow(:,chanDat.use & chanDat.hits);
+    %onset locked time
     HFB.encMulTim = mulTim; 
-    HFB.encFrex = mulFrex; 
+    HFB.enconFrex = mulFrex; 
+
+    %get misses RT locked
+    HFB.subMissRT = pow_align(:,chanDat.use & chanDat.misses);
+    %get hits RT locked
+    HFB.subHitRT = pow_align(:,chanDat.use & chanDat.hits);
+
+
+    %RT locked time
+    HFB.encRT_tim = RT_tim; 
+    HFB.encrtFrex = mulFrex; 
     %clean up
     clear pow
     disp('encoding done')
@@ -173,87 +207,87 @@ if ~isfield(chanDat, 'HFBenc')
     save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat'); 
     disp(['save success: ' chanFiles(idx).folder '/' chanFiles(idx).name])
 
-else
-    disp('HFB already done')
-end
+% else
+%     disp('HFB already done')
+% end
 
 
 %% Lead lag analysis
-x = 5
-if sum(sum(chanDat.roiNote)) == 0 
-    roiMat = chanDat.roimni; 
-else
-    roiMat = chanDat.roiNote; 
-end
-
-chanDat.chansRoi = sum(roiMat,2);
-roiIDX = find(chanDat.chansRoi==1); 
-chanDat.leadLagRoi = roiMat(roiIDX,:);
-if ismember(chanDat.chi, roiIDX)
-
-%look at lead v. lag across + - 200 ms
-%chan X lead/lag X time
-leadLag = struct; 
-encHit = zeros([sum(chanDat.chansRoi==1), 401, size(chanDat.HFB.subHit,1)]);
-encMiss = zeros([sum(chanDat.chansRoi==1), 401, size(chanDat.HFB.subHit,1)]);
-for chan = 1:length(roiIDX)
-    chan
-    chanDat2 = load([chanFiles(roiIDX(chan)).folder '/' chanFiles(roiIDX(chan)).name]).chanDat; 
-
-    % ENCODING DATA! ******************************************************
-    %HITS: 
-    for offSet = -200:200
-        HFB1 = chanDat.HFB.subHit;
-        HFB2 = chanDat2.HFB.subHit; 
-        tim = chanDat.HFB.encMulTim; 
-        if offSet<0
-            HFB2 = [ HFB2(abs(offSet)+1:end, :); zeros([abs(offSet), size(HFB1,2)] )];
-        elseif offSet>0
-            HFB2 = [zeros([abs(offSet), size(HFB1,2)] ); HFB2(1:end -abs(offSet), :)];
-        end
-        
-        encHit(chan, offSet+201, :) = arrayfun(@(x) corr(HFB1(x,:)', HFB2(x,:)'), [1:size(HFB1,1)]);
-        
-    end
-    leadLag.encHit = encHit; 
-
-    %MISSES: 
-    for offSet = -200:200
-        HFB1 = chanDat.HFB.subMiss;
-        HFB2 = chanDat2.HFB.subMiss; 
-        tim = chanDat.HFB.encMulTim; 
-        if offSet<0
-            HFB2 = [ HFB2(abs(offSet)+1:end, :); zeros([abs(offSet), size(HFB1,2)] )];
-        elseif offSet>0
-            HFB2 = [zeros([abs(offSet), size(HFB1,2)] ); HFB2(1:end -abs(offSet), :)];
-        end
-        
-        encMiss(chan, offSet+201, :) = arrayfun(@(x) corr(HFB1(x,:)', HFB2(x,:)'), [1:size(HFB1,1)]);
-        
-    end
-    leadLag.encMiss = encMiss; 
-
-
-
-    
-
-
-
-end
-disp('saving leadlag')
-chanDat.leadLag = leadLag; 
-save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat'); 
-
-
-else
-
-chanDat.leadLag = "no ROI electrodes"; 
-save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat'); 
-
-%THIS CHANNEL IS NOT IN A ROI, so SKIP LEAD LAG! 
-
-
-end
+% x = 5
+% if sum(sum(chanDat.roiNote)) == 0 
+%     roiMat = chanDat.roimni; 
+% else
+%     roiMat = chanDat.roiNote; 
+% end
+% 
+% chanDat.chansRoi = sum(roiMat,2);
+% roiIDX = find(chanDat.chansRoi==1); 
+% chanDat.leadLagRoi = roiMat(roiIDX,:);
+% if ismember(chanDat.chi, roiIDX)
+% 
+% %look at lead v. lag across + - 200 ms
+% %chan X lead/lag X time
+% leadLag = struct; 
+% encHit = zeros([sum(chanDat.chansRoi==1), 401, size(chanDat.HFB.subHit,1)]);
+% encMiss = zeros([sum(chanDat.chansRoi==1), 401, size(chanDat.HFB.subHit,1)]);
+% for chan = 1:length(roiIDX)
+%     chan
+%     chanDat2 = load([chanFiles(roiIDX(chan)).folder '/' chanFiles(roiIDX(chan)).name]).chanDat; 
+% 
+%     % ENCODING DATA! ******************************************************
+%     %HITS: 
+%     for offSet = -200:200
+%         HFB1 = chanDat.HFB.subHit;
+%         HFB2 = chanDat2.HFB.subHit; 
+%         tim = chanDat.HFB.encMulTim; 
+%         if offSet<0
+%             HFB2 = [ HFB2(abs(offSet)+1:end, :); zeros([abs(offSet), size(HFB1,2)] )];
+%         elseif offSet>0
+%             HFB2 = [zeros([abs(offSet), size(HFB1,2)] ); HFB2(1:end -abs(offSet), :)];
+%         end
+%         
+%         encHit(chan, offSet+201, :) = arrayfun(@(x) corr(HFB1(x,:)', HFB2(x,:)'), [1:size(HFB1,1)]);
+%         
+%     end
+%     leadLag.encHit = encHit; 
+% 
+%     %MISSES: 
+%     for offSet = -200:200
+%         HFB1 = chanDat.HFB.subMiss;
+%         HFB2 = chanDat2.HFB.subMiss; 
+%         tim = chanDat.HFB.encMulTim; 
+%         if offSet<0
+%             HFB2 = [ HFB2(abs(offSet)+1:end, :); zeros([abs(offSet), size(HFB1,2)] )];
+%         elseif offSet>0
+%             HFB2 = [zeros([abs(offSet), size(HFB1,2)] ); HFB2(1:end -abs(offSet), :)];
+%         end
+%         
+%         encMiss(chan, offSet+201, :) = arrayfun(@(x) corr(HFB1(x,:)', HFB2(x,:)'), [1:size(HFB1,1)]);
+%         
+%     end
+%     leadLag.encMiss = encMiss; 
+% 
+% 
+% 
+%     
+% 
+% 
+% 
+% end
+% disp('saving leadlag')
+% chanDat.leadLag = leadLag; 
+% save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat'); 
+% 
+% 
+% else
+% 
+% chanDat.leadLag = "no ROI electrodes"; 
+% save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat'); 
+% 
+% %THIS CHANNEL IS NOT IN A ROI, so SKIP LEAD LAG! 
+% 
+% 
+% end
 
 
 
