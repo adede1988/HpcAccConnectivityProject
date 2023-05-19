@@ -109,7 +109,7 @@ end
     %hack for long RT trials: 
         nanIdx = find(isnan(pow(30,:,1)));
         if ~isempty(nanIdx)
-            for nani = 1:length(nanIDX)
+            for nani = 1:length(nanIdx)
                 pow(:,nanIdx(nani),:) = mean(pow, 2, 'omitnan'); 
             end
         end
