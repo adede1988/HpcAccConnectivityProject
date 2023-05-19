@@ -17,7 +17,7 @@ disp(['attempting file: ' num2str(start)])
 %local paths: 
 
 % codePre = 'R:\MSS\Johnson_Lab\dtf8829\GitHub\';
-% datPre = 'C:\Users\dtf8829\Documents\QuestConnect\';
+% datPre = 'R:\MSS\Johnson_Lab\dtf8829\';
 
 %HPC paths: 
 
@@ -54,3 +54,19 @@ tic
 singleChanPipeline(chanFiles, curChani, datPre); 
 toc
 
+%% put encoding behavioral data onto it
+% curSub = 'something'; 
+% for ii = 482:length(chanFiles)
+%     ii
+%     chanDat = load([chanFiles(ii).folder '/' chanFiles(ii).name]).chanDat; 
+%     if strcmp(curSub, chanDat.subID)
+%         chanDat.encInfo = dat.trialinfo; 
+%         parsave([chanFiles(ii).folder '/' chanFiles(ii).name], chanDat)
+%     else
+%         dat = load(fullfile([chanDat.dataDir '/' chanDat.encDatFn])).data; 
+%         chanDat.encInfo = dat.trialinfo; 
+%         parsave([chanFiles(ii).folder '/' chanFiles(ii).name], chanDat)
+%         curSub = chanDat.subID; 
+%     end
+%    
+% end

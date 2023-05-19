@@ -41,6 +41,7 @@ subDat.use = dat.trialinfo(:,1)==1; %trials where participant paid attention
 subDat.hits = dat.trialinfo(:,2)==1; %trials that resulted in a subsequent hit
 subDat.misses = dat.trialinfo(:,2)==2; %trials that resulted in a subsequent miss
 subDat.retInfo = dat2.trialinfo; %store the trial info for retrieval 
+subDat.encInfo = dat.trialinfo; 
 
 %check for RT mistake and eliminate trials which don't pass
 RT = dat2.trialinfo(:,3); 
@@ -88,23 +89,26 @@ subDat.retInfo(errorTrials, :) = [];
 
 % if ~isfield(subDat, 'chanSplit')
     allDatEnc = makeAllDat(dat.trial, dat.time, dat.fsample); 
+    allDatEncRT = makeAllDatEncRT(dat.trial, dat.time, dat.fsample, subDat.encInfo(:,4));
+
     allDatRetON = makeAllDatRetON(dat2.trial, dat2.time, errorTrials, dat.fsample); 
     allDatRetRT = makeAllDatRetRT(dat2.trial, dat2.time, dat2.trialinfo(:,3), errorTrials, dat.fsample);
-    
+    dat.fsample = 1000; 
     for ch = 1:size(allDatEnc,1)
         if ~subDat.badTrodes %only save if it's a good electrode
             chanDat = subDat; 
             chanDat.enc = squeeze(allDatEnc(ch,:,:)); %data are in trials X time -1000ms:3500ms
+            chanDat.encRT = squeeze(allDatEncRT(ch,:,:)); %data are in trials X time -2000ms:500ms
             chanDat.retOn = squeeze(allDatRetON(ch,:,:)); %data are in trials X time -1000ms:2000ms
             chanDat.retRT = squeeze(allDatRetRT(ch,:,:)); %data are in trials X time -2000ms:500ms
             chanDat.chi = ch; %note which electrode it is for reference into other structs
             if ch<10
-%                 save([chanFolder '\' 'chanDat_' chanDat.subID '_' '00' num2str(ch) '.mat'], 'chanDat')
+                save([chanFolder '\' 'chanDat_' chanDat.subID '_' '00' num2str(ch) '.mat'], 'chanDat')
             elseif ch<100
-%                 save([chanFolder '\' 'chanDat_' chanDat.subID '_' '0' num2str(ch) '.mat'], 'chanDat')
+                save([chanFolder '\' 'chanDat_' chanDat.subID '_' '0' num2str(ch) '.mat'], 'chanDat')
             else
 
-%                 save([chanFolder '\' 'chanDat_' chanDat.subID '_' num2str(ch) '.mat'], 'chanDat')
+                save([chanFolder '\' 'chanDat_' chanDat.subID '_' num2str(ch) '.mat'], 'chanDat')
             end
 
         end
@@ -113,7 +117,7 @@ subDat.retInfo(errorTrials, :) = [];
 
     %record that the chan split has been done
     subDat.chanSplit = 1; 
-%     save([saveFolder 'sumDat_' subDat.subID '.mat'], 'subDat')
+    save([saveFolder 'sumDat_' subDat.subID '.mat'], 'subDat')
 % end
 
 

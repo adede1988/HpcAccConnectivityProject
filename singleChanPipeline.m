@@ -11,11 +11,11 @@ highstds = linspace(5, 7, highnumfrex);
 
 %% load the data
 
-try %try loading the processed file
-    chanDat = load([chanFiles(idx).folder '/' chanFiles(idx).name]).chanDat; 
-catch
+% try %try loading the processed file
+%     chanDat = load([chanFiles(idx).folder '/' chanFiles(idx).name]).chanDat; 
+% catch
     chanDat = load([chanFiles(idx).folder '/CHANRAW/' chanFiles(idx).name]).chanDat; % go raw if it's not working!
-end
+% end
 
 disp(['data loaded: ' chanDat.subID ' ' num2str(chanDat.chi)])
 
@@ -23,7 +23,7 @@ disp(['data loaded: ' chanDat.subID ' ' num2str(chanDat.chi)])
 %% check for encoding info
 if ~isfield(chanDat, 'encInfo')
     dataDirPath = split(chanDat.dataDir, 'Johnson_Lab');
-    dat = load(['/projects/p31578' dataDirPath{2} '/' chanDat.encDatFn]).data; 
+    dat = load(fullfile(['/projects/p31578' dataDirPath{2} '/' chanDat.encDatFn])).data; 
     chanDat.encInfo = dat.trialinfo; 
     clear dat
     save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat')
@@ -63,20 +63,20 @@ end
     %take the mean across frequencies
     pow = squeeze(mean(pow, 3)); 
 
-    %can I make an RT aligned set? 
-    pow_align = nan(4000, size(pow,2)); 
-    RTs = chanDat.encInfo(:, 4); 
-    RT_down = 2500 - (round(RTs/5) + 200); 
-
-    for tt = 1:size(pow,2)
-        pow_align(RT_down(tt):RT_down(tt)+size(pow,1)-1, tt) = pow(:,tt); 
-    end
-
-    test = sum(isnan(pow_align),2);
-    RT_tim = [-12495:5:7500];
-    test = find(RT_tim<-2000 | RT_tim>2000);
-    RT_tim(test) = []; 
-    pow_align(test,:) = []; 
+%     %can I make an RT aligned set? 
+%     pow_align = nan(4000, size(pow,2)); 
+%     RTs = chanDat.encInfo(:, 4); 
+%     RT_down = 2500 - (round(RTs/5) + 200); 
+% 
+%     for tt = 1:size(pow,2)
+%         pow_align(RT_down(tt):RT_down(tt)+size(pow,1)-1, tt) = pow(:,tt); 
+%     end
+% 
+%     test = sum(isnan(pow_align),2);
+%     RT_tim = [-12495:5:7500];
+%     test = find(RT_tim<-2000 | RT_tim>2000);
+%     RT_tim(test) = []; 
+%     pow_align(test,:) = []; 
 
     
     test = mean(pow(:,chanDat.use), 2);
@@ -104,15 +104,30 @@ end
     HFB.encMulTim = mulTim; 
     HFB.enconFrex = mulFrex; 
 
+    %ENCODING RT aligned DATA: ***********************************************************
+    [pow, mulTim, mulFrex] = getChanMultiTF(chanDat.encRT, highfrex, chanDat.fsample, chanDat.retRtim); 
+    %hack for long RT trials: 
+        nanIdx = find(isnan(pow(30,:,1)));
+        pow(:,nanIdx,:) = mean(pow, 2, 'omitnan'); 
+    %
+    pow = arrayfun(@(x) myChanZscore(pow(:,:,x), [find(mulTim>=-450,1), find(mulTim>=-50,1)] ), 1:size(pow,3), 'UniformOutput',false ); %z-score
+    highnumfrex = length(mulFrex); 
+    pow = cell2mat(pow); %organize
+    pow = reshape(pow, size(pow,1), size(pow,2)/highnumfrex, []); %organize
+
+    %take the mean across frequencies
+    pow = squeeze(mean(pow, 3)); 
+
+
     %get misses RT locked
-    HFB.subMissRT = pow_align(:,chanDat.use & chanDat.misses);
+    HFB.subMissRT = pow(:,chanDat.use & chanDat.misses);
     %get hits RT locked
-    HFB.subHitRT = pow_align(:,chanDat.use & chanDat.hits);
+    HFB.subHitRT = pow(:,chanDat.use & chanDat.hits);
 
 
     %RT locked time
-    HFB.encRT_tim = RT_tim; 
-    HFB.encrtFrex = mulFrex; 
+    HFB.encRT_tim = mulTim; 
+    HFB.encRTFrex = mulFrex; 
     %clean up
     clear pow
     disp('encoding done')

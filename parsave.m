@@ -1,3 +1,3 @@
-function parsave(fname, subDat)
-  save(fname, 'subDat','-v7.3')
+function parsave(fname, chanDat)
+  save(fname, 'chanDat','-v7.3')
 end
