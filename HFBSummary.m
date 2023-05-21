@@ -1,11 +1,11 @@
-function [curDatSum] = HFBSummary(curDat)
+function [curDatSum] = HFBSummary(curDat, updown)
 
 
 curDatSum = struct; 
 ci = 1; 
 
 %hardCode the time periods for threshold testing
-threshTestWin = [[-50 2500]; [-50 2000]; [-1500, 500]];
+threshTestWin = [[-50 2500]; [-1500, 500]; [-50 2000]; [-1500, 500]];
 
 
 
@@ -32,6 +32,7 @@ for cond = 1:length(HFBConditions)
         curDatSum(ci).chi = zeros(10000,1); 
         curDatSum(ci).time = curDat(1).HFB.(HFBConditions{timIdx(find(timIdx>cond,1))}); 
         curDatSum(ci).peakLat = zeros(10000,1);
+        curDatSum(ci).peakAmp = zeros(10000,1);
         curDatSum(ci).threshCross = zeros(10000,1); 
         curDatSum(ci).maxAmp = zeros(10000,1); 
         curDatSum(ci).amp = zeros(10000,1); 
@@ -54,7 +55,11 @@ for cond = 1:length(HFBConditions)
             test = mean(comboHFB,2); 
           
     
-            test = checkForThreshold(test, curDatSum(ci).time, threshTestWin(find(timIdx>cond,1)-1,:) ); %this is getting rid of negatives! 
+            if curDat(ii).HFBenc==updown || curDat(ii).HFBretOn ==updown || curDat(ii).HFBretRT==updown || curDat(ii).HFBencRT==updown
+                test = true;
+            else
+                test = false; 
+            end
             if test %only add in channels that have good threshold crossings! 
                 
                 L = size(curDat(ii).HFB.(HFBConditions{cond}),2);
@@ -92,7 +97,7 @@ for cond = 1:length(HFBConditions)
                     winVals = threshTestWin(find(timIdx>cond,1)-1,:); 
 
                     %peakLat
-                    if ci < 7
+                    if ci == 1 || ci ==2 || ci == 5 || ci ==6 || ci ==7 || ci == 8
                         if curDatSum(ci).RT(ti+tt-1) > max(curDatSum(ci).time)
                             curDatSum(ci).RT(ti+tt-1) = max(curDatSum(ci).time);
                         end
@@ -103,6 +108,10 @@ for cond = 1:length(HFBConditions)
                     [maxVal, peakLat] = max(curTrial(find(curDatSum(ci).time>=winVals(1),1):find(curDatSum(ci).time>=endTim,1) ) );
                     peakLat = peakLat + find(curDatSum(ci).time>=winVals(1),1) - 1; 
                     curDatSum(ci).peakLat(ti+tt-1) = peakLat; 
+
+                    %peakamp
+
+                    curDatSum(ci).peakAmp(ti+tt-1) = curTrial(peakLat); 
                     
                     %center of mass
 %                     if ci == 7
@@ -165,6 +174,7 @@ for cond = 1:length(HFBConditions)
         curDatSum(ci).subID(cutPoint:end) = []; 
         curDatSum(ci).chi(cutPoint:end) = []; 
         curDatSum(ci).peakLat(cutPoint:end) = []; 
+        curDatSum(ci).peakAmp(cutPoint:end) = [];
         curDatSum(ci).threshCross(cutPoint:end) = []; 
         curDatSum(ci).maxAmp(cutPoint:end) = []; 
         curDatSum(ci).amp(cutPoint:end) = []; 

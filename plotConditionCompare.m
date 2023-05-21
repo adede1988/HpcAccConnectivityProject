@@ -11,7 +11,7 @@ function [] = plotConditionCompare(curDatSum, targConditions, regName, histBins)
 
     for ci = 1:2
     [sortedRT, order] = sort(curDatSum(targConditions(ci)).RT ); 
-    subplot(4,2, [ci,ci+2])
+    subplot(4,2, [ci])
     imagesc(curDatSum(targConditions(ci)).HFB(:,order)')
     caxis([-7,7])
     hold on 
@@ -22,7 +22,51 @@ function [] = plotConditionCompare(curDatSum, targConditions, regName, histBins)
     title([regName ' ' curDatSum(targConditions(ci)).condition], 'interpreter', 'none')
 
 
-    subplot(4,2,[5,6])
+    
+    subplot(4,2, 3)
+    hold on 
+    subIDs = unique(curDatSum(targConditions(ci)).subID); 
+    chanMeans = []; 
+    chanMeanAmp = []; 
+    for subi = 1:length(subIDs)
+        tempDati = cellfun(@(x) strcmp(subIDs{subi}, x), curDatSum(targConditions(ci)).subID);
+        chanNums = unique(curDatSum(targConditions(ci)).chi(tempDati)); 
+        for chani = 1:length(chanNums)
+            curChanMask = arrayfun(@(x) x==chanNums(chani), curDatSum(targConditions(ci)).chi);
+            curChanMask = curChanMask==1 & tempDati==1; 
+            curMeanTrial = mean(curDatSum(targConditions(ci)).HFB(:,curChanMask), 2); 
+            curMeanAmp = mean(curDatSum(targConditions(ci)).peakAmp(curChanMask)); 
+            chanMeanAmp = [chanMeanAmp curMeanAmp]; 
+            chanMeans = [chanMeans, curMeanTrial];
+        end
+    end
+    cndMean = mean(chanMeans,2);
+    cndStd = std(chanMeans,[],2) ./ sqrt(size(chanMeans,2)); 
+    cndLow = cndMean - cndStd; %prctile(allHit, 2.5, 2); 
+    cndHigh = cndMean + cndStd; %prctile(allHit, 97.5, 2); 
+    plot(cndMean, 'color', colors{ci}, 'linewidth', 2)
+    hold on 
+    xticks([101:100:size(curDatSum(targConditions(ci)).HFB,1)])
+    xticklabels(curDatSum(targConditions(ci)).time([101:100:size(curDatSum(targConditions(ci)).HFB,1)]))
+    xline(find(curDatSum(targConditions(ci)).time>=0,1), '--', 'linewidth', 4, 'color', 'green')
+    x = [1:length(cndMean)]; 
+    x = [x flip(x)]; 
+    y = [cndLow' flip(cndHigh')];
+    h = fill(x,y,colors{ci},'LineStyle','none'); 
+    set(h, 'facealpha', .5)
+    xlim([5,length(cndMean)-5])
+    title('mean of channel means')
+    xlabel('time (ms)')
+
+
+    subplot(4,2,4)
+    hold on 
+    histogram(chanMeanAmp, [0:5:50], ...
+        'FaceColor', colors{ci}, 'normalization', 'probability')
+    title('channel mean peak amplitude')
+    xlabel('HFB (z-score)')
+
+    subplot(4,2,5)
     hold on 
     cndMean = mean(curDatSum(targConditions(ci)).HFB,2);
     cndStd = std(curDatSum(targConditions(ci)).HFB,[],2) ./ sqrt(size(curDatSum(targConditions(ci)).HFB,2)); 
@@ -40,14 +84,23 @@ function [] = plotConditionCompare(curDatSum, targConditions, regName, histBins)
     h = fill(x,y,colors{ci},'LineStyle','none'); 
     set(h, 'facealpha', .5)
     xlim([5,length(cndMean)-5])
+    title('mean of individual trials')
+    xlabel('time (ms)')
 
-
+    subplot(4,2,6)
+    hold on 
+    histogram(curDatSum(targConditions(ci)).peakAmp, [0:1:50], ...
+        'FaceColor', colors{ci}, 'normalization', 'probability')
+    title('peak amplitude')
+    xlabel('HFB (z-score)')
     
 
     subplot(4,2,[7])
     hold on 
     histogram(curDatSum(targConditions(ci)).time(curDatSum(targConditions(ci)).peakLat),histBins, ...
         'FaceColor', colors{ci}, 'normalization', 'probability')
+    title('peak latency')
+    xlabel('time (ms)')
 
     subplot(4,2,[8])
     hold on 
@@ -57,14 +110,17 @@ function [] = plotConditionCompare(curDatSum, targConditions, regName, histBins)
 
     histogram(crossTimes, histBins, ...
         'FaceColor', colors{ci}, 'normalization', 'probability')
+    title('center of mass')
+    xlabel('time (ms)')
 
-
-
-
+    
+    
 
 
 
     end
+    subplot(4,2,8)
+    legend({curDatSum(targConditions).condition})
 
 
 %     subplot(3,2, [2,4])

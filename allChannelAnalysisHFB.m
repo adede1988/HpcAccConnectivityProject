@@ -136,67 +136,88 @@ allChanEncDat = allChanEncDat.allChanEncDat;
 % ROIDat = {dlPFCEnc, hipEnc, phgEnc, accEnc}; 
 RoiNames = {'dlPFC', 'hip', 'phg', 'acc'}; 
 
+%% check the reactivity, looking for only upward going reactivity! 
+
+
+HFBConditions = fieldnames(allChanEncDat(1).HFB); 
+
+for chan = 1:length(allChanEncDat)
+    
+    %enc onset
+    conditions = [1 2]; 
+    comboHFB = []; 
+    for con = 1:length(conditions)
+        comboHFB = [comboHFB allChanEncDat(chan).HFB.(HFBConditions{conditions(con)})];
+    end
+
+    test = mean(comboHFB,2); 
+    test = checkForThreshold(test, allChanEncDat(chan).HFB.encMulTim, [-50,2000] ); 
+    allChanEncDat(chan).HFBenc = test;
+
+    %enc RT
+    conditions = [5 6]; 
+    comboHFB = []; 
+    for con = 1:length(conditions)
+        comboHFB = [comboHFB allChanEncDat(chan).HFB.(HFBConditions{conditions(con)})];
+    end
+
+    test = mean(comboHFB,2); 
+    test = checkForThreshold(test, allChanEncDat(chan).HFB.encMulTim, [-1500,500] ); 
+    allChanEncDat(chan).HFBencRT = test;
+
+    %ret on
+    conditions = [9 10 11 12]; 
+    comboHFB = []; 
+    for con = 1:length(conditions)
+        comboHFB = [comboHFB allChanEncDat(chan).HFB.(HFBConditions{conditions(con)})];
+    end
+
+    test = mean(comboHFB,2); 
+    test = checkForThreshold(test, allChanEncDat(chan).HFB.encMulTim, [-50,2000] ); 
+    allChanEncDat(chan).HFBretOn = test;
+
+    %ret rt
+    conditions = [15 16 17 18]; 
+    comboHFB = []; 
+    for con = 1:length(conditions)
+        comboHFB = [comboHFB allChanEncDat(chan).HFB.(HFBConditions{conditions(con)})];
+    end
+
+    test = mean(comboHFB,2); 
+    test = checkForThreshold(test, allChanEncDat(chan).HFB.encMulTim, [-1500,500] ); 
+    allChanEncDat(chan).HFBretRT = test;
+
+
+
+end
+
 %% heatmaps of hits vs. misses and activity w/i regions across all trials
 %loop over ROIs, combine all trials within a region, plot sorted by RT and
 %split by hit v. miss
 
 for rr = 1:4
     curDat = allChanEncDat([allChanEncDat.(RoiNames{rr})] == 1); 
-
-    %need to get subHit and subMiss RT aligned data, ugh
-    for chan = 1:length(curDat)
-        
-
-
-
-
-
-    end
-
-
-
-    %head struct name: curDatSum
-
-    %substructs:
-    %SubHitOn
-    %SubMissOn
-    %HitOn
-    %MissOn
-    %HitRT
-    %MissRT
     
-    %each substruct will have following fields: 
-    %HFB = time X trials
-    %RT = trials X 1
-    %subID = trials X 1 cellarray
-    %time = time X 1 (ms time relative to onset or RT as the case may be)
-    %peakLat = trials X 1   %maximum deflection point between t=0 and RT
-    %threshCross = trials X 1
-    %amp = trials X 1            %summed total above threshold
+    hitRates = arrayfun(@(x) sum(curDat(x).retInfo(:,1)==1) / sum(curDat(x).retInfo(:,1)<5), 1:length(curDat));
+    faRates = arrayfun(@(x) sum(curDat(x).retInfo(:,1)==4) / sum(curDat(x).retInfo(:,1)<5), 1:length(curDat));
+    dPrime = norminv(hitRates) - norminv(faRates);
+    
+%     curDat(dPrime<1.5) = []; 
 
 
-    %vectors of RT for
-    %subHit_rt
-    %subMiss_rt
-    %hitOn_rt
-    %missOn_rt
-    %hitRT_rt
-    %missRT_rt
-
-    %cellarray vectors of SubID for all trials
-    %
-
-    curDatSum = HFBSummary(curDat); 
+    curDat(cellfun(@(x) strcmp('DA8', x), {curDat.subID})) = []; 
+    curDatSum = HFBSummary(curDat, 1); 
 
     %need to add in the subsequent memory RT locked responses 
     
 
-
+    
 
 
     plotConditionCompare(curDatSum, [1,2], RoiNames{rr}, linspace(-50,2500, 30))
-    plotConditionCompare(curDatSum, [5,3], RoiNames{rr}, linspace(-50,2000, 30))
-    plotConditionCompare(curDatSum, [9,7], RoiNames{rr}, linspace(-1500,500, 30))
+    plotConditionCompare(curDatSum, [3,4], RoiNames{rr}, linspace(-1500,500, 30))
+    plotConditionCompare(curDatSum, [7,5], RoiNames{rr}, linspace(-50,2000, 30))
+    plotConditionCompare(curDatSum, [11,9], RoiNames{rr}, linspace(-1500,500, 30))
     
 
 
@@ -208,188 +229,8 @@ end
 
 
   
-%  
-end
 
 
-%% average line plotting locked to stim onset and RT
-for rr = 1:4
-    curDat = allChanEncDat([allChanEncDat.(RoiNames{rr})] == 1); 
-    allHit = []; 
-    allHitRT = []; 
-    allMiss = []; 
-    allMissRT = []; 
-    for ii = 1:length(curDat)
-        comboHFB = [curDat(ii).HFB.subHit curDat(ii).HFB.subMiss]; 
-        test = mean(comboHFB,2); 
-      
-
-        test = checkForThreshold(test, curDat(ii).HFB.encMulTim, [-450 2500]);
-        if test
-
-        allHit = [allHit curDat(ii).HFB.subHit];
-        allHitRT = [allHitRT; curDat(ii).encInfo(curDat(ii).use & curDat(ii).hits, 4)]; 
-        allMiss = [allMiss curDat(ii).HFB.subMiss]; 
-        allMissRT = [allMissRT; curDat(ii).encInfo(curDat(ii).use & curDat(ii).misses, 4)];
-
-        end
-    end
-
-    % aligned to stim onset: *********************************************
-    meanHit = mean(allHit,2);
-    hitStd = std(allHit,[],2) ./ sqrt(size(allHit,2)); 
-    hitLow = meanHit - hitStd; %prctile(allHit, 2.5, 2); 
-    hitHigh = meanHit + hitStd; %prctile(allHit, 97.5, 2); 
-
-    meanMiss = mean(allMiss,2); 
-    missStd = std(allMiss,[],2) ./ sqrt(size(allMiss,2)); 
-    missLow = meanMiss - missStd; %prctile(allHit, 2.5, 2); 
-    missHigh = meanMiss + missStd; %prctile(allHit, 97.5, 2); 
-
-
-    colors = {[75, 122, 71]./255, [236, 146, 72]./255};
-
-
-    figure
-    subplot 211
-    plot(meanHit, 'color', colors{1}, 'linewidth', 2)
-    hold on 
-    xticks([101:100:size(curDat(1).HFB.subMiss,1)])
-    xticklabels(curDat(1).HFB.encMulTim([101:100:size(curDat(1).HFB.subMiss,1)]))
-    xline(find(curDat(1).HFB.encMulTim>=0,1), '--', 'linewidth', 4, 'color', 'green')
-    x = [1:length(meanHit)]; 
-    x = [x flip(x)]; 
-    y = [hitLow' flip(hitHigh')];
-    h = fill(x,y,colors{1},'LineStyle','none'); 
-    set(h, 'facealpha', .5)
-    xlim([5,length(meanHit)-5])
-
-    plot(meanMiss, 'color', colors{2}, 'linewidth', 2)
-    hold on 
-   
-    x = [1:length(meanMiss)]; 
-    x = [x flip(x)]; 
-    y = [missLow' flip(missHigh')];
-    h = fill(x,y,colors{2},'LineStyle','none'); 
-    set(h, 'facealpha', .5)
-
-    title(["mean hit and miss for " RoiNames{rr}])
-    xlabel('time relative to image onset (ms)')
-    ylabel('z-scored HFB')
-
-    % aligned to RT: ******************************************************
-    
-    
-
-    allHit_align = nan(4000, size(allHit,2)); 
-    allHitRT_down = 2500 - (round(allHitRT/5) + 200); 
-    
-    allMiss_align = nan(4000, size(allMiss,2)); 
-    allMissRT_down = 2500 - (round(allMissRT/5) + 200); 
-
-    for ii = 1:size(allHit,2)
-        if(allHitRT_down(ii)>0)
-        allHit_align(allHitRT_down(ii):allHitRT_down(ii)+length(meanHit)-1, ii) = allHit(:,ii); 
-        end
-
-    end
-
-    for ii = 1:size(allMiss,2)
-
-        if(allMissRT_down(ii)>0)
-
-            allMiss_align(allMissRT_down(ii):allMissRT_down(ii)+length(meanMiss)-1,ii) = allMiss(:,ii); 
-        end
-
-    end
-
-    %trim down Hits
-    test = sum(isnan(allHit_align),2);
-    RT_tim = [-12495:5:7500];
-    test = find(test > size(allHit_align,2)/2 );
-    RT_tim(test) = []; 
-    allHit_align(test,:) = []; 
-    
-    %use the same time to trim for misses
-    allMiss_align(test,:) = []; 
-
-    [~, order] = sort(allMissRT); 
-
-    meanHit = mean(allHit_align,2, 'omitnan');
-    hitStd = std(allHit_align,[],2, 'omitnan') ./ sqrt(size(allHit_align,2)); 
-    hitLow = meanHit - hitStd; %prctile(allHit, 2.5, 2); 
-    hitHigh = meanHit + hitStd; %prctile(allHit, 97.5, 2); 
-
-
-    meanMiss = mean(allMiss_align,2, 'omitnan'); 
-    missStd = std(allMiss_align,[],2, 'omitnan') ./ sqrt(size(allMiss_align,2)); 
-    missLow = meanMiss - missStd; %prctile(allHit, 2.5, 2); 
-    missHigh = meanMiss + missStd; %prctile(allHit, 97.5, 2); 
-
- 
-    subplot 212
-    plot(meanHit, 'color', colors{1}, 'linewidth', 2)
-    hold on 
-    xticks([100:100:length(RT_tim)])
-    xticklabels(RT_tim([100:100:length(RT_tim)]))
-    xline(find(RT_tim>=0,1), '--', 'linewidth', 4, 'color', 'red')
-    x = [1:length(meanHit)]; 
-    x = [x flip(x)]; 
-    y = [hitLow' flip(hitHigh')];
-    h = fill(x,y,colors{1},'LineStyle','none'); 
-    set(h, 'facealpha', .5)
-    xlim([5,length(RT_tim)-5])
-
-    plot(meanMiss, 'color', colors{2}, 'linewidth', 2)
-    hold on 
-   
-    x = [1:length(meanMiss)]; 
-    x = [x flip(x)]; 
-    y = [missLow' flip(missHigh')];
-    h = fill(x,y,colors{2},'LineStyle','none'); 
-    set(h, 'facealpha', .5)
-
-    xlabel('time relative to response time (ms)')
-    ylabel('z-scored HFB')
-
-
-
-end
-
-%% pull out the trial by trial peak time of HFB activity
-
-for rr = 1:4
-    curDat = allChanEncDat([allChanEncDat.(RoiNames{rr})] == 1); 
-    allHit = []; 
-    allHitRT = []; 
-    allMiss = []; 
-    allMissRT = []; 
-    for ii = 1:length(curDat)
-        comboHFB = [curDat(ii).HFB.subHit curDat(ii).HFB.subMiss]; 
-        test = mean(comboHFB,2); 
-      
-
-        test = checkForThreshold(test, curDat(ii).HFB.encMulTim, [-450 2500]);
-        if test
-
-        allHit = [allHit curDat(ii).HFB.subHit];
-        allHitRT = [allHitRT; curDat(ii).encInfo(curDat(ii).use & curDat(ii).hits, 4)]; 
-        allMiss = [allMiss curDat(ii).HFB.subMiss]; 
-        allMissRT = [allMissRT; curDat(ii).encInfo(curDat(ii).use & curDat(ii).misses, 4)];
-
-        end
-    end
-
-
-    %Latency data now on a trial by trial basis 
-
-
-
-
-
-
-
-end
 
 
 
@@ -401,6 +242,7 @@ end
 
 %down select to ROI channels
 allChanEncROI = allChanEncDat([allChanEncDat.dlPFC]==1 | [allChanEncDat.hip]==1 | [allChanEncDat.phg]==1 | [allChanEncDat.acc]==1);
+ allChanEncROI(cellfun(@(x) strcmp('DA8', x), {allChanEncROI.subID})) = []; 
 %get subject IDs
 IDs = unique({allChanEncROI.subID}); 
 
@@ -425,39 +267,9 @@ end
 
 %% scratch connectivity code
 % 
-%     %initialize the output for all channels to all channels 
-%     %chan X chan X trial X time X offset
-%     leadLagHit = zeros(length(curSub), length(curSub), size(curSub(1).HFB.subHit,2), size(curSub(1).HFB.subHit,1), 41);
-%     leadLagMiss = zeros(length(curSub), length(curSub), size(curSub(1).HFB.subHit,2), size(curSub(1).HFB.subHit,1), 41);
-%     
-% 
-%     for chan = 1:length(curSub)
-%         for chan2 = 1:length(curSub)
-%             for offSet = -20:20 %a time step is 5ms, so -20:20 is -100ms:100ms
-%                 %Hit trials 
-%                 HFB1 = curSub(chan).HFB.subHit; 
-%                 HFB2 = curSub(chan2).HFB.subHit; 
-%                 if offSet<0
-%                     HFB2 = [ HFB2(abs(offSet)+1:end, :); zeros([abs(offSet), size(HFB1,2)] )];
-%                 elseif offSet>0
-%                     HFB2 = [zeros([abs(offSet), size(HFB1,2)] ); HFB2(1:end -abs(offSet), :)];
-%                 end
-%                 
-%                 %hard code 30 time step (150ms +- around time point)
-%                 test = reshape(cell2mat(arrayfun(@(x) ... %x is loop on trials
-%                     arrayfun(@(y) ... %y is loop on time
-%                         corr(HFB1(y-30:y+30,x), HFB2(y-30:y+30,x)), ...
-%                     31:size(HFB1,1)-30), ...
-%                 1:size(HFB1,2), 'uniformoutput', false)),[], size(HFB2,2));
-%                 
-%                 leadLagHit(chan, chan2, :, 31:size(test,1)+30, offSet+21) = test'; 
-% 
-% 
-%             end
-%         end
-%     end
-% 
-%      
+   
+
+     
 %         for rr = 1:4
 %             if rr ~= curRoi && sum(roiMat(:,rr)) ~= 0
 %                 %if both of these are passed, then it's possible there were
@@ -478,21 +290,21 @@ end
 % 
 % 
 %         end
-
-
-
-
-
-
-
-  
-
-
-
-
-
-
-
+% 
+% 
+% 
+% 
+% 
+% 
+% 
+%   
+% 
+% 
+% 
+% 
+% 
+% 
+% 
 % end
 
 
@@ -575,71 +387,71 @@ end
 
 
 %% pull out structs for each region separately and plot its mean leadLag
-RoiNames = {'dlPFC', 'hip', 'phg', 'acc'}; 
-for rr = 1:4
-
-    curDat = allChanEncDat([allChanEncDat.(RoiNames{rr})] == 1); 
-
-    %count the channels
-    allLeadLagRoi = []; 
-    for chan = 1:length(curDat)
-        allLeadLagRoi = [allLeadLagRoi; curDat(chan).leadLagRoi]; 
-        
-    end
-
-    %preallocate
-    allLeadLagHit = zeros([size(allLeadLagRoi,1), size(curDat(1).leadLag.encHit, [2,3]) ] ) ; 
-    allLeadLagMiss = zeros([size(allLeadLagRoi,1), size(curDat(1).leadLag.encHit, [2,3]) ] ) ; 
-    lli = 1; 
-    for chan = 1:length(curDat)
-        allLeadLagHit(lli:size(curDat(chan).leadLag.encHit,1)+lli-1, :, :) = curDat(chan).leadLag.encHit; 
-        allLeadLagMiss(lli:size(curDat(chan).leadLag.encMiss,1)+lli-1, :, :) = curDat(chan).leadLag.encMiss; 
-        lli = lli + size(curDat(chan).leadLag.encMiss,1);
-    end
-
-    for rr2 = 1:4 %loop on the region whose connection with respect to the current is being tested
-       tmpHit = allLeadLagHit(allLeadLagRoi(:,rr2)==1, :, :);  
-       tmpMiss = allLeadLagMiss(allLeadLagRoi(:,rr2)==1, :, :);
-    
-       figure 
-       subplot 211
-       imagesc(squeeze(mean(tmpHit,1)))
-       xticks([101:100:size(curDat(1).HFB.subMiss,1)])
-       xticklabels(curDat(1).HFB.encMulTim([101:100:size(curDat(1).HFB.subMiss,1)]))
-       xline(find(curDat(1).HFB.encMulTim>=0,1), '--', 'linewidth', 4, 'color', 'green')
-       yticks([0:100:400])
-       ylim([-.05, 400])
-       yticklabels([-200:100:200])
-       title([RoiNames{rr} ' hit correlation with ' RoiNames{rr2}])
-       colorbar
-       caxis([0,.15])
-       ylabel('lags               leads')
-       xlabel('time relative to stim onset (ms)')
-
-       subplot 212
-       imagesc(squeeze(mean(tmpMiss,1)))
-       xticks([101:100:size(curDat(1).HFB.subMiss,1)])
-       xticklabels(curDat(1).HFB.encMulTim([101:100:size(curDat(1).HFB.subMiss,1)]))
-       xline(find(curDat(1).HFB.encMulTim>=0,1), '--', 'linewidth', 4, 'color', 'green')
-       yticks([0:100:400])
-       ylim([-.05, 400])
-       yticklabels([-200:100:200])
-       title([RoiNames{rr} ' miss correlation with ' RoiNames{rr2}])
-       colorbar
-       caxis([0,.15])
-       ylabel('lags               leads') 
-       xlabel('time relative to stim onset (ms)')
-
-    end
-
-end
-
-
-dlPFCEnc = allChanEncDat([allChanEncDat.dlPFC] ==1); 
-hipEnc = allChanEncDat([allChanEncDat.hip] == 1);
-phgEnc = allChanEncDat([allChanEncDat.phg] == 1);
-accEnc = allChanEncDat([allChanEncDat.acc] == 1);
-
+% RoiNames = {'dlPFC', 'hip', 'phg', 'acc'}; 
+% for rr = 1:4
+% 
+%     curDat = allChanEncDat([allChanEncDat.(RoiNames{rr})] == 1); 
+% 
+%     %count the channels
+%     allLeadLagRoi = []; 
+%     for chan = 1:length(curDat)
+%         allLeadLagRoi = [allLeadLagRoi; curDat(chan).leadLagRoi]; 
+%         
+%     end
+% 
+%     %preallocate
+%     allLeadLagHit = zeros([size(allLeadLagRoi,1), size(curDat(1).leadLag.encHit, [2,3]) ] ) ; 
+%     allLeadLagMiss = zeros([size(allLeadLagRoi,1), size(curDat(1).leadLag.encHit, [2,3]) ] ) ; 
+%     lli = 1; 
+%     for chan = 1:length(curDat)
+%         allLeadLagHit(lli:size(curDat(chan).leadLag.encHit,1)+lli-1, :, :) = curDat(chan).leadLag.encHit; 
+%         allLeadLagMiss(lli:size(curDat(chan).leadLag.encMiss,1)+lli-1, :, :) = curDat(chan).leadLag.encMiss; 
+%         lli = lli + size(curDat(chan).leadLag.encMiss,1);
+%     end
+% 
+%     for rr2 = 1:4 %loop on the region whose connection with respect to the current is being tested
+%        tmpHit = allLeadLagHit(allLeadLagRoi(:,rr2)==1, :, :);  
+%        tmpMiss = allLeadLagMiss(allLeadLagRoi(:,rr2)==1, :, :);
+%     
+%        figure 
+%        subplot 211
+%        imagesc(squeeze(mean(tmpHit,1)))
+%        xticks([101:100:size(curDat(1).HFB.subMiss,1)])
+%        xticklabels(curDat(1).HFB.encMulTim([101:100:size(curDat(1).HFB.subMiss,1)]))
+%        xline(find(curDat(1).HFB.encMulTim>=0,1), '--', 'linewidth', 4, 'color', 'green')
+%        yticks([0:100:400])
+%        ylim([-.05, 400])
+%        yticklabels([-200:100:200])
+%        title([RoiNames{rr} ' hit correlation with ' RoiNames{rr2}])
+%        colorbar
+%        caxis([0,.15])
+%        ylabel('lags               leads')
+%        xlabel('time relative to stim onset (ms)')
+% 
+%        subplot 212
+%        imagesc(squeeze(mean(tmpMiss,1)))
+%        xticks([101:100:size(curDat(1).HFB.subMiss,1)])
+%        xticklabels(curDat(1).HFB.encMulTim([101:100:size(curDat(1).HFB.subMiss,1)]))
+%        xline(find(curDat(1).HFB.encMulTim>=0,1), '--', 'linewidth', 4, 'color', 'green')
+%        yticks([0:100:400])
+%        ylim([-.05, 400])
+%        yticklabels([-200:100:200])
+%        title([RoiNames{rr} ' miss correlation with ' RoiNames{rr2}])
+%        colorbar
+%        caxis([0,.15])
+%        ylabel('lags               leads') 
+%        xlabel('time relative to stim onset (ms)')
+% 
+%     end
+% 
+% end
+% 
+% % 
+% % dlPFCEnc = allChanEncDat([allChanEncDat.dlPFC] ==1); 
+% % hipEnc = allChanEncDat([allChanEncDat.hip] == 1);
+% % phgEnc = allChanEncDat([allChanEncDat.phg] == 1);
+% % accEnc = allChanEncDat([allChanEncDat.acc] == 1);
+% % 
 
 % for rr = 1:4
 %     curDat = allChanEncDat; %ROIDat{rr}; 
@@ -719,7 +531,7 @@ accEnc = allChanEncDat([allChanEncDat.acc] == 1);
 %         ylabel('mean z-score')
 %         xlabel('time (ms)')
 %     
-         export_fig(join(['G:\My Drive\Johnson\MTL_PFC_networkFigs\singleChanHFB\' titReg '_' curDat(chan).subID '_' num2str(curDat(chan).chi) '.jpg'],''), '-r300')
+%          export_fig(join(['G:\My Drive\Johnson\MTL_PFC_networkFigs\singleChanHFB\' titReg '_' curDat(chan).subID '_' num2str(curDat(chan).chi) '.jpg'],''), '-r300')
 %     
 %     end
 % 
@@ -733,21 +545,200 @@ accEnc = allChanEncDat([allChanEncDat.acc] == 1);
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+% 
+% 
+% %% average line plotting locked to stim onset and RT
+% for rr = 1:4
+%     curDat = allChanEncDat([allChanEncDat.(RoiNames{rr})] == 1); 
+%     allHit = []; 
+%     allHitRT = []; 
+%     allMiss = []; 
+%     allMissRT = []; 
+%     for ii = 1:length(curDat)
+%         comboHFB = [curDat(ii).HFB.subHit curDat(ii).HFB.subMiss]; 
+%         test = mean(comboHFB,2); 
+%       
+% 
+%         test = checkForThreshold(test, curDat(ii).HFB.encMulTim, [-450 2500]);
+%         if test
+% 
+%         allHit = [allHit curDat(ii).HFB.subHit];
+%         allHitRT = [allHitRT; curDat(ii).encInfo(curDat(ii).use & curDat(ii).hits, 4)]; 
+%         allMiss = [allMiss curDat(ii).HFB.subMiss]; 
+%         allMissRT = [allMissRT; curDat(ii).encInfo(curDat(ii).use & curDat(ii).misses, 4)];
+% 
+%         end
+%     end
+% 
+%     % aligned to stim onset: *********************************************
+%     meanHit = mean(allHit,2);
+%     hitStd = std(allHit,[],2) ./ sqrt(size(allHit,2)); 
+%     hitLow = meanHit - hitStd; %prctile(allHit, 2.5, 2); 
+%     hitHigh = meanHit + hitStd; %prctile(allHit, 97.5, 2); 
+% 
+%     meanMiss = mean(allMiss,2); 
+%     missStd = std(allMiss,[],2) ./ sqrt(size(allMiss,2)); 
+%     missLow = meanMiss - missStd; %prctile(allHit, 2.5, 2); 
+%     missHigh = meanMiss + missStd; %prctile(allHit, 97.5, 2); 
+% 
+% 
+%     colors = {[75, 122, 71]./255, [236, 146, 72]./255};
+% 
+% 
+%     figure
+%     subplot 211
+%     plot(meanHit, 'color', colors{1}, 'linewidth', 2)
+%     hold on 
+%     xticks([101:100:size(curDat(1).HFB.subMiss,1)])
+%     xticklabels(curDat(1).HFB.encMulTim([101:100:size(curDat(1).HFB.subMiss,1)]))
+%     xline(find(curDat(1).HFB.encMulTim>=0,1), '--', 'linewidth', 4, 'color', 'green')
+%     x = [1:length(meanHit)]; 
+%     x = [x flip(x)]; 
+%     y = [hitLow' flip(hitHigh')];
+%     h = fill(x,y,colors{1},'LineStyle','none'); 
+%     set(h, 'facealpha', .5)
+%     xlim([5,length(meanHit)-5])
+% 
+%     plot(meanMiss, 'color', colors{2}, 'linewidth', 2)
+%     hold on 
+%    
+%     x = [1:length(meanMiss)]; 
+%     x = [x flip(x)]; 
+%     y = [missLow' flip(missHigh')];
+%     h = fill(x,y,colors{2},'LineStyle','none'); 
+%     set(h, 'facealpha', .5)
+% 
+%     title(["mean hit and miss for " RoiNames{rr}])
+%     xlabel('time relative to image onset (ms)')
+%     ylabel('z-scored HFB')
+% 
+%     % aligned to RT: ******************************************************
+%     
+%     
+% 
+%     allHit_align = nan(4000, size(allHit,2)); 
+%     allHitRT_down = 2500 - (round(allHitRT/5) + 200); 
+%     
+%     allMiss_align = nan(4000, size(allMiss,2)); 
+%     allMissRT_down = 2500 - (round(allMissRT/5) + 200); 
+% 
+%     for ii = 1:size(allHit,2)
+%         if(allHitRT_down(ii)>0)
+%         allHit_align(allHitRT_down(ii):allHitRT_down(ii)+length(meanHit)-1, ii) = allHit(:,ii); 
+%         end
+% 
+%     end
+% 
+%     for ii = 1:size(allMiss,2)
+% 
+%         if(allMissRT_down(ii)>0)
+% 
+%             allMiss_align(allMissRT_down(ii):allMissRT_down(ii)+length(meanMiss)-1,ii) = allMiss(:,ii); 
+%         end
+% 
+%     end
+% 
+%     %trim down Hits
+%     test = sum(isnan(allHit_align),2);
+%     RT_tim = [-12495:5:7500];
+%     test = find(test > size(allHit_align,2)/2 );
+%     RT_tim(test) = []; 
+%     allHit_align(test,:) = []; 
+%     
+%     %use the same time to trim for misses
+%     allMiss_align(test,:) = []; 
+% 
+%     [~, order] = sort(allMissRT); 
+% 
+%     meanHit = mean(allHit_align,2, 'omitnan');
+%     hitStd = std(allHit_align,[],2, 'omitnan') ./ sqrt(size(allHit_align,2)); 
+%     hitLow = meanHit - hitStd; %prctile(allHit, 2.5, 2); 
+%     hitHigh = meanHit + hitStd; %prctile(allHit, 97.5, 2); 
+% 
+% 
+%     meanMiss = mean(allMiss_align,2, 'omitnan'); 
+%     missStd = std(allMiss_align,[],2, 'omitnan') ./ sqrt(size(allMiss_align,2)); 
+%     missLow = meanMiss - missStd; %prctile(allHit, 2.5, 2); 
+%     missHigh = meanMiss + missStd; %prctile(allHit, 97.5, 2); 
+% 
+%  
+%     subplot 212
+%     plot(meanHit, 'color', colors{1}, 'linewidth', 2)
+%     hold on 
+%     xticks([100:100:length(RT_tim)])
+%     xticklabels(RT_tim([100:100:length(RT_tim)]))
+%     xline(find(RT_tim>=0,1), '--', 'linewidth', 4, 'color', 'red')
+%     x = [1:length(meanHit)]; 
+%     x = [x flip(x)]; 
+%     y = [hitLow' flip(hitHigh')];
+%     h = fill(x,y,colors{1},'LineStyle','none'); 
+%     set(h, 'facealpha', .5)
+%     xlim([5,length(RT_tim)-5])
+% 
+%     plot(meanMiss, 'color', colors{2}, 'linewidth', 2)
+%     hold on 
+%    
+%     x = [1:length(meanMiss)]; 
+%     x = [x flip(x)]; 
+%     y = [missLow' flip(missHigh')];
+%     h = fill(x,y,colors{2},'LineStyle','none'); 
+%     set(h, 'facealpha', .5)
+% 
+%     xlabel('time relative to response time (ms)')
+%     ylabel('z-scored HFB')
+% 
+% 
+% 
+% end
+% 
+% %% pull out the trial by trial peak time of HFB activity
+% 
+% for rr = 1:4
+%     curDat = allChanEncDat([allChanEncDat.(RoiNames{rr})] == 1); 
+%     allHit = []; 
+%     allHitRT = []; 
+%     allMiss = []; 
+%     allMissRT = []; 
+%     for ii = 1:length(curDat)
+%         comboHFB = [curDat(ii).HFB.subHit curDat(ii).HFB.subMiss]; 
+%         test = mean(comboHFB,2); 
+%       
+% 
+%         test = checkForThreshold(test, curDat(ii).HFB.encMulTim, [-450 2500]);
+%         if test
+% 
+%         allHit = [allHit curDat(ii).HFB.subHit];
+%         allHitRT = [allHitRT; curDat(ii).encInfo(curDat(ii).use & curDat(ii).hits, 4)]; 
+%         allMiss = [allMiss curDat(ii).HFB.subMiss]; 
+%         allMissRT = [allMissRT; curDat(ii).encInfo(curDat(ii).use & curDat(ii).misses, 4)];
+% 
+%         end
+%     end
+% 
+% 
+%     %Latency data now on a trial by trial basis 
+% 
+% 
+% 
+% 
+% 
+% 
+% 
+% end
+% 
+% 
+% 
+% 
+% 
+% 
+% 
+% 
+% 
+% 
+% 
+% 
+% 
+% 
 
 
 
