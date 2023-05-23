@@ -183,7 +183,7 @@ for cond = 1:length(HFBConditions)
 
 
      
-        disp(ci)
+%         disp(ci)
 
 
         ci = ci+1; 

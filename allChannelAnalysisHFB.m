@@ -195,6 +195,32 @@ end
 %loop over ROIs, combine all trials within a region, plot sorted by RT and
 %split by hit v. miss
 
+%chan X stats
+%col 1: subID
+%col 2: chi
+%col 3: center of mass
+%col 4: peak latency
+%col 5: peak value
+%col 6: encode v. retrieve
+%col 7: condition
+%col 8: region
+%col 9: mean RT
+%col 10: mean ( centerOfMass / RT)
+aovDat = table;
+aovDat.subID = repmat("askj", 1000,1); 
+aovDat.chi = zeros(1000,1); 
+aovDat.centerOfMass = zeros(1000,1); 
+aovDat.peakLat = zeros(1000,1); 
+aovDat.peakVal = zeros(1000,1); 
+aovDat.encRet = repmat("askj", 1000,1); 
+aovDat.cond = repmat("askj", 1000,1); 
+aovDat.reg = repmat("askj", 1000,1); 
+aovDat.RT = zeros(1000,1); 
+aovDat.adjTime = zeros(1000,1); 
+
+aovi = 1; 
+
+
 for rr = 1:4
     curDat = allChanEncDat([allChanEncDat.(RoiNames{rr})] == 1); 
     
@@ -208,26 +234,23 @@ for rr = 1:4
     curDat(cellfun(@(x) strcmp('DA8', x), {curDat.subID})) = []; 
     curDatSum = HFBSummary(curDat, 1); 
 
-    %need to add in the subsequent memory RT locked responses 
+    %need to add in the subsequent memory RT locked responses RESOLVED
     
-
     
-
-
-    plotConditionCompare(curDatSum, [1,2], RoiNames{rr}, linspace(-50,2500, 30))
-    plotConditionCompare(curDatSum, [3,4], RoiNames{rr}, linspace(-1500,500, 30))
-    plotConditionCompare(curDatSum, [7,5], RoiNames{rr}, linspace(-50,2000, 30))
-    plotConditionCompare(curDatSum, [11,9], RoiNames{rr}, linspace(-1500,500, 30))
     
 
 
-
+    [aovDat, aovi] = plotConditionCompare(curDatSum, [1,2], RoiNames{rr}, linspace(-50,2500, 30), aovDat, aovi);
+    [aovDat, aovi] = plotConditionCompare(curDatSum, [3,4], RoiNames{rr}, linspace(-1500,500, 30), aovDat, aovi);
+    [aovDat, aovi] = plotConditionCompare(curDatSum, [7,5], RoiNames{rr}, linspace(-50,2000, 30), aovDat, aovi);
+    [aovDat, aovi] = plotConditionCompare(curDatSum, [11,9], RoiNames{rr}, linspace(-1500,500, 30), aovDat, aovi);
+    
 
 
 
 end
 
-
+writetable(aovDat, join(['R:\MSS\Johnson_Lab\dtf8829\' 'latencyAOVdat.csv'],''))
   
 
 

@@ -1,16 +1,37 @@
-function [] = plotConditionCompare(curDatSum, targConditions, regName, histBins)
+function [aovDat, aovi] = plotConditionCompare(curDatSum, targConditions, regName, histBins, aovDat, aovi)
 
     b2w2r = [[linspace(0,255,128)'; linspace(255,0,128)'], [linspace(0,255,128)'; linspace(255,0,128)'], [linspace(0,255,128)'; linspace(255,0,128)']]/255;
     b2w2r(129:end, 1) = 1; 
     b2w2r(1:128, 3) = 1; 
 
-    figure
+    figure('visible', 'off', 'Position', [1,1,800,1200])
     %hardCode the time periods for threshold testing
     threshTestWin = [[-50 2500]; [-50 2000]; [-1500, 500]];
     colors = {[75, 122, 71]./255, [236, 146, 72]./255};
 
     for ci = 1:2
+        %overall heatmap of all trials
+    %eliminate long RT trials
+    badTrials = curDatSum(targConditions(ci)).RT>3000; 
+    sum(badTrials)
+    curDatSum(targConditions(ci)).HFB(:,badTrials) = []; 
+    curDatSum(targConditions(ci)).RT(badTrials) = []; 
+    curDatSum(targConditions(ci)).subID(badTrials) = []; 
+    curDatSum(targConditions(ci)).chi(badTrials) = []; 
+    curDatSum(targConditions(ci)).peakLat(badTrials) = []; 
+    curDatSum(targConditions(ci)).peakAmp(badTrials) = []; 
+    curDatSum(targConditions(ci)).threshCross(badTrials) = []; 
+    curDatSum(targConditions(ci)).maxAmp(badTrials) = []; 
+    curDatSum(targConditions(ci)).amp(badTrials) = []; 
+    curDatSum(targConditions(ci)).dur(badTrials) = []; 
+    curDatSum(targConditions(ci)).centerOfMass(badTrials) = []; 
+
+
+
+   
     [sortedRT, order] = sort(curDatSum(targConditions(ci)).RT ); 
+   
+
     subplot(4,2, [ci])
     imagesc(curDatSum(targConditions(ci)).HFB(:,order)')
     caxis([-7,7])
@@ -22,7 +43,7 @@ function [] = plotConditionCompare(curDatSum, targConditions, regName, histBins)
     title([regName ' ' curDatSum(targConditions(ci)).condition], 'interpreter', 'none')
 
 
-    
+    %time course of mean channels
     subplot(4,2, 3)
     hold on 
     subIDs = unique(curDatSum(targConditions(ci)).subID); 
@@ -30,6 +51,7 @@ function [] = plotConditionCompare(curDatSum, targConditions, regName, histBins)
     chanMeanAmp = []; 
     for subi = 1:length(subIDs)
         tempDati = cellfun(@(x) strcmp(subIDs{subi}, x), curDatSum(targConditions(ci)).subID);
+        tempGood = tempDati; 
         chanNums = unique(curDatSum(targConditions(ci)).chi(tempDati)); 
         for chani = 1:length(chanNums)
             curChanMask = arrayfun(@(x) x==chanNums(chani), curDatSum(targConditions(ci)).chi);
@@ -38,6 +60,33 @@ function [] = plotConditionCompare(curDatSum, targConditions, regName, histBins)
             curMeanAmp = mean(curDatSum(targConditions(ci)).peakAmp(curChanMask)); 
             chanMeanAmp = [chanMeanAmp curMeanAmp]; 
             chanMeans = [chanMeans, curMeanTrial];
+
+            %pull data for stats: 
+            %col 1: subID
+            aovDat(aovi, 1) = {string(subIDs{subi})}; 
+            %col 2: chi
+            aovDat(aovi, 2) = {chanNums(chani)}; 
+            %col 3: center of mass
+            aovDat(aovi, 3) = {mean(curDatSum(targConditions(ci)).centerOfMass(curChanMask))}; 
+            %col 4: peak latency
+            aovDat(aovi, 4) = {mean(curDatSum(targConditions(ci)).time(curDatSum(targConditions(ci)).peakLat(curChanMask) ))}; 
+            %col 5: peak value
+            aovDat(aovi, 5) = {mean(curDatSum(targConditions(ci)).peakAmp(curChanMask))}; 
+            %col 6: encode v. retrieve
+            aovDat(aovi, 6) = {string(curDatSum(targConditions(ci)).condition)};
+            %col 7: condition
+            aovDat(aovi, 7) = {string(curDatSum(targConditions(ci)).condition)};
+            %col 8: region
+            aovDat(aovi, 8) = {string(regName)}; 
+            %col 9: RT
+            aovDat(aovi, 9) = {mean(curDatSum(targConditions(ci)).RT(curChanMask))}; 
+            %col 10: mean ( centerOfMass / RT)
+            aovDat(aovi, 10)= {mean( curDatSum(targConditions(ci)).centerOfMass(curChanMask)./...
+                                     curDatSum(targConditions(ci)).RT(curChanMask) ) };
+            aovi = aovi + 1; 
+
+
+
         end
     end
     cndMean = mean(chanMeans,2);
@@ -121,7 +170,11 @@ function [] = plotConditionCompare(curDatSum, targConditions, regName, histBins)
     end
     subplot(4,2,8)
     legend({curDatSum(targConditions).condition})
-
+    set(gcf,'color','w');
+   
+    export_fig(['G:\My Drive\Johnson\MTL_PFC_networkFigs\HFBsummary_' regName '_' ...
+        curDatSum(targConditions(1)).condition '_' ...
+        curDatSum(targConditions(2)).condition '.jpg'])
 
 %     subplot(3,2, [2,4])
 %     [sortedRT, order] = sort(curDatSum(targConditions(1)).RT ); 
