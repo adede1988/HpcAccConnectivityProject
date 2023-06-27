@@ -40,7 +40,7 @@ clear dlPFC hipp phg acc
 
 
 parfor ii = 1:length(allData)
-ii
+
 
 readAndSplitPipeline(allData(ii), prefix, regModels, saveFolder, chanFolder);
 

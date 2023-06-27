@@ -1,6 +1,6 @@
 function [] = HFBleadLagPipeline(chanFiles, idx) 
 
-curSub = load([chanFiles(idx).folder '/' chanFiles(idx).name]).curSub; 
+curSub = load([chanFiles(idx).folder '/' chanFiles(idx).name]).curSub; % go raw if it's not working!
 
 %initialize the output for all channels to all channels 
     %chan X chan X trial X time X offset
@@ -66,25 +66,7 @@ tic
                     31:size(HFB1,1)-30), ...
                 1:size(HFB1,2), 'uniformoutput', false)),[], size(HFB2,2));
                 
-                leadLagHit_on(chan, chan2, :, 31:size(test,1)+30, offSet+21) = test'; 
-
-                %miss trials 
-                HFB1 = curSub(chan).HFB.miss_on; 
-                HFB2 = curSub(chan2).HFB.miss_on; 
-                if offSet<0
-                    HFB2 = [ HFB2(abs(offSet)+1:end, :); zeros([abs(offSet), size(HFB1,2)] )];
-                elseif offSet>0
-                    HFB2 = [zeros([abs(offSet), size(HFB1,2)] ); HFB2(1:end -abs(offSet), :)];
-                end
-                
-                %hard code 30 time step (150ms +- around time point)
-                test = reshape(cell2mat(arrayfun(@(x) ... %x is loop on trials
-                    arrayfun(@(y) ... %y is loop on time
-                        corr(HFB1(y-30:y+30,x), HFB2(y-30:y+30,x)), ...
-                    31:size(HFB1,1)-30), ...
-                1:size(HFB1,2), 'uniformoutput', false)),[], size(HFB2,2));
-                
-                leadLagMiss_on(chan, chan2, :, 31:size(test,1)+30, offSet+21) = test'; 
+                leadLag(chan, chan2, :, 31:size(test,1)+30, offSet+21) = test'; 
 
 
             end
@@ -94,8 +76,6 @@ tic
 
     curSub(1).leadLagHit = leadLagHit; 
     curSub(1).leadLagMiss = leadLagMiss; 
-    curSub(1).leadLagHit_on = leadLagHit_on; 
-    curSub(1).leadLagMiss_on = leadLagMiss_on; 
 
     save([chanFiles(idx).folder '/' chanFiles(idx).name], 'curSub', '-v7.3')
     

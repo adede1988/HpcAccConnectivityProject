@@ -2,7 +2,7 @@ library(tidyverse)
 library(ggpubr)
 library(rstatix)
 library(performance)
-
+library(lmerTest)
 
 #standard power comparison across conditions in different times and frequencies independently ####
 data = read.csv('R:\\MSS\\Johnson_Lab\\dtf8829\\latencyAOVdat.csv')
@@ -13,7 +13,7 @@ data$encRet[data$cond=='hit_on' | data$cond=='miss_on'] <- 'ret'
 data$hitMiss = 'hit'
 data$hitMiss[data$cond=='miss_on' | data$cond == 'subMiss'] = 'miss'
 data$realID = paste(data$subID, data$chi)
-# data$adjTime = data$centerOfMass / data$RT
+data$adjTime = data$centerOfMass / data$RT
 # data <- data %>% filter(reg =='hip' | reg == 'phg')
 
 #regress out RT first
@@ -120,7 +120,7 @@ model_cond %>%
   #####################################################################################################################
   ######################## analaysis of proportion of time ############################################################
   
-  
+  data$adjTime = data$centerOfMass / data$RT
   data.lmer <- lmer(adjTime ~ reg*hitMiss*encRet + (1|realID), REML = TRUE, 
                     control = lmerControl(optimizer = "bobyqa", calc.derivs = TRUE), data = data)
   

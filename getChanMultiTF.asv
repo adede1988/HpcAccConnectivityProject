@@ -3,11 +3,14 @@ function [trialTF, outTim, frexOut] = getChanMultiTF(trialDat, frex, srate, time
 %trialDat:            timepoints X trials data points
 
 
-
+if srate ~= 1000
+    'cannot handle this!!!'
+    return
+end
 %initialize indexing
-timewinms = 500; %time window in milliseconds
-timeStepms = 25; %steps in terms of milliseconds independent of sampling rate 
+timewinms = 300; %time window in milliseconds
 timewin = round(timewinms / (1000/srate)); %timewin length in data point steps
+timeStepms = 5; %steps in terms of milliseconds independent of sampling rate 
 hz = linspace(0, srate, timewin);
 numfrex = sum(hz>min(frex) & hz<max(frex));
 L = size(trialDat,1); 
@@ -59,50 +62,44 @@ while check
 end
 
 %trim down outTim and trialTF
-remove = find(outTim==0);
-if remove(1) - remove(2) < -1 %if the outTim values include precisely time zero, don't lose that!
-    remove(1) = []; 
+find(outTim==0)
+
+
+
+
+
+
+winStarts = [1:timeStepms:size(zeroPadTD,1)-timewin];
+%time resolution  = 5ms (.05 seconds)
+
+%time X trials X freq
+trialTF = zeros([length(winStarts), size(trialDat,2), numfrex]); 
+outTim = times([1:timeStepms:length(times)]);
+
+ 
+
+
+
+for tt = 1:length(winStarts)
+    curDat = zeroPadTD(winStarts(tt):winStarts(tt)+timewin-1, :);
+    curDat = detrend(curDat); 
+    tapers    = dpss(size(curDat,1),5);
+    tapers = tapers(:,1:end-1); %discard the last taper
+    tapSpect = zeros(size(tapers,2),timewin, size(curDat,2)); 
+    for tapi = 1:size(tapers,2)
+        test = abs(fft(curDat.*tapers(:,tapi))).^2;
+        tapSpect(tapi,:,:) = test(1:timewin,:); 
+    end
+    
+    spect = squeeze(mean(tapSpect(:,hz>min(frex) & hz<max(frex),:), 1));
+    trialTF(tt,:,:) = spect'; 
+
+    
+
 end
-
-outTim(remove) = []; 
-trialTF(remove, :, :) = []; 
+    
 
 
-
-% 
-% 
-% 
-% winStarts = [1:timeStepms:size(zeroPadTD,1)-timewin];
-% %time resolution  = 5ms (.05 seconds)
-% 
-% %time X trials X freq
-% trialTF = zeros([length(winStarts), size(trialDat,2), numfrex]); 
-% outTim = times([1:timeStepms:length(times)]);
-% 
-%  
-% 
-% 
-% 
-% for tt = 1:length(winStarts)
-%     curDat = zeroPadTD(winStarts(tt):winStarts(tt)+timewin-1, :);
-%     curDat = detrend(curDat); 
-%     tapers    = dpss(size(curDat,1),5);
-%     tapers = tapers(:,1:end-1); %discard the last taper
-%     tapSpect = zeros(size(tapers,2),timewin, size(curDat,2)); 
-%     for tapi = 1:size(tapers,2)
-%         test = abs(fft(curDat.*tapers(:,tapi))).^2;
-%         tapSpect(tapi,:,:) = test(1:timewin,:); 
-%     end
-%     
-%     spect = squeeze(mean(tapSpect(:,hz>min(frex) & hz<max(frex),:), 1));
-%     trialTF(tt,:,:) = spect'; 
-% 
-%     
-% 
-% end
-%     
-% 
-% 
 
 
 

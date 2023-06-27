@@ -75,7 +75,7 @@ subDat.retInfo(errorTrials, :) = [];
     %standardize the labels from the anatomy notes
     [subDat.labels, subDat.labErrors] = getLabs(dat.elec, subDat.elecNotes);
 
-    if isfield(subDat.labErrors, 'elec')
+    if isfield(subDat.labErrors, '')>0
         disp(['unknown labels for: ' subDat.subID])
     end
 

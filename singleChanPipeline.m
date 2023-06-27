@@ -32,6 +32,7 @@ disp(['data loaded: ' chanDat.subID ' ' num2str(chanDat.chi)])
 %% needs time points! hard code
 if chanDat.fsample == 1000
     chanDat.enctim = [-1000:3500];
+    chanDat.enctimRT = [-2000:500];
     chanDat.retOtim = [-1000:3000];
     chanDat.retRtim = [-2000:500];
 else
@@ -62,22 +63,6 @@ end
 
     %take the mean across frequencies
     pow = squeeze(mean(pow, 3)); 
-
-%     %can I make an RT aligned set? 
-%     pow_align = nan(4000, size(pow,2)); 
-%     RTs = chanDat.encInfo(:, 4); 
-%     RT_down = 2500 - (round(RTs/5) + 200); 
-% 
-%     for tt = 1:size(pow,2)
-%         pow_align(RT_down(tt):RT_down(tt)+size(pow,1)-1, tt) = pow(:,tt); 
-%     end
-% 
-%     test = sum(isnan(pow_align),2);
-%     RT_tim = [-12495:5:7500];
-%     test = find(RT_tim<-2000 | RT_tim>2000);
-%     RT_tim(test) = []; 
-%     pow_align(test,:) = []; 
-
     
     test = mean(pow(:,chanDat.use), 2);
     test = test>1.96;
@@ -184,6 +169,7 @@ end
     pow = cell2mat(pow); %organize
     highnumfrex = length(mulFrex); 
     pow = reshape(pow, size(pow,1), size(pow,2)/highnumfrex, []); %organize
+    %take the mean across trials and frequencies to get a test timeseries
     test = mean(pow(:,chanDat.retInfo(:,1)>0 & chanDat.retInfo(:,1)<5,:), [2,3]);
     test = abs(test)>1.96;
     testidx = find(test([find(mulTim>=-1600,1): find(mulTim>=300,1)]));
