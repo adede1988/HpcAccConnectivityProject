@@ -51,7 +51,7 @@ curChani = find(idx == start);
 
 disp(['going for ' subID ' ' num2str(curChani)] )
 tic
-singleChanPipeline(chanFiles, curChani, datPre); 
+singleChanPipeline(chanFiles, curChani, codePre); 
 toc
 
 %% put encoding behavioral data onto it

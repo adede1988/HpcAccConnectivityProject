@@ -16,7 +16,7 @@
 addpath([codePre 'HpcAccConnectivityProject'])
 addpath([codePre 'myFrequentUse'])
 addpath([codePre 'myFrequentUse/export_fig_repo'])
-
+addpath(genpath([codePre 'mni2atlas']))
 
 datFolder = [datPre 'CHANDAT']; 
 chanFiles = dir(datFolder);
@@ -53,7 +53,7 @@ for chan = 1:length(chanFiles)
 
     try
     %check for HFB encoding reactivity
-    if chanDat.HFBenc == 1  || chanDat.HFBretOn == 1 || chanDat.HFBretRT == 1
+%     if chanDat.HFBenc == 1  || chanDat.HFBretOn == 1 || chanDat.HFBretRT == 1
         if Ei == 1
             allChanEncDat = chanDat; 
             Ei = Ei+1; 
@@ -61,7 +61,7 @@ for chan = 1:length(chanFiles)
             allChanEncDat(Ei) = chanDat; 
             Ei = Ei + 1; 
         end
-    end
+%     end
     catch
         errorChans = [errorChans chan]; 
     end
@@ -228,8 +228,8 @@ for sub = 1:length(IDs)
     age(sub) = temp(1).age; 
 end
 %lose DA8 because still haven't fixed up the sample rate issue
-sex(3) = []; 
-age(3) = []; 
+% sex(3) = []; 
+% age(3) = []; 
 
 
 %% heatmaps of hits vs. misses and activity w/i regions across all trials
@@ -272,7 +272,7 @@ for rr = 1:4
 %     curDat(dPrime<1.5) = []; 
 
 
-    curDat(cellfun(@(x) strcmp('DA8', x), {curDat.subID})) = []; 
+%     curDat(cellfun(@(x) strcmp('DA8', x), {curDat.subID})) = []; 
     curDatSum = HFBSummary(curDat, 1); 
 
     %need to add in the subsequent memory RT locked responses RESOLVED

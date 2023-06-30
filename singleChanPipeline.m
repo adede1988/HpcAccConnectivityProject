@@ -1,4 +1,4 @@
-function [] = singleChanPipeline(chanFiles, idx, datPre)
+function [] = singleChanPipeline(chanFiles, idx, codePre)
 
 %% set frequency parameters
 frex = logspace(log10(2),log10(80),100);
@@ -11,14 +11,28 @@ highstds = linspace(5, 7, highnumfrex);
 
 %% load the data
 
-% try %try loading the processed file
-%     chanDat = load([chanFiles(idx).folder '/' chanFiles(idx).name]).chanDat; 
-% catch
+try %try loading the processed file
+    chanDat = load([chanFiles(idx).folder '/' chanFiles(idx).name]).chanDat; 
+catch
     chanDat = load([chanFiles(idx).folder '/CHANRAW/' chanFiles(idx).name]).chanDat; % go raw if it's not working!
-% end
+end
 
 disp(['data loaded: ' chanDat.subID ' ' num2str(chanDat.chi)])
 
+%% get channel labels from Zach's CSV
+
+zachLabs = readtable([codePre 'HpcAccConnectivityProject\brodmann_area_channel.csv']);
+zachLabs = zachLabs(cell2mat(cellfun(@(x) strcmp(x, chanDat.subID), {zachLabs.subj}, 'uniformoutput', false )), :);
+%check that order is the same 
+if sum(abs(zachLabs.x - chanDat.elecpos(:,1))) < .00001
+    zachLabs = zachLabs(chanDat.chi, :); 
+    chanDat.brodmann = zachLabs.brodmann_area{1}; 
+    chanDat.aal_lab = zachLabs.aal_label{1}; 
+else
+    disp(['MISMATCH WITH ZACH COORDINATES!!!'])
+    chanDat.brodmann = 'ERROR'; 
+    chanDat.aal_lab = 'ERROR'; 
+end
 
 %% check for encoding info
 % if ~isfield(chanDat, 'encInfo')
@@ -29,18 +43,31 @@ disp(['data loaded: ' chanDat.subID ' ' num2str(chanDat.chi)])
 %     save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat')
 % end
 
-%% needs time points! hard code
-if chanDat.fsample == 1000
-    chanDat.enctim = [-1000:3500];
-    chanDat.enctimRT = [-2000:500];
-    chanDat.retOtim = [-1000:3000];
-    chanDat.retRtim = [-2000:500];
-else
-    step = 1000 / chanDat.fsample; 
-    chanDat.enctim = [-1000:step:3500];
-    chanDat.retOtim = [-1000:step:3000];
-    chanDat.retRtim = [-2000:step:500];
-end
+%% time points! hard code
+
+chanDat.enctim = [-1000:3500];
+chanDat.enctimRT = [-2000:500];
+chanDat.retOtim = [-1000:3000];
+chanDat.retRtim = [-2000:500];
+
+%% ROI membership
+
+    if sum(sum(chanDat.roiNote)) == 0 
+        roi = chanDat.roimni(chanDat.chi, :);
+        if roi(2) == 1
+            roi(2) = 0; %ECoG channels cannot be in the hippocampus
+            roi(3) = 1; %any ECoG channels flagged as H were probably in the PHG
+        end
+    else
+        roi = chanDat.roiNote(chanDat.chi, :);
+    end
+
+    chanDat.dlPFC = roi(1); 
+    chanDat.hip = roi(2); 
+    chanDat.phg = roi(3); 
+    chanDat.acc = roi(4); 
+
+    
 
 
 
@@ -50,12 +77,12 @@ end
 %                          retOn   : -450 : -50   ms
 %                          retRT   : -2000: -1600 ms
 
-% if ~isfield(chanDat, 'HFBenc')
+if ~isfield(chanDat, 'HFB')
 
     HFB = struct; 
     %ENCODING DATA: ***********************************************************
     chanDat.HFBenc = 0; %note if it's a reactive channel, assume not
-    [pow, mulTim, mulFrex] = getChanMultiTF(chanDat.enc, highfrex, chanDat.fsample, chanDat.enctim); 
+    [pow, mulTim, mulFrex] = getChanMultiTF(chanDat.enc, highfrex, chanDat.fsample, chanDat.enctim, 25); 
     pow = arrayfun(@(x) myChanZscore(pow(:,:,x), [find(mulTim>=-450,1), find(mulTim>=-50,1)] ), 1:size(pow,3), 'UniformOutput',false ); %z-score
     highnumfrex = length(mulFrex); 
     pow = cell2mat(pow); %organize
@@ -90,7 +117,7 @@ end
     HFB.enconFrex = mulFrex; 
 
     %ENCODING RT aligned DATA: ***********************************************************
-    [pow, mulTim, mulFrex] = getChanMultiTF(chanDat.encRT, highfrex, chanDat.fsample, chanDat.retRtim); 
+    [pow, mulTim, mulFrex] = getChanMultiTF(chanDat.encRT, highfrex, chanDat.fsample, chanDat.retRtim, 25); 
     %hack for long RT trials: 
         nanIdx = find(isnan(pow(30,:,1)));
         if ~isempty(nanIdx)
@@ -124,7 +151,7 @@ end
 
     %RETRIEVAL STIM ONSET: ****************************************************
     chanDat.HFBretOn = 0; 
-    [pow, mulTim, mulFrex] = getChanMultiTF(chanDat.retOn, highfrex, chanDat.fsample, chanDat.retOtim); 
+    [pow, mulTim, mulFrex] = getChanMultiTF(chanDat.retOn, highfrex, chanDat.fsample, chanDat.retOtim, 25); 
     pow = arrayfun(@(x) myChanZscore(pow(:,:,x), [find(mulTim>=-450,1), find(mulTim>=-50,1)] ), 1:size(pow,3), 'UniformOutput',false ); %z-score
     pow = cell2mat(pow); %organize
     highnumfrex = length(mulFrex); 
@@ -164,7 +191,7 @@ end
     
     %RETRIEVAL RESPONSE LOCKED: ***********************************************
     chanDat.HFBretRT = 0; 
-    [pow, mulTim, mulFrex] = getChanMultiTF(chanDat.retRT, highfrex, chanDat.fsample, chanDat.retRtim); 
+    [pow, mulTim, mulFrex] = getChanMultiTF(chanDat.retRT, highfrex, chanDat.fsample, chanDat.retRtim, 25); 
     pow = arrayfun(@(x) myChanZscore(pow(:,:,x), [find(mulTim>=-2000,1), find(mulTim>=-1600,1)] ), 1:size(pow,3), 'UniformOutput',false ); %z-score
     pow = cell2mat(pow); %organize
     highnumfrex = length(mulFrex); 
@@ -213,32 +240,144 @@ end
     save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat'); 
     disp(['save success: ' chanFiles(idx).folder '/' chanFiles(idx).name])
 
-% else
-%     disp('HFB already done')
-% end
+else
+    disp('HFB already done')
+end
 
 
 %% Lead lag analysis
-% x = 5
-% if sum(sum(chanDat.roiNote)) == 0 
-%     roiMat = chanDat.roimni; 
-% else
-%     roiMat = chanDat.roiNote; 
-% end
-% 
-% chanDat.chansRoi = sum(roiMat,2);
-% roiIDX = find(chanDat.chansRoi==1); 
-% chanDat.leadLagRoi = roiMat(roiIDX,:);
-% if ismember(chanDat.chi, roiIDX)
-% 
-% %look at lead v. lag across + - 200 ms
-% %chan X lead/lag X time
+
+
+
+
+%look at lead v. lag across + - 150 ms (multitaperd HFB data is at 25ms
+%steps, so that's only -6 to +6 steps
+%chan X lead/lag X time
 % leadLag = struct; 
 % encHit = zeros([sum(chanDat.chansRoi==1), 401, size(chanDat.HFB.subHit,1)]);
 % encMiss = zeros([sum(chanDat.chansRoi==1), 401, size(chanDat.HFB.subHit,1)]);
-% for chan = 1:length(roiIDX)
-%     chan
-%     chanDat2 = load([chanFiles(roiIDX(chan)).folder '/' chanFiles(roiIDX(chan)).name]).chanDat; 
+
+leadLag = struct; 
+%chan X time X offSet
+leadLagEncTim = chanDat.enctim(51:25:end-50);
+subMiss = zeros([length(chanFiles), length(leadLagEncTim), length([-150:150])]);
+subHit = subMiss; 
+
+leadLagRetTim = chanDat.retOtim(51:25:end-50); 
+miss_on = zeros([length(chanFiles), length(leadLagRetTim), length([-150:150])]);
+hit_on = miss_on; 
+for chan = 1:length(chanFiles)
+    chan
+    tic
+    chanDat2 =  load([chanFiles(chan).folder '/' chanFiles(chan).name]).chanDat; 
+
+    %need to grab the HFB data at higher resolution!
+
+    %ENCODING DATA%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %CHAN 1
+    [pow, mulTim, mulFrex] = getChanMultiTF(chanDat.enc, highfrex, chanDat.fsample, chanDat.enctim, 1);  
+    pow = arrayfun(@(x) myChanZscore(pow(:,:,x), [find(mulTim>=-450,1), find(mulTim>=-50,1)] ), 1:size(pow,3), 'UniformOutput',false ); %z-score
+    pow = cell2mat(pow); %organize
+    highnumfrex = length(mulFrex); 
+    pow = reshape(pow, size(pow,1), size(pow,2)/highnumfrex, []); %organize
+    pow = squeeze(mean(pow, 3)); %take the mean over frequencies
+
+    HFB1 = pow; 
+    clear pow
+
+    %CHAN 2
+    [pow2, mulTim, mulFrex] = getChanMultiTF(chanDat2.enc, highfrex, chanDat.fsample, chanDat.enctim, 1);  
+    pow2 = arrayfun(@(x) myChanZscore(pow2(:,:,x), [find(mulTim>=-450,1), find(mulTim>=-50,1)] ), 1:size(pow2,3), 'UniformOutput',false ); %z-score
+    pow2 = cell2mat(pow2); %organize
+    highnumfrex = length(mulFrex); 
+    pow2 = reshape(pow2, size(pow2,1), size(pow2,2)/highnumfrex, []); %organize
+    pow2 = squeeze(mean(pow2, 3)); %take the mean over frequencies
+    
+    
+    for offSet = -150:150 %negative means current Channel leads, positive means other channel leads
+        
+        if offSet<0
+            HFB2 = [pow2(abs(offSet)+1:end,:); zeros([abs(offSet), size(pow2,2)] ) ] ;
+        elseif offSet>0
+            HFB2 = [zeros([abs(offSet), size(pow2,2)] );  pow2(1:end-abs(offSet),:)];
+        end
+        %sub miss
+        subMiss(chan, :, offSet+151) = arrayfun(@(x) corr(reshape(HFB1(x-50:x+50, chanDat.use & chanDat.misses),[],1), ...
+                           reshape(HFB2(x-50:x+50, chanDat.use & chanDat.misses),[],1)), ...
+                           leadLagEncTim+abs(min(chanDat.enctim))+1 );
+        %sub hit
+        subHit(chan, :, offSet+151) = arrayfun(@(x) corr(reshape(HFB1(x-50:x+50, chanDat.use & chanDat.hits),[],1), ...
+                           reshape(HFB2(x-50:x+50, chanDat.use & chanDat.hits),[],1)), ...
+                           leadLagEncTim+abs(min(chanDat.enctim))+1 );
+
+
+    end
+
+
+
+
+    %RERTRIEVAL DATA%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %CHAN 1
+    [pow, mulTim, mulFrex] = getChanMultiTF(chanDat.retOn, highfrex, chanDat.fsample, chanDat.retOtim, 1);  
+    pow = arrayfun(@(x) myChanZscore(pow(:,:,x), [find(mulTim>=-450,1), find(mulTim>=-50,1)] ), 1:size(pow,3), 'UniformOutput',false ); %z-score
+    pow = cell2mat(pow); %organize
+    highnumfrex = length(mulFrex); 
+    pow = reshape(pow, size(pow,1), size(pow,2)/highnumfrex, []); %organize
+    pow = squeeze(mean(pow, 3)); %take the mean over frequencies
+
+    HFB1 = pow; 
+    clear pow
+
+    %CHAN 2
+    [pow2, mulTim, mulFrex] = getChanMultiTF(chanDat2.retOn, highfrex, chanDat.fsample, chanDat.retOtim, 1);  
+    pow2 = arrayfun(@(x) myChanZscore(pow2(:,:,x), [find(mulTim>=-450,1), find(mulTim>=-50,1)] ), 1:size(pow2,3), 'UniformOutput',false ); %z-score
+    pow2 = cell2mat(pow2); %organize
+    highnumfrex = length(mulFrex); 
+    pow2 = reshape(pow2, size(pow2,1), size(pow2,2)/highnumfrex, []); %organize
+    pow2 = squeeze(mean(pow2, 3)); %take the mean over frequencies
+    
+    
+    for offSet = -150:150 %negative means current Channel leads, positive means other channel leads
+       
+        if offSet<0
+            HFB2 = [pow2(abs(offSet)+1:end,:); zeros([abs(offSet), size(pow2,2)] ) ] ;
+        elseif offSet>0
+            HFB2 = [zeros([abs(offSet), size(pow2,2)] );  pow2(1:end-abs(offSet),:)];
+        end
+        %miss
+        miss_on(chan, :, offSet+151) = arrayfun(@(x) corr(reshape(HFB1(x-50:x+50, chanDat.retInfo(:,1)==2),[],1), ...
+                           reshape(HFB2(x-50:x+50, chanDat.retInfo(:,1)==2),[],1)), ...
+                           leadLagRetTim+abs(min(chanDat.retOtim))+1 );
+        %sub hit
+        hit_on(chan, :, offSet+151) = arrayfun(@(x) corr(reshape(HFB1(x-50:x+50, chanDat.retInfo(:,1)==1),[],1), ...
+                           reshape(HFB2(x-50:x+50, chanDat.retInfo(:,1)==1),[],1)), ...
+                           leadLagRetTim+abs(min(chanDat.retOtim))+1 );
+
+
+    end
+
+
+
+
+
+
+    toc
+end
+leadLag.encTim = leadLagEncTim; 
+leadLag.subMiss = subMiss; 
+leadLag.subHit = subHit; 
+leadLag.retTim = leadLagRetTim; 
+leadLag.missRet = miss_on; 
+leadLag.hitRet = hit_on; 
+chanDat.leadLag = leadLag; 
+
+clear HFB1 HFB2 leadLag subMiss subHit miss_on hit_on 
+disp('attempting saving')
+save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat'); 
+disp(['save success: ' chanFiles(idx).folder '/' chanFiles(idx).name])
+
+
+% 
 % 
 %     % ENCODING DATA! ******************************************************
 %     %HITS: 

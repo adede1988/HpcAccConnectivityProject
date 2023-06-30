@@ -36,9 +36,9 @@ function [aovDat, aovi] = plotConditionCompare(curDatSum, targConditions, regNam
     imagesc(curDatSum(targConditions(ci)).HFB(:,order)')
     caxis([-7,7])
     hold on 
-    plot(sortedRT/5 + find(curDatSum(targConditions(ci)).time>=0,1), [1:length(sortedRT)], 'color', 'red', 'linewidth', 2)
-    xticks([101:100:size(curDatSum(targConditions(ci)).HFB,1)])
-    xticklabels(curDatSum(targConditions(ci)).time([101:100:size(curDatSum(targConditions(ci)).HFB,1)]))
+    plot(sortedRT/25 + find(curDatSum(targConditions(ci)).time>=0,1), [1:length(sortedRT)], 'color', 'red', 'linewidth', 2)
+    xticks([9:16:size(curDatSum(targConditions(ci)).HFB,1)])
+    xticklabels(curDatSum(targConditions(ci)).time([9:16:size(curDatSum(targConditions(ci)).HFB,1)]))
     xline(find(curDatSum(targConditions(ci)).time>=0,1), '--', 'linewidth', 4, 'color', 'green')
     title([regName ' ' curDatSum(targConditions(ci)).condition], 'interpreter', 'none')
 

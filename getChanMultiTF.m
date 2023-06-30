@@ -1,4 +1,4 @@
-function [trialTF, outTim, frexOut] = getChanMultiTF(trialDat, frex, srate, times)
+function [trialTF, outTim, frexOut] = getChanMultiTF(trialDat, frex, srate, times, timeStepms)
 
 %trialDat:            timepoints X trials data points
 
@@ -6,7 +6,7 @@ function [trialTF, outTim, frexOut] = getChanMultiTF(trialDat, frex, srate, time
 
 %initialize indexing
 timewinms = 500; %time window in milliseconds
-timeStepms = 25; %steps in terms of milliseconds independent of sampling rate 
+% timeStepms = 25; %steps in terms of milliseconds independent of sampling rate 
 timewin = round(timewinms / (1000/srate)); %timewin length in data point steps
 hz = linspace(0, srate, timewin);
 numfrex = sum(hz>min(frex) & hz<max(frex));
@@ -60,6 +60,7 @@ end
 
 %trim down outTim and trialTF
 remove = find(outTim==0);
+if length(remove)>1
 if remove(1) - remove(2) < -1 %if the outTim values include precisely time zero, don't lose that!
     remove(1) = []; 
 end
@@ -67,6 +68,7 @@ end
 outTim(remove) = []; 
 trialTF(remove, :, :) = []; 
 
+end
 
 
 % 

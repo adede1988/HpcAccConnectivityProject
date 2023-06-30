@@ -14,7 +14,7 @@ data$hitMiss = 'hit'
 data$hitMiss[data$cond=='miss_on' | data$cond == 'subMiss'] = 'miss'
 data$realID = paste(data$subID, data$chi)
 data$adjTime = data$centerOfMass / data$RT
-# data <- data %>% filter(reg =='hip' | reg == 'phg')
+# data <- data %>% filter(reg == 'hip' | reg == 'phg')
 
 #regress out RT first
 
@@ -23,7 +23,7 @@ data$adjTime = data$centerOfMass / data$RT
 data.rt = lm(centerOfMass ~ RT, data = data)
 data$rt_res = data.rt$residuals
 
-data.lmer <- lmer(rt_res ~ reg*hitMiss*encRet + (1+chi|subID), REML = TRUE, 
+data.lmer <- lmer(rt_res ~ reg*hitMiss*encRet + (1 | chi/subID), REML = TRUE, 
                   control = lmerControl(optimizer = "bobyqa", calc.derivs = TRUE), data = data)
 
 Anova(data.lmer)
@@ -60,6 +60,20 @@ model_cond %>%
   geom_point(aes(fill = reg, color = reg, group = reg, x = hitMiss, y = rt_res), 
              size = 1.5, shape = 19, alpha = 1, position = position_jitterdodge(.1), data = data) + 
   ylim(c(-400, 400))
+
+
+model_cond %>%
+  ggplot(aes(x = encRet, y = rt_res, group = reg)) + 
+  geom_line(aes(group = reg), alpha = 1 , colour = "gray48", linewidth = .5, position = position_dodge(1)) +
+  geom_point(aes(fill = reg, group = reg, color = reg), size = 1, shape = 19, alpha = 0.2, position = position_dodge(1)) +
+  geom_errorbar(aes(colour = reg, ymin = conf.low, ymax = conf.high), 
+                width = 0.4, alpha = 0.95, size = 1.3, position = position_dodge(1)) + 
+  facet_wrap(~hitMiss) + 
+  geom_point(aes(fill = reg, color = reg, group = reg, x = encRet, y = rt_res), 
+             size = 1.5, shape = 19, alpha = 1, position = position_jitterdodge(.1), data = data) + 
+  ylim(c(-400, 400))
+
+
 
 #plot of region effect alone
 model_cond <- ggemmeans(data.lmer,
