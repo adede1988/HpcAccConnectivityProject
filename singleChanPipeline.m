@@ -23,6 +23,7 @@ disp(['data loaded: ' chanDat.subID ' ' num2str(chanDat.chi)])
 
 zachLabs = readtable([codePre 'HpcAccConnectivityProject/brodmann_area_channel.csv']);
 zachLabs = zachLabs(cell2mat(cellfun(@(x) strcmp(x, chanDat.subID), {zachLabs.subj}, 'uniformoutput', false )), :);
+zachLabs(isnan(zachLabs.x), :) = []; 
 %check that order is the same 
 try
 
