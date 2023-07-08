@@ -26,50 +26,111 @@ chanFiles = chanFiles(test);
 
 %% loop over channels and grab all the summary info for responsive channels
 Ei = 1; 
-Oi = 1; 
-Ri = 1; 
+
 errorChans = []; 
-curRawDir = 'someStuff'; 
-for chan = 1:length(chanFiles)
-    chan
-    chanDat = load([chanFiles(chan).folder '/' chanFiles(chan).name]).chanDat; 
-    try
-        chanDat = rmfield(chanDat, {'leadLag', 'leadLagRoi', 'chansRoi'});
-    catch
-        disp(['chan: ' num2str(chan) ' did not have leadlag'])
-    end
 
-    %make sure that the encoding info is available in the data
-    if ~isfield(chanDat, 'encInfo')
-        if strcmp(curRawDir, chanDat.dataDir)
-            chanDat.encInfo = rawDat.trialinfo;
+subIDs = cellfun(@(x) split(x, '_'), {chanFiles.name}, 'UniformOutput',false);
+subIDs_all = cellfun(@(x) x{2}, subIDs, 'UniformOutput',false); 
+subIDs_uni = unique(subIDs_all); 
+clear subIDs
+
+for sub = 1:length(subIDs_uni)
+    sub
+    curSub = chanFiles(cellfun(@(x) strcmp(x, subIDs_uni{sub}), subIDs_all)); 
+    curSubReact = zeros(length(curSub), 1); 
+    curIdx = []; 
+    for chan = 1:length(curSub)
+        chanDat = load([curSub(chan).folder '/' curSub(chan).name]).chanDat; 
+        chanDat.reactive = 1; 
+        if isfield(chanDat, 'HFB') && isfield(chanDat, 'leadLag') %check for complete processing
+             reactive = reactiveTest(chanDat.HFB);
+             
+             if sum(reactive>0)>0
+                curSubReact(chan) = 1; 
+                curIdx = [curIdx Ei]; 
+                if Ei == 1
+                    allChanEncDat = chanDat; 
+                    Ei = Ei+1; 
+                else
+                    allChanEncDat(Ei) = chanDat; 
+                    Ei = Ei + 1; 
+                end
+
+             end
+
         else
-            rawDat = load([chanDat.dataDir '/' chanDat.encDatFn]).data; 
-            curRawDir = chanDat.dataDir; 
-            chanDat.encInfo = rawDat.trialinfo; 
-            save([chanFiles(chan).folder '/' chanFiles(chan).name], 'chanDat')
-        end
-    end
+            %note down error channel! 
+            errorChans = [errorChans sub*1000+chan];
+            disp(['missing processing for: ' subIDs_uni{sub} ' channel: ' num2str(chan)])
 
-    try
-    %check for HFB encoding reactivity
-%     if chanDat.HFBenc == 1  || chanDat.HFBretOn == 1 || chanDat.HFBretRT == 1
-        if Ei == 1
-            allChanEncDat = chanDat; 
-            Ei = Ei+1; 
-        else
-            allChanEncDat(Ei) = chanDat; 
-            Ei = Ei + 1; 
         end
-%     end
-    catch
-        errorChans = [errorChans chan]; 
-    end
 
+        
+
+    end
     
+    for chan = 1:length(curIdx)
+        allChanEncDat(curIdx(chan)).reactive = curSubReact; 
+        allChanEncDat(curIdx(chan)).leadLag.subMiss(curSubReact==0,:,:) = []; 
+        allChanEncDat(curIdx(chan)).leadLag.subHit(curSubReact==0,:,:) = []; 
+        allChanEncDat(curIdx(chan)).leadLag.missRet(curSubReact==0,:,:) = []; 
+        allChanEncDat(curIdx(chan)).leadLag.hitRet(curSubReact==0,:,:) = []; 
+    end
 
 
 end
+
+
+
+
+
+
+
+
+% for chan = 1:length(chanFiles)
+%     chan
+%     chanDat = load([chanFiles(chan).folder '/' chanFiles(chan).name]).chanDat; 
+%     if isfield(chanDat, 'HFB') && isfield(chanDat, 'leadLag') %check for complete processing
+%         reactive = reactiveTest(chanDat.HFB); 
+%         
+% 
+% 
+%     else
+% 
+%         errorChans = [errorChans chan]; 
+% 
+%     end
+% end
+%     
+
+
+
+
+% 
+%     if sum(reactive>0)>0
+%         if Ei = 1 
+% 
+%    
+% 
+%     try
+%     %check for HFB encoding reactivity
+% %     if chanDat.HFBenc == 1  || chanDat.HFBretOn == 1 || chanDat.HFBretRT == 1
+%         if Ei == 1
+%             allChanEncDat = chanDat; 
+%             Ei = Ei+1; 
+%         else
+%             allChanEncDat(Ei) = chanDat; 
+%             Ei = Ei + 1; 
+%         end
+% %     end
+%     catch
+%         errorChans = [errorChans chan]; 
+%     end
+% 
+%     
+% 
+% 
+% end
 
 
 
