@@ -39,9 +39,11 @@ for sub = 1:length(subIDs_uni)
     curSub = chanFiles(cellfun(@(x) strcmp(x, subIDs_uni{sub}), subIDs_all)); 
     curSubReact = zeros(length(curSub), 1); 
     curIdx = []; 
+    flag = true;
     for chan = 1:length(curSub)
         chanDat = load([curSub(chan).folder '/' curSub(chan).name]).chanDat; 
         chanDat.reactive = 1; 
+        chanDat.goodSub = 1; 
         if isfield(chanDat, 'HFB') && isfield(chanDat, 'leadLag') %check for complete processing
              reactive = reactiveTest(chanDat.HFB);
              
@@ -60,6 +62,7 @@ for sub = 1:length(subIDs_uni)
 
         else
             %note down error channel! 
+            flag = false; 
             errorChans = [errorChans sub*1000+chan];
             disp(['missing processing for: ' subIDs_uni{sub} ' channel: ' num2str(chan)])
 
@@ -68,69 +71,268 @@ for sub = 1:length(subIDs_uni)
         
 
     end
+    if flag
+        for chan = 1:length(curIdx)
+            allChanEncDat(curIdx(chan)).reactive = curSubReact; 
+            allChanEncDat(curIdx(chan)).leadLag.subMiss(curSubReact==0,:,:) = []; 
+            allChanEncDat(curIdx(chan)).leadLag.subHit(curSubReact==0,:,:) = []; 
+            allChanEncDat(curIdx(chan)).leadLag.missRet(curSubReact==0,:,:) = []; 
+            allChanEncDat(curIdx(chan)).leadLag.hitRet(curSubReact==0,:,:) = []; 
+        end
     
-    for chan = 1:length(curIdx)
-        allChanEncDat(curIdx(chan)).reactive = curSubReact; 
-        allChanEncDat(curIdx(chan)).leadLag.subMiss(curSubReact==0,:,:) = []; 
-        allChanEncDat(curIdx(chan)).leadLag.subHit(curSubReact==0,:,:) = []; 
-        allChanEncDat(curIdx(chan)).leadLag.missRet(curSubReact==0,:,:) = []; 
-        allChanEncDat(curIdx(chan)).leadLag.hitRet(curSubReact==0,:,:) = []; 
+        subIDX = find(cellfun(@(x) strcmp(x, subIDs_uni{sub}), {allChanEncDat.subID})); 
+        subMiss = zeros([sum(allChanEncDat(subIDX(1)).reactive), ...
+            sum(allChanEncDat(subIDX(1)).reactive), ...
+            size(allChanEncDat(subIDX(1)).leadLag.subMiss, [2,3])]); 
+        subHit = subMiss; 
+        missRet = zeros([sum(allChanEncDat(subIDX(1)).reactive), ...
+            sum(allChanEncDat(subIDX(1)).reactive), ...
+            size(allChanEncDat(subIDX(1)).leadLag.missRet, [2,3])]); 
+        hitRet = missRet; 
+        for chan = 1:length(subIDX)
+            subMiss(chan,:,:,:) = allChanEncDat(subIDX(chan)).leadLag.subMiss; 
+            subHit(chan,:,:,:) = allChanEncDat(subIDX(chan)).leadLag.subHit; 
+            missRet(chan,:,:,:) = allChanEncDat(subIDX(chan)).leadLag.missRet; 
+            hitRet(chan,:,:,:) = allChanEncDat(subIDX(chan)).leadLag.hitRet; 
+            if chan>1
+                allChanEncDat(subIDX(chan)).leadLag = 1; 
+            end
+        end
+        
+        allChanEncDat(subIDX(1)).leadLag.subMiss = subMiss; 
+        allChanEncDat(subIDX(1)).leadLag.subHit = subHit; 
+        allChanEncDat(subIDX(1)).leadLag.missRet = missRet; 
+        allChanEncDat(subIDX(1)).leadLag.hitRet = hitRet; 
+    else
+        subIDX = find(cellfun(@(x) strcmp(x, subIDs_uni{sub}), {allChanEncDat.subID})); 
+        for chan = 1:length(subIDX)
+            allChanEncDat(subIDX(chan)).goodSub = 0; 
+        end
     end
+
+end
+
+%get rid of the not currently working subjects
+allChanEncDat([allChanEncDat.goodSub]==0) = []; 
+%lose the kids
+allChanEncDat([allChanEncDat.age]<16) = []; 
+
+%% how many available electrodes in each region? 
+regions = unique({allChanEncDat.brodmann}); 
+LRcombo = cell(length(regions),1); 
+for reg = 1:length(regions)
+   LRcombo{reg} = split(regions{reg}, '-');
+   LRcombo{reg} = LRcombo{reg}{end}; 
+end
+LRcombo = unique(LRcombo); 
+
+regCount = struct; 
+for reg = 1:length(LRcombo)
+    regCount(reg).name = LRcombo{reg}; 
+    regIDX = find(cellfun(@(x) ~isempty(x), cellfun(@(x) strfind(x, LRcombo{reg}), {allChanEncDat.brodmann}, 'uniformoutput', false)) );
+    regCount(reg).n = length(unique({allChanEncDat(regIDX).subID}));
+    regCount(reg).count = length(regIDX);
+    regCount(reg).subs = unique({allChanEncDat(regIDX).subID});
+
 
 
 end
 
 
+%% I want to know about inter-regional connections, but not all regions are simulrecorded in all patients (FAR FROM IT!)
+%I will create a regions X regions X time X lag matrix, each cell will get
+%a value that is a mean of all the available connections
+areaCount = sum([regCount.n]>=5);
+regCount([regCount.n]<5) = []; 
+
+subIDs = unique({allChanEncDat.subID});
+
+%region 1 (ii) X region 2 (jj) X time X leadLag
+subMiss = zeros([areaCount, areaCount, size(allChanEncDat(1).leadLag.subMiss, [3,4])]);
+subHit = subMiss; 
+%countDat: region 1 (ii) X region 2 (jj)
+connectionCount = zeros(areaCount, areaCount); 
+for ii = 1:areaCount
+    ii
+    for jj = 1:areaCount
+        if ii ~= jj
+            %need to ID all subs who have both ii and jj regions
+            idx_ii = find(cellfun(@(y) ~isempty(y), cellfun(@(x) strfind(x, regCount(ii).name), {allChanEncDat.brodmann}, 'uniformoutput', false)) );
+            sub_ii = regCount(ii).subs;
+%             allSubii = {allChanEncDat(idx_ii).subID};
+            idx_jj = find(cellfun(@(y) ~isempty(y), cellfun(@(x) strfind(x, regCount(jj).name), {allChanEncDat.brodmann}, 'uniformoutput', false)) );
+            sub_jj = regCount(jj).subs;
+%             allSubjj = {allChanEncDat(idx_jj).subID};
+            cc=0;
+            for ss = 1:length(sub_ii)
+                
+                if sum(cellfun(@(x) strcmp(x, sub_ii{ss}), sub_jj )) > 0 %is a subject implanted in both regions? 
+                    %get their leadLag info
+                    subIDX = find(cellfun(@(x) strcmp(sub_ii{ss}, x), {allChanEncDat.subID}));
+                    leadLag = allChanEncDat(subIDX(1)).leadLag; 
+                    subReg = {allChanEncDat(subIDX).brodmann};
+                    LRcombo = cell(length(subReg),1); 
+                    for reg = 1:length(subReg)
+                       LRcombo{reg} = split(subReg{reg}, '-');
+                       LRcombo{reg} = LRcombo{reg}{end}; 
+                    end
+                    
+                    subReg_ii = find(cellfun(@(x) strcmp(x, regCount(ii).name), LRcombo)); 
+                    subReg_jj = find(cellfun(@(x) strcmp(x, regCount(jj).name), LRcombo)); 
+                    
+                    for iii = 1:length(subReg_ii)
+                        for jjj = 1:length(subReg_jj)
+                            subMiss(ii,jj,:,:) = subMiss(ii,jj,:,:) + leadLag.subMiss(subReg_ii(iii), subReg_jj(jjj), :, :); 
+                            subHit(ii,jj,:,:) = subHit(ii,jj,:,:) + leadLag.subHit(subReg_ii(iii), subReg_jj(jjj), :, :);
+                            cc = cc+1; 
+                        end
+                    end
+                    
 
 
 
+                end
+            end
+            
+            subMiss(ii,jj,:,:) = subMiss(ii,jj,:,:) ./ cc; 
+            subHit(ii, jj,:,:) = subHit(ii,jj,:,:) ./ cc; 
+
+            connectionCount(ii,jj) = cc; 
+
+        end
+    end
+end
+
+hitLead = VideoWriter(join(['G:\My Drive\Johnson\MTL_PFC_networkFigs\leadLagAll\' 'hitLead.avi'],''));
+open(hitLead); 
+hitLag = VideoWriter(join(['G:\My Drive\Johnson\MTL_PFC_networkFigs\leadLagAll\' 'hitLag.avi'],''));
+open(hitLag);
+missLead = VideoWriter(join(['G:\My Drive\Johnson\MTL_PFC_networkFigs\leadLagAll\' 'missLead.avi'],''));
+open(missLead);
+missLag = VideoWriter(join(['G:\My Drive\Johnson\MTL_PFC_networkFigs\leadLagAll\' 'missLag.avi'],''));
+open(missLag); 
+
+hitLeadLagDiff = VideoWriter(join(['G:\My Drive\Johnson\MTL_PFC_networkFigs\leadLagAll\' 'hitLeadLagDiff.avi'],''));
+open(hitLeadLagDiff); 
+
+f = figure;
+f.Position = [100 100 600 600];
+for ii = 1:length(allChanEncDat(1).leadLag.encTim)
+ii
+    test = squeeze(mean(subHit(:,:,ii,151:170),4)); 
+    test(isnan(test)) = 0; 
+%     imagesc(test)
+%     axis square
+%     xticks([1:areaCount])
+%     xticklabels({regCount.name})
+%     yticks([1:areaCount])
+%     yticklabels({regCount.name})
+%     caxis([-.25, .25])
+%     title(['subHit lead map at: ' num2str(allChanEncDat(1).leadLag.encTim(ii))])
+%     frame = getframe(gcf);
+%     writeVideo(hitLead, frame); 
+%     writeVideo(hitLead, frame); 
+%     writeVideo(hitLead, frame); 
+%     writeVideo(hitLead, frame); 
+% 
+% 
+    test2 = squeeze(mean(subHit(:,:,ii,130:150),4)); 
+    test2(isnan(test2)) = 0; 
+%     imagesc(test2)
+%     axis square
+%     xticks([1:areaCount])
+%     xticklabels({regCount.name})
+%     yticks([1:areaCount])
+%     yticklabels({regCount.name})
+%     caxis([-.25, .25])
+%     title(['subHit follow map at: ' num2str(allChanEncDat(1).leadLag.encTim(ii))])
+%     frame = getframe(gcf);
+%     writeVideo(hitLag, frame); 
+%     writeVideo(hitLag, frame); 
+%     writeVideo(hitLag, frame); 
+%     writeVideo(hitLag, frame); 
+
+    
+    imagesc(test - test2)
+    axis square
+    xticks([1:areaCount])
+    xticklabels({regCount.name})
+    yticks([1:areaCount])
+    yticklabels({regCount.name})
+    caxis([.05, .15])
+    title(['subHit lead over Lag: ' num2str(allChanEncDat(1).leadLag.encTim(ii))])
+    frame = getframe(gcf);
+    writeVideo(hitLeadLagDiff, frame); 
+    writeVideo(hitLeadLagDiff, frame); 
+    writeVideo(hitLeadLagDiff, frame); 
+    writeVideo(hitLeadLagDiff, frame); 
 
 
 
-% for chan = 1:length(chanFiles)
-%     chan
-%     chanDat = load([chanFiles(chan).folder '/' chanFiles(chan).name]).chanDat; 
-%     if isfield(chanDat, 'HFB') && isfield(chanDat, 'leadLag') %check for complete processing
-%         reactive = reactiveTest(chanDat.HFB); 
-%         
+%     test = squeeze(mean(subMiss(:,:,ii,151:170),4)); 
+%     test(isnan(test)) = 0; 
+%     imagesc(test)
+%     axis square
+%     xticks([1:areaCount])
+%     xticklabels({regCount.name})
+%     yticks([1:areaCount])
+%     yticklabels({regCount.name})
+%     caxis([-.25, .25])
+%     title(['subMiss lead map at: ' num2str(allChanEncDat(1).leadLag.encTim(ii))])
+%     frame = getframe(gcf);
+%     writeVideo(missLead, frame); 
+%     writeVideo(missLead, frame); 
+%     writeVideo(missLead, frame); 
+%     writeVideo(missLead, frame); 
 % 
 % 
-%     else
+%     test = squeeze(mean(subMiss(:,:,ii,130:150),4)); 
+%     test(isnan(test)) = 0; 
+%     imagesc(test)
+%     axis square
+%     xticks([1:areaCount])
+%     xticklabels({regCount.name})
+%     yticks([1:areaCount])
+%     yticklabels({regCount.name})
+%     caxis([-.25, .25])
+%     title(['subMiss follow map at: ' num2str(allChanEncDat(1).leadLag.encTim(ii))])
+%     frame = getframe(gcf);
+%     writeVideo(missLag, frame); 
+%     writeVideo(missLag, frame); 
+%     writeVideo(missLag, frame); 
+%     writeVideo(missLag, frame); 
+% % 
 % 
-%         errorChans = [errorChans chan]; 
-% 
-%     end
-% end
-%     
+% export_fig(join(['G:\My Drive\Johnson\MTL_PFC_networkFigs\leadLagAll\' 'leadLagAll' num2str(ii) '.jpg'],''), '-r300')
 
 
 
+end
 
-% 
-%     if sum(reactive>0)>0
-%         if Ei = 1 
-% 
-%    
-% 
-%     try
-%     %check for HFB encoding reactivity
-% %     if chanDat.HFBenc == 1  || chanDat.HFBretOn == 1 || chanDat.HFBretRT == 1
-%         if Ei == 1
-%             allChanEncDat = chanDat; 
-%             Ei = Ei+1; 
-%         else
-%             allChanEncDat(Ei) = chanDat; 
-%             Ei = Ei + 1; 
-%         end
-% %     end
-%     catch
-%         errorChans = [errorChans chan]; 
-%     end
-% 
-%     
-% 
-% 
-% end
+close(hitLead); 
+close(hitLag); 
+close(missLead); 
+close(missLag); 
+close(hitLeadLagDiff); 
+
+
+for ii = 1:length(allChanEncDat(1).leadLag.encTim)
+    figure('visible', false)
+plot(squeeze(mean(subMiss(13,:,ii,151:170),4)), 'linewidth', 3, 'color', 'red')
+xticks([1:areaCount])
+xticklabels({regCount.name})
+hold on 
+plot(squeeze(mean(subMiss(13,:,ii,130:150),4)), 'linewidth', 3, 'color', 'magenta')
+plot(squeeze(mean(subHit(13,:,ii,151:170),4)), 'linewidth', 3, 'color', 'green')
+plot(squeeze(mean(subHit(13,:,ii,130:150),4)), 'linewidth', 3, 'color', 'blue')
+legend({'lead miss', 'lag miss', 'lead hit', 'lag hit'})
+title(['hippocampus leadlag at: ' num2str(allChanEncDat(1).leadLag.encTim(ii))])
+ylim([-.25,.25])
+export_fig(join(['G:\My Drive\Johnson\MTL_PFC_networkFigs\leadLagAll\' 'leadLagHip' num2str(ii) '.jpg'],''), '-r300')
+end
+
+
+
 
 
 
