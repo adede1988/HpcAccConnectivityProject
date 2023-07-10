@@ -1,0 +1,2 @@
+/var/spool/slurmd/job3254249/slurm_script: line 19: 99526 Killed                  matlab -singleCompThread -batch "start=${SLURM_ARRAY_TASK_ID}; singleChanPipelineWrapper;"
+slurmstepd: error: Detected 1 oom-kill event(s) in StepId=3254249.batch. Some of your processes may have been killed by the cgroup out-of-memory handler.

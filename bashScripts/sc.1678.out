@@ -1,0 +1,37 @@
+getting started: 1678
+attempting file: 1678
+going for ECoG25 7
+data loaded: ECoG25 7
+HFB already done
+already done with leadLag
+working on TF
+encoding done
+encoding RT done
+retrieval 1 done
+retrieval 2 done
+attempting saving
+save success: /projects/p31578/dtf8829/QuestConnect/CHANDAT/chanDat_ECoG25_007.mat
+working on ISPC
+channel: 1 took 0 minutes
+channel: 2 took 0 minutes
+channel: 3 took 0 minutes
+channel: 4 took 0 minutes
+channel: 5 took 0 minutes
+channel: 6 took 0 minutes
+channel: 7 took 0 minutes
+channel: 8 took 2.6 minutes
+channel: 9 took 2.5 minutes
+channel: 10 took 2.6 minutes
+channel: 11 took 2.6 minutes
+channel: 12 took 2.6 minutes
+channel: 13 took 2.5 minutes
+channel: 14 took 2.6 minutes
+channel: 15 took 2.5 minutes
+channel: 16 took 2.5 minutes
+channel: 17 took 2.5 minutes
+channel: 18 took 2.4 minutes
+channel: 19 took 2.5 minutes
+channel: 20 took 2.5 minutes
+attempting saving
+save success: /projects/p31578/dtf8829/QuestConnect/CHANDAT/chanDat_ECoG25_007.mat
+Elapsed time is 154.549293 seconds.

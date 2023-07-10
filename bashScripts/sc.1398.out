@@ -1,0 +1,620 @@
+getting started: 1398
+attempting file: 1398
+going for ECoG20 44
+data loaded: ECoG20 44
+HFB already done
+
+chan =
+
+     1
+
+Elapsed time is 308.777577 seconds.
+
+chan =
+
+     2
+
+Elapsed time is 306.089852 seconds.
+
+chan =
+
+     3
+
+Elapsed time is 304.924289 seconds.
+
+chan =
+
+     4
+
+Elapsed time is 304.854021 seconds.
+
+chan =
+
+     5
+
+Elapsed time is 306.954529 seconds.
+
+chan =
+
+     6
+
+Elapsed time is 305.084419 seconds.
+
+chan =
+
+     7
+
+Elapsed time is 307.431786 seconds.
+
+chan =
+
+     8
+
+Elapsed time is 306.175946 seconds.
+
+chan =
+
+     9
+
+Elapsed time is 304.892901 seconds.
+
+chan =
+
+    10
+
+Elapsed time is 315.242389 seconds.
+
+chan =
+
+    11
+
+Elapsed time is 296.462870 seconds.
+
+chan =
+
+    12
+
+Elapsed time is 252.329902 seconds.
+
+chan =
+
+    13
+
+Elapsed time is 244.707624 seconds.
+
+chan =
+
+    14
+
+Elapsed time is 259.909827 seconds.
+
+chan =
+
+    15
+
+Elapsed time is 297.522105 seconds.
+
+chan =
+
+    16
+
+Elapsed time is 300.569182 seconds.
+
+chan =
+
+    17
+
+Elapsed time is 304.500174 seconds.
+
+chan =
+
+    18
+
+Elapsed time is 304.101608 seconds.
+
+chan =
+
+    19
+
+Elapsed time is 295.204638 seconds.
+
+chan =
+
+    20
+
+Elapsed time is 288.944169 seconds.
+
+chan =
+
+    21
+
+Elapsed time is 283.578679 seconds.
+
+chan =
+
+    22
+
+Elapsed time is 279.712720 seconds.
+
+chan =
+
+    23
+
+Elapsed time is 277.147776 seconds.
+
+chan =
+
+    24
+
+Elapsed time is 273.957650 seconds.
+
+chan =
+
+    25
+
+Elapsed time is 273.463936 seconds.
+
+chan =
+
+    26
+
+Elapsed time is 274.336996 seconds.
+
+chan =
+
+    27
+
+Elapsed time is 273.834145 seconds.
+
+chan =
+
+    28
+
+Elapsed time is 276.963103 seconds.
+
+chan =
+
+    29
+
+Elapsed time is 278.438753 seconds.
+
+chan =
+
+    30
+
+Elapsed time is 278.319889 seconds.
+
+chan =
+
+    31
+
+Elapsed time is 277.033375 seconds.
+
+chan =
+
+    32
+
+Elapsed time is 275.303064 seconds.
+
+chan =
+
+    33
+
+Elapsed time is 274.062772 seconds.
+
+chan =
+
+    34
+
+Elapsed time is 274.701855 seconds.
+
+chan =
+
+    35
+
+Elapsed time is 276.125926 seconds.
+
+chan =
+
+    36
+
+Elapsed time is 275.849576 seconds.
+
+chan =
+
+    37
+
+Elapsed time is 274.911213 seconds.
+
+chan =
+
+    38
+
+Elapsed time is 274.968825 seconds.
+
+chan =
+
+    39
+
+Elapsed time is 274.519819 seconds.
+
+chan =
+
+    40
+
+Elapsed time is 274.309489 seconds.
+
+chan =
+
+    41
+
+Elapsed time is 274.631162 seconds.
+
+chan =
+
+    42
+
+Elapsed time is 274.529703 seconds.
+
+chan =
+
+    43
+
+Elapsed time is 279.216040 seconds.
+
+chan =
+
+    44
+
+Elapsed time is 291.424524 seconds.
+
+chan =
+
+    45
+
+Elapsed time is 288.159731 seconds.
+
+chan =
+
+    46
+
+Elapsed time is 271.589924 seconds.
+
+chan =
+
+    47
+
+Elapsed time is 276.849761 seconds.
+
+chan =
+
+    48
+
+Elapsed time is 281.297651 seconds.
+
+chan =
+
+    49
+
+Elapsed time is 273.751580 seconds.
+
+chan =
+
+    50
+
+Elapsed time is 282.888709 seconds.
+
+chan =
+
+    51
+
+Elapsed time is 283.705192 seconds.
+
+chan =
+
+    52
+
+Elapsed time is 282.373056 seconds.
+
+chan =
+
+    53
+
+Elapsed time is 285.778617 seconds.
+
+chan =
+
+    54
+
+Elapsed time is 277.802938 seconds.
+
+chan =
+
+    55
+
+Elapsed time is 278.356684 seconds.
+
+chan =
+
+    56
+
+Elapsed time is 282.646297 seconds.
+
+chan =
+
+    57
+
+Elapsed time is 282.380853 seconds.
+
+chan =
+
+    58
+
+Elapsed time is 282.218337 seconds.
+
+chan =
+
+    59
+
+Elapsed time is 271.516689 seconds.
+
+chan =
+
+    60
+
+Elapsed time is 270.778432 seconds.
+
+chan =
+
+    61
+
+Elapsed time is 272.995385 seconds.
+
+chan =
+
+    62
+
+Elapsed time is 259.093599 seconds.
+
+chan =
+
+    63
+
+Elapsed time is 254.324112 seconds.
+
+chan =
+
+    64
+
+Elapsed time is 250.323011 seconds.
+
+chan =
+
+    65
+
+Elapsed time is 246.330499 seconds.
+
+chan =
+
+    66
+
+Elapsed time is 245.658057 seconds.
+
+chan =
+
+    67
+
+Elapsed time is 248.156774 seconds.
+
+chan =
+
+    68
+
+Elapsed time is 260.510473 seconds.
+
+chan =
+
+    69
+
+Elapsed time is 246.175428 seconds.
+
+chan =
+
+    70
+
+Elapsed time is 245.789219 seconds.
+
+chan =
+
+    71
+
+Elapsed time is 260.133226 seconds.
+
+chan =
+
+    72
+
+Elapsed time is 261.554896 seconds.
+
+chan =
+
+    73
+
+Elapsed time is 261.948995 seconds.
+
+chan =
+
+    74
+
+Elapsed time is 260.353759 seconds.
+
+chan =
+
+    75
+
+Elapsed time is 262.210255 seconds.
+
+chan =
+
+    76
+
+Elapsed time is 260.944584 seconds.
+
+chan =
+
+    77
+
+Elapsed time is 261.899240 seconds.
+
+chan =
+
+    78
+
+Elapsed time is 260.313051 seconds.
+
+chan =
+
+    79
+
+Elapsed time is 261.575939 seconds.
+
+chan =
+
+    80
+
+Elapsed time is 260.019127 seconds.
+
+chan =
+
+    81
+
+Elapsed time is 262.298144 seconds.
+
+chan =
+
+    82
+
+Elapsed time is 260.433609 seconds.
+
+chan =
+
+    83
+
+Elapsed time is 263.297719 seconds.
+
+chan =
+
+    84
+
+Elapsed time is 260.928739 seconds.
+
+chan =
+
+    85
+
+Elapsed time is 262.416711 seconds.
+
+chan =
+
+    86
+
+Elapsed time is 256.128727 seconds.
+attempting saving
+save success: /projects/p31578/dtf8829/QuestConnect/CHANDAT/chanDat_ECoG20_044.mat
+working on TF
+encoding done
+encoding RT done
+retrieval 1 done
+retrieval 2 done
+attempting saving
+save success: /projects/p31578/dtf8829/QuestConnect/CHANDAT/chanDat_ECoG20_044.mat
+working on ISPC
+channel: 1 took 0 minutes
+channel: 2 took 0 minutes
+channel: 3 took 0 minutes
+channel: 4 took 0 minutes
+channel: 5 took 0 minutes
+channel: 6 took 0 minutes
+channel: 7 took 0 minutes
+channel: 8 took 0 minutes
+channel: 9 took 0 minutes
+channel: 10 took 0 minutes
+channel: 11 took 0 minutes
+channel: 12 took 0 minutes
+channel: 13 took 0 minutes
+channel: 14 took 0 minutes
+channel: 15 took 0 minutes
+channel: 16 took 0 minutes
+channel: 17 took 0 minutes
+channel: 18 took 0 minutes
+channel: 19 took 0 minutes
+channel: 20 took 0 minutes
+channel: 21 took 0 minutes
+channel: 22 took 0 minutes
+channel: 23 took 0 minutes
+channel: 24 took 0 minutes
+channel: 25 took 0 minutes
+channel: 26 took 0 minutes
+channel: 27 took 0 minutes
+channel: 28 took 0 minutes
+channel: 29 took 0 minutes
+channel: 30 took 0 minutes
+channel: 31 took 0 minutes
+channel: 32 took 0 minutes
+channel: 33 took 0 minutes
+channel: 34 took 0 minutes
+channel: 35 took 0 minutes
+channel: 36 took 0 minutes
+channel: 37 took 0 minutes
+channel: 38 took 0 minutes
+channel: 39 took 0 minutes
+channel: 40 took 0 minutes
+channel: 41 took 0 minutes
+channel: 42 took 0 minutes
+channel: 43 took 0 minutes
+channel: 44 took 0 minutes
+channel: 45 took 4.2 minutes
+channel: 46 took 4.1 minutes
+channel: 47 took 4.1 minutes
+channel: 48 took 4.1 minutes
+channel: 49 took 4.1 minutes
+channel: 50 took 4.1 minutes
+channel: 51 took 4.1 minutes
+channel: 52 took 4 minutes
+channel: 53 took 4 minutes
+channel: 54 took 4 minutes
+channel: 55 took 3.8 minutes
+channel: 56 took 3.8 minutes
+channel: 57 took 3.7 minutes
+channel: 58 took 3.7 minutes
+channel: 59 took 3.7 minutes
+channel: 60 took 3.7 minutes
+channel: 61 took 3.7 minutes
+channel: 62 took 3.7 minutes
+channel: 63 took 3.7 minutes
+channel: 64 took 3.7 minutes
+channel: 65 took 3.7 minutes
+channel: 66 took 3.7 minutes
+channel: 67 took 3.7 minutes
+channel: 68 took 3.7 minutes
+channel: 69 took 3.7 minutes
+channel: 70 took 3.7 minutes
+channel: 71 took 3.7 minutes
+channel: 72 took 4.6 minutes
+channel: 73 took 4.3 minutes
+channel: 74 took 4.9 minutes
+channel: 75 took 4.9 minutes
+channel: 76 took 4.9 minutes
+channel: 77 took 4 minutes
+channel: 78 took 3.8 minutes
+channel: 79 took 3.7 minutes
+channel: 80 took 3.7 minutes
+channel: 81 took 3.9 minutes
+channel: 82 took 4 minutes
+channel: 83 took 4 minutes
+channel: 84 took 3.4 minutes
+channel: 85 took 3.4 minutes
+channel: 86 took 3.7 minutes
+attempting saving
+save success: /projects/p31578/dtf8829/QuestConnect/CHANDAT/chanDat_ECoG20_044.mat
+Elapsed time is 225.048550 seconds.

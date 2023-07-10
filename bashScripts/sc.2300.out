@@ -1,0 +1,325 @@
+getting started: 2300
+attempting file: 2300
+going for ECoG37 6
+data loaded: ECoG37 6
+     1
+
+     2
+
+     3
+
+     4
+
+     5
+
+     6
+
+     7
+
+     8
+
+     9
+
+    10
+
+    11
+
+    12
+
+    13
+
+    14
+
+    15
+
+    16
+
+    17
+
+    18
+
+    19
+
+    20
+
+    21
+
+    22
+
+    23
+
+    24
+
+    25
+
+    26
+
+    27
+
+    28
+
+    29
+
+    30
+
+    31
+
+    32
+
+    33
+
+    34
+
+MISMATCH WITH ZACH COORDINATES!!!
+HFB already done
+
+chan =
+
+     1
+
+Elapsed time is 190.499831 seconds.
+
+chan =
+
+     2
+
+Elapsed time is 190.336612 seconds.
+
+chan =
+
+     3
+
+Elapsed time is 188.241723 seconds.
+
+chan =
+
+     4
+
+Elapsed time is 189.547613 seconds.
+
+chan =
+
+     5
+
+Elapsed time is 189.402006 seconds.
+
+chan =
+
+     6
+
+Elapsed time is 190.836492 seconds.
+
+chan =
+
+     7
+
+Elapsed time is 189.953862 seconds.
+
+chan =
+
+     8
+
+Elapsed time is 192.489365 seconds.
+
+chan =
+
+     9
+
+Elapsed time is 191.031636 seconds.
+
+chan =
+
+    10
+
+Elapsed time is 190.901574 seconds.
+
+chan =
+
+    11
+
+Elapsed time is 190.141686 seconds.
+
+chan =
+
+    12
+
+Elapsed time is 191.026545 seconds.
+
+chan =
+
+    13
+
+Elapsed time is 189.471239 seconds.
+
+chan =
+
+    14
+
+Elapsed time is 190.406404 seconds.
+
+chan =
+
+    15
+
+Elapsed time is 191.481771 seconds.
+
+chan =
+
+    16
+
+Elapsed time is 192.480865 seconds.
+
+chan =
+
+    17
+
+Elapsed time is 189.279769 seconds.
+
+chan =
+
+    18
+
+Elapsed time is 191.780651 seconds.
+
+chan =
+
+    19
+
+Elapsed time is 188.842801 seconds.
+
+chan =
+
+    20
+
+Elapsed time is 193.279245 seconds.
+
+chan =
+
+    21
+
+Elapsed time is 191.865133 seconds.
+
+chan =
+
+    22
+
+Elapsed time is 192.672898 seconds.
+
+chan =
+
+    23
+
+Elapsed time is 188.935968 seconds.
+
+chan =
+
+    24
+
+Elapsed time is 191.707076 seconds.
+
+chan =
+
+    25
+
+Elapsed time is 191.380123 seconds.
+
+chan =
+
+    26
+
+Elapsed time is 191.650638 seconds.
+
+chan =
+
+    27
+
+Elapsed time is 190.080332 seconds.
+
+chan =
+
+    28
+
+Elapsed time is 192.034568 seconds.
+
+chan =
+
+    29
+
+Elapsed time is 191.234654 seconds.
+
+chan =
+
+    30
+
+Elapsed time is 191.206154 seconds.
+
+chan =
+
+    31
+
+Elapsed time is 190.926951 seconds.
+
+chan =
+
+    32
+
+Elapsed time is 194.687549 seconds.
+
+chan =
+
+    33
+
+Elapsed time is 192.028140 seconds.
+
+chan =
+
+    34
+
+Elapsed time is 191.826067 seconds.
+attempting saving
+save success: /projects/p31578/dtf8829/QuestConnect/CHANDAT/chanDat_ECoG37_006.mat
+working on TF
+encoding done
+encoding RT done
+retrieval 1 done
+retrieval 2 done
+attempting saving
+save success: /projects/p31578/dtf8829/QuestConnect/CHANDAT/chanDat_ECoG37_006.mat
+working on ISPC
+channel: 1 took 0 minutes
+channel: 2 took 0 minutes
+channel: 3 took 0 minutes
+channel: 4 took 0 minutes
+channel: 5 took 0 minutes
+channel: 6 took 0 minutes
+channel: 7 took 3 minutes
+channel: 8 took 3 minutes
+channel: 9 took 3 minutes
+channel: 10 took 3 minutes
+channel: 11 took 2.9 minutes
+channel: 12 took 2.9 minutes
+channel: 13 took 2.9 minutes
+channel: 14 took 2.9 minutes
+channel: 15 took 3 minutes
+channel: 16 took 2.9 minutes
+channel: 17 took 2.9 minutes
+channel: 18 took 2.9 minutes
+channel: 19 took 3 minutes
+channel: 20 took 2.9 minutes
+channel: 21 took 3 minutes
+channel: 22 took 2.9 minutes
+channel: 23 took 2.9 minutes
+channel: 24 took 2.9 minutes
+channel: 25 took 2.9 minutes
+channel: 26 took 2.9 minutes
+channel: 27 took 2.9 minutes
+channel: 28 took 2.9 minutes
+channel: 29 took 2.9 minutes
+channel: 30 took 2.9 minutes
+channel: 31 took 2.9 minutes
+channel: 32 took 2.9 minutes
+channel: 33 took 2.9 minutes
+channel: 34 took 2.9 minutes
+attempting saving
+save success: /projects/p31578/dtf8829/QuestConnect/CHANDAT/chanDat_ECoG37_006.mat
+Elapsed time is 177.128501 seconds.

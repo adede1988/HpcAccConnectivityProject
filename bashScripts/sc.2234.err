@@ -1,0 +1,12 @@
+{Error using corr
+Requires a data matrix X.
+
+Error in singleChanPipeline>@(x)corr(reshape(HFB1(x-50:x+50,chanDat.use&chanDat.hits),[],1),reshape(HFB2(x-50:x+50,chanDat.use&chanDat.hits),[],1)) (line 329)
+            subHit(chan, :, offSet+151) = arrayfun(@(x) corr(reshape(HFB1(x-50:x+50, chanDat.use & chanDat.hits),[],1), ...
+
+Error in singleChanPipeline (line 329)
+            subHit(chan, :, offSet+151) = arrayfun(@(x) corr(reshape(HFB1(x-50:x+50, chanDat.use & chanDat.hits),[],1), ...
+
+Error in singleChanPipelineWrapper (line 54)
+singleChanPipeline(chanFiles, curChani, codePre);
+} 
