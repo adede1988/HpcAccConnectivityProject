@@ -407,7 +407,7 @@ end
 % subsequent hit / subsequent miss (encoding data)
 % hit / miss / CR / FA (retrieval locked to onset data)
 % hit / miss / CR / FA (retrieval locked to response data)
-
+x = 5;
 if ~isfield(chanDat, 'TF')
     disp('working on TF')
     %to keep size down, don't put large variables into the chanDat struct!

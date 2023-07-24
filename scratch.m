@@ -462,7 +462,7 @@ for tt=1:length(timBreaks)-1
     ft_plot_mesh(surface_template_r.mesh, 'facecolor', [0.781 0.762 0.664], 'EdgeColor', 'none', 'facealpha', 0.1);
     scatter3(elecLocs(:,1), elecLocs(:,2), elecLocs(:,3), 'filled', 'color', 'red')
     text(elecLocs(:,1), elecLocs(:,2), elecLocs(:,3), [data.myLabels])
-    view([260,30])
+    view([90,0])
     axis([-70, 70, -50, 100, -50, 50])
 
     subplot 122
