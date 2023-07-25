@@ -31,7 +31,7 @@ addpath(genpath([pre 'myFrequentUse']))
 %% initialize 
 
 sumDat = dir([preDat 'SUMDAT']); 
-LLidx = find(cellfun(@(x) length(x)>0, strfind({sumDat.name}, '_LL')));
+LLidx = find(cellfun(@(x) length(x)>0, strfind({sumDat.name}, '_LL.mat')));
 sumDat = sumDat(LLidx); 
 
 LLpermutationPipeline(sumDat(start))

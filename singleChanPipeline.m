@@ -21,7 +21,7 @@ disp(['data loaded: ' chanDat.subID ' ' num2str(chanDat.chi)])
 
 %% get channel labels from Zach's CSV
 
-zachLabs = readtable([codePre 'HpcAccConnectivityProject/brodmann_area_channel.csv']);
+zachLabs = readtable([codePre 'HpcAccConnectivityProject/brodmann_by_subj.csv']);
 zachLabs = zachLabs(cell2mat(cellfun(@(x) strcmp(x, chanDat.subID), {zachLabs.subj}, 'uniformoutput', false )), :);
 zachLabs(isnan(zachLabs.x), :) = []; 
 %check that order is the same 
@@ -29,8 +29,11 @@ try
 
     if sum(abs(zachLabs.x - chanDat.elecpos(:,1))) < .00001
         zachLabs = zachLabs(chanDat.chi, :); 
-        chanDat.brodmann = zachLabs.brodmann_area{1}; 
-        chanDat.aal_lab = zachLabs.aal_label{1}; 
+        chanDat.brodmann = zachLabs.brodmann{1}; 
+        chanDat.ogChan = zachLabs.Channel{1}; 
+        if isfield(chanDat, 'aal_lab')
+            chanDat = rmfield(chanDat, 'aal_lab');
+        end
     else
         disp(['MISMATCH WITH ZACH COORDINATES!!!'])
         chanDat.brodmann = 'ERROR'; 
@@ -268,8 +271,10 @@ end
 %% Lead lag analysis
 
 
-if ~isfield(chanDat, 'leadLag')
-
+if ~isfield(chanDat, 'garble')
+    if isfield(chanDat, 'leadLag')
+        chanDat = rmfield(chanDat, 'leadLag');
+    end
     %look at lead v. lag across + - 150 ms (multitaperd HFB data is at 25ms
     %steps, so that's only -6 to +6 steps
     %chan X lead/lag X time
@@ -280,18 +285,52 @@ if ~isfield(chanDat, 'leadLag')
     leadLag = struct; 
     %chan X time X offSet
     leadLagEncTim = chanDat.enctim(51:25:end-50);
-    subMiss = zeros([length(chanFiles), length(leadLagEncTim), length([-150:150])]);
-    subHit = subMiss; 
+%     subMiss = zeros([length(chanFiles), length(leadLagEncTim), length([-150:150])]);
+%     subHit = subMiss; 
     
     leadLagRetTim = chanDat.retOtim(51:25:end-50); 
-    miss_on = zeros([length(chanFiles), length(leadLagRetTim), length([-150:150])]);
-    hit_on = miss_on; 
+%     miss_on = zeros([length(chanFiles), length(leadLagRetTim), length([-150:150])]);
+%     hit_on = miss_on; 
+
+
+    %trial index values
+    subMiss = find(chanDat.use & chanDat.misses); 
+    subHit = find(chanDat.use & chanDat.hits); 
+    miss_on = find(chanDat.retInfo(:,1)==2);
+    hit_on = find(chanDat.retInfo(:,1)==1); 
+    %out stats will be chan X pos/neg X clust X stat: 
+    %stat 1: num points
+    %stat 2: mean time
+    %stat 3: min time
+    %stat 4: max time
+    %stat 5: mean LL
+    %stat 6: min LL
+    %stat 7: max LL
+    %stat 8: mean correlation Hit
+    %stat 9: min correlation Hit
+    %stat 10: max correlation Hit
+    %stat 11: median correlation Hit
+    %stat 12: mean correlation Miss
+    %stat 13: min correlation Miss
+    %stat 14: max correlation Miss
+    %stat 15: median correlation Miss
+
+    %Initialize with 30 possible clusters, all valued nan
+
+
+    outCluStats = nan(length(chanFiles), 2, 30, 15); %subsequent memory
+    outCluStats2 = nan(length(chanFiles), 2, 30, 15); %retrieval
+
+
+
+
     for chan = 1:length(chanFiles)
-        chan
+        disp(['leadLag analysis with channel: ' num2str(chan) ' of ' num2str(length(chanFiles))])
         tic
-%         chanDat2 =  load([chanFiles(chan).folder '/' chanFiles(chan).name]).chanDat; 
-        chanDat2 = load([chanFiles(chan).folder '/CHANRAW/' chanFiles(chan).name]).chanDat; % go raw if it's not working!
-        %need to grab the HFB data at higher resolution!
+
+        chanDat2 = load([chanFiles(chan).folder '/CHANRAW/' chanFiles(chan).name]).chanDat; 
+        %need to grab the HFB data at higher resolution, so calculate from
+        %scratch 
     
         %ENCODING DATA%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %CHAN 1
@@ -313,28 +352,13 @@ if ~isfield(chanDat, 'leadLag')
         pow2 = reshape(pow2, size(pow2,1), size(pow2,2)/highnumfrex, []); %organize
         pow2 = squeeze(mean(pow2, 3)); %take the mean over frequencies
         
-        
-        for offSet = -150:150 %negative means current Channel leads, positive means other channel leads
-            
-            if offSet<0
-                HFB2 = [pow2(abs(offSet)+1:end,:); zeros([abs(offSet), size(pow2,2)] ) ] ;
-            elseif offSet>0
-                HFB2 = [zeros([abs(offSet), size(pow2,2)] );  pow2(1:end-abs(offSet),:)];
-            end
-            %sub miss
-            subMiss(chan, :, offSet+151) = arrayfun(@(x) corr(reshape(HFB1(x-50:x+50, chanDat.use & chanDat.misses),[],1), ...
-                               reshape(HFB2(x-50:x+50, chanDat.use & chanDat.misses),[],1)), ...
-                               leadLagEncTim+abs(min(chanDat.enctim))+1 );
-            %sub hit
-            subHit(chan, :, offSet+151) = arrayfun(@(x) corr(reshape(HFB1(x-50:x+50, chanDat.use & chanDat.hits),[],1), ...
-                               reshape(HFB2(x-50:x+50, chanDat.use & chanDat.hits),[],1)), ...
-                               leadLagEncTim+abs(min(chanDat.enctim))+1 );
-    
-    
-        end
-    
-    
-    
+        disp('encoding: ')
+        outCluStats = conditionCluTest(HFB1, pow2, subMiss, subHit, outCluStats, chanDat.enctim, leadLagEncTim, chan);
+
+
+      
+
+
     
         %RERTRIEVAL DATA%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %CHAN 1
@@ -356,40 +380,20 @@ if ~isfield(chanDat, 'leadLag')
         pow2 = reshape(pow2, size(pow2,1), size(pow2,2)/highnumfrex, []); %organize
         pow2 = squeeze(mean(pow2, 3)); %take the mean over frequencies
         
-        
-        for offSet = -150:150 %negative means current Channel leads, positive means other channel leads
-           
-            if offSet<0
-                HFB2 = [pow2(abs(offSet)+1:end,:); zeros([abs(offSet), size(pow2,2)] ) ] ;
-            elseif offSet>0
-                HFB2 = [zeros([abs(offSet), size(pow2,2)] );  pow2(1:end-abs(offSet),:)];
-            end
-            %miss
-            miss_on(chan, :, offSet+151) = arrayfun(@(x) corr(reshape(HFB1(x-50:x+50, chanDat.retInfo(:,1)==2),[],1), ...
-                               reshape(HFB2(x-50:x+50, chanDat.retInfo(:,1)==2),[],1)), ...
-                               leadLagRetTim+abs(min(chanDat.retOtim))+1 );
-            %sub hit
-            hit_on(chan, :, offSet+151) = arrayfun(@(x) corr(reshape(HFB1(x-50:x+50, chanDat.retInfo(:,1)==1),[],1), ...
-                               reshape(HFB2(x-50:x+50, chanDat.retInfo(:,1)==1),[],1)), ...
-                               leadLagRetTim+abs(min(chanDat.retOtim))+1 );
+
+        disp('retrieval: ')
+        outCluStats2 = conditionCluTest(HFB1, pow2, miss_on, hit_on, outCluStats2, chanDat.retOtim, leadLagRetTim, chan);
     
-    
-        end
-    
-    
-    
-    
-        toc
+        x = num2str(toc/60); 
+        disp(['.......................................................' x])
     end
     leadLag.encTim = leadLagEncTim; 
-    leadLag.subMiss = subMiss; 
-    leadLag.subHit = subHit; 
     leadLag.retTim = leadLagRetTim; 
-    leadLag.missRet = miss_on; 
-    leadLag.hitRet = hit_on; 
+    leadLag.subMem = outCluStats; 
+    leadLag.retMem = outCluStats2; 
     chanDat.leadLag = leadLag; 
     
-    clear HFB1 HFB2 leadLag subMiss subHit miss_on hit_on 
+    clear HFB1 HFB2 pow2 leadLag subMiss subHit miss_on hit_on 
     disp('attempting saving')
     save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat'); 
     disp(['save success: ' chanFiles(idx).folder '/' chanFiles(idx).name])
@@ -407,7 +411,7 @@ end
 % subsequent hit / subsequent miss (encoding data)
 % hit / miss / CR / FA (retrieval locked to onset data)
 % hit / miss / CR / FA (retrieval locked to response data)
-x = 5;
+
 if ~isfield(chanDat, 'TF')
     disp('working on TF')
     %to keep size down, don't put large variables into the chanDat struct!

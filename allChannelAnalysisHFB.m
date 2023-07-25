@@ -124,11 +124,13 @@ end
 
 %% scratch
 sumMat = zeros(size(obs));
+count = 0; 
 for ii = 1:size(cluStats,1)
     for jj = 1:size(cluStats,1)
-        cur = squeeze(cluStats(ii,jj,1,:,:)); 
+        cur = squeeze(cluStats(ii,jj,2,:,:)); 
         ccidx = find(~isnan(cur(:,1)));
         for cc = 1:length(ccidx)
+            count = count+1; 
             sumMat(tim>=cur(ccidx(cc),3) & tim<=cur(ccidx(cc),4), LLtim>=cur(ccidx(cc),6) & LLtim<=cur(ccidx(cc),7) ) = ...
                 sumMat(tim>=cur(ccidx(cc),3) & tim<=cur(ccidx(cc),4), LLtim>=cur(ccidx(cc),6) & LLtim<=cur(ccidx(cc),7) )+1; 
         end
