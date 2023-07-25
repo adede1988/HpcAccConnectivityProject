@@ -283,6 +283,8 @@ if ~isfield(chanDat, 'garble')
     % encMiss = zeros([sum(chanDat.chansRoi==1), 401, size(chanDat.HFB.subHit,1)]);
     
     leadLag = struct; 
+    reactive = reactiveTest(chanDat.HFB);
+    if sum(reactive==1)>0
     %chan X time X offSet
     leadLagEncTim = chanDat.enctim(51:25:end-50);
 %     subMiss = zeros([length(chanFiles), length(leadLagEncTim), length([-150:150])]);
@@ -292,7 +294,7 @@ if ~isfield(chanDat, 'garble')
 %     miss_on = zeros([length(chanFiles), length(leadLagRetTim), length([-150:150])]);
 %     hit_on = miss_on; 
 
-
+    includedChans = []; 
     %trial index values
     subMiss = find(chanDat.use & chanDat.misses); 
     subHit = find(chanDat.use & chanDat.hits); 
@@ -328,7 +330,10 @@ if ~isfield(chanDat, 'garble')
         disp(['leadLag analysis with channel: ' num2str(chan) ' of ' num2str(length(chanFiles))])
         tic
 
-        chanDat2 = load([chanFiles(chan).folder '/CHANRAW/' chanFiles(chan).name]).chanDat; 
+        chanDat2 = load([chanFiles(chan).folder '/' chanFiles(chan).name]).chanDat; 
+        reactive2 = reactiveTest(chanDat2.HFB);
+        if sum(reactive2==1)>0
+            includedChans = [includedChans chan]; 
         %need to grab the HFB data at higher resolution, so calculate from
         %scratch 
     
@@ -386,7 +391,7 @@ if ~isfield(chanDat, 'garble')
     
         x = num2str(toc/60); 
         disp(['.......................................................' x])
-
+        leadLag.inclChan = includedChans; 
         leadLag.encTim = leadLagEncTim; 
         leadLag.retTim = leadLagRetTim; 
         leadLag.subMem = outCluStats; 
@@ -394,9 +399,10 @@ if ~isfield(chanDat, 'garble')
         chanDat.leadLag2 = leadLag; 
         disp('interim save')
         save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat');
+        end
     end
 
-
+    leadLag.inclChan = includedChans; 
     leadLag.encTim = leadLagEncTim; 
     leadLag.retTim = leadLagRetTim; 
     leadLag.subMem = outCluStats; 
@@ -407,7 +413,13 @@ if ~isfield(chanDat, 'garble')
     disp('attempting saving')
     save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat'); 
     disp(['save success: ' chanFiles(idx).folder '/' chanFiles(idx).name])
-
+    
+    else
+        chanDat.leadLag2 = 1; 
+        disp('non-reactive channel save')
+        save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat'); 
+        disp(['save success: ' chanFiles(idx).folder '/' chanFiles(idx).name])
+    end
 else
     disp('already done with leadLag')
 
