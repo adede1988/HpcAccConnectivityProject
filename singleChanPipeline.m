@@ -316,7 +316,7 @@ if ~isfield(chanDat, 'garble')
     %stat 15: median correlation Miss
 
     %Initialize with 30 possible clusters, all valued nan
-
+    
 
     outCluStats = nan(length(chanFiles), 2, 30, 15); %subsequent memory
     outCluStats2 = nan(length(chanFiles), 2, 30, 15); %retrieval
@@ -386,12 +386,22 @@ if ~isfield(chanDat, 'garble')
     
         x = num2str(toc/60); 
         disp(['.......................................................' x])
+
+        leadLag.encTim = leadLagEncTim; 
+        leadLag.retTim = leadLagRetTim; 
+        leadLag.subMem = outCluStats; 
+        leadLag.retMem = outCluStats2; 
+        chanDat.leadLag2 = leadLag; 
+        disp('interim save')
+        save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat');
     end
+
+
     leadLag.encTim = leadLagEncTim; 
     leadLag.retTim = leadLagRetTim; 
     leadLag.subMem = outCluStats; 
     leadLag.retMem = outCluStats2; 
-    chanDat.leadLag = leadLag; 
+    chanDat.leadLag2 = leadLag; 
     
     clear HFB1 HFB2 pow2 leadLag subMiss subHit miss_on hit_on 
     disp('attempting saving')
