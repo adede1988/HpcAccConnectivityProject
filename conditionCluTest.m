@@ -41,8 +41,8 @@ function [outCluStats] = conditionCluTest(HFB1, pow2, missidx, hitidx, outCluSta
                 disp(['................permutation: ' num2str(p)])
             end
             % subsample to the lower trial count-1
-%             h = 1:length(hitidx); 
-%             m = 1:length(missidx); 
+            h = 1:length(hitidx); 
+            m = 1:length(missidx); 
 %             h = randsample(h, kVal, true); 
 %             m = randsample(m, kVal, true); 
 %             obsT(:,:,p) = reshape(cell2mat(arrayfun(@(x) arrayfun(@(y) myT(hitTemp(h, y, x), missTemp(m, y, x),  1), 1:301),...
@@ -132,14 +132,14 @@ function [outCluStats] = conditionCluTest(HFB1, pow2, missidx, hitidx, outCluSta
                 %stat 1: num points
                 outCluStats(chan,2,cc,1) = sum(clusterinfo.neg_clusters(pidx(cc)).inds, 'all'); 
                 %stat 2: mean time
-                cluTim = tim(sum(clusterinfo.neg_clusters(pidx(cc)).inds,2)>0);
+                cluTim = dstim(sum(clusterinfo.neg_clusters(pidx(cc)).inds,1)>0);
                 outCluStats(chan,2,cc,2) = mean(cluTim); 
                 %stat 3: min time
                 outCluStats(chan,2,cc,3) = min(cluTim); 
                 %stat 4: max time
                 outCluStats(chan,2,cc,4) = max(cluTim); 
                 %stat 5: mean LL
-                cluLL = LLtim(sum(clusterinfo.neg_clusters(pidx(cc)).inds,1)>0);
+                cluLL = LLtim(sum(clusterinfo.neg_clusters(pidx(cc)).inds,2)>0);
                 outCluStats(chan,2,cc,5) = mean(cluLL); 
                 %stat 6: min LL
                 outCluStats(chan,2,cc,6) = min(cluLL); 

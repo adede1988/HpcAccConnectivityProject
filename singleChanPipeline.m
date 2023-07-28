@@ -117,20 +117,39 @@ end
 
 %% Lead lag analysis
 
+x = 5
+
 
 if ~isfield(chanDat, 'garble')
     if isfield(chanDat, 'leadLag')
         chanDat = rmfield(chanDat, 'leadLag');
     end
-    %look at lead v. lag across + - 150 ms (multitaperd HFB data is at 25ms
-    %steps, so that's only -6 to +6 steps
-    %chan X lead/lag X time
-    % leadLag = struct; 
-    % encHit = zeros([sum(chanDat.chansRoi==1), 401, size(chanDat.HFB.subHit,1)]);
-    % encMiss = zeros([sum(chanDat.chansRoi==1), 401, size(chanDat.HFB.subHit,1)]);
-    
-    leadLag = struct; 
-    reactive = reactiveTest(chanDat.HFB);
+  
+
+    if isfield(chanDat, 'leadLag2') %check for previous work! 
+        leadLag = chanDat.leadLag2; 
+        if isstruct(leadLag) %is this a reactive channel with previous leadLag calculation? 
+            start = max(leadLag.inclChan); %start value for looping below
+            includedChans = leadLag.inclChan; %previous work done on these channels
+            outCluStats = leadLag.subMem; 
+            outCluStats2 = leadLag.retMem; 
+            reactive = [1,1,1,1]; 
+        else
+            reactive = [0,0,0,0]; %if it's not a struct, then this channel itself is not reactive, so skip it
+        end
+
+    else %if no work has been done, then start from scratch here
+
+        leadLag = struct; 
+        reactive = reactiveTest(chanDat.HFB);
+        includedChans = []; 
+        start = 1; 
+        outCluStats = nan(length(chanFiles), 2, 30, 15); %subsequent memory
+        outCluStats2 = nan(length(chanFiles), 2, 30, 15); %retrieval
+    end
+
+
+
     if sum(reactive==1)>0
     %chan X time X offSet
     leadLagEncTim = chanDat.enctim(51:25:end-50);
@@ -141,7 +160,7 @@ if ~isfield(chanDat, 'garble')
 %     miss_on = zeros([length(chanFiles), length(leadLagRetTim), length([-150:150])]);
 %     hit_on = miss_on; 
 
-    includedChans = []; 
+    
     %trial index values
     subMiss = find(chanDat.use & chanDat.misses); 
     subHit = find(chanDat.use & chanDat.hits); 
@@ -164,16 +183,14 @@ if ~isfield(chanDat, 'garble')
     %stat 14: max correlation Miss
     %stat 15: median correlation Miss
 
-    %Initialize with 30 possible clusters, all valued nan
-    
-
-    outCluStats = nan(length(chanFiles), 2, 30, 15); %subsequent memory
-    outCluStats2 = nan(length(chanFiles), 2, 30, 15); %retrieval
 
 
 
 
-    for chan = 1:length(chanFiles)
+
+    if start<length(chanFiles) %is there even any work left to be done? 
+
+    for chan = start:length(chanFiles)
         disp(['leadLag analysis with channel: ' num2str(chan) ' of ' num2str(length(chanFiles))])
         tic
 
@@ -262,6 +279,9 @@ if ~isfield(chanDat, 'garble')
     save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat'); 
     disp(['save success: ' chanFiles(idx).folder '/' chanFiles(idx).name])
     
+    else %there was no work to be done
+        disp('channel leadLag already complete!')
+    end
     else
         chanDat.leadLag2 = 1; 
         disp('non-reactive channel save')
