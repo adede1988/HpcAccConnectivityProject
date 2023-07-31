@@ -126,8 +126,8 @@ if ~isfield(chanDat, 'garble')
     end
   
 
-    if isfield(chanDat, 'leadLag2') %check for previous work! 
-        leadLag = chanDat.leadLag2; 
+    if isfield(chanDat, 'leadLag3') %check for previous work! 
+        leadLag = chanDat.leadLag3; 
         if isstruct(leadLag) %is this a reactive channel with previous leadLag calculation? 
             start = max(leadLag.inclChan); %start value for looping below
             includedChans = leadLag.inclChan; %previous work done on these channels
@@ -261,7 +261,7 @@ if ~isfield(chanDat, 'garble')
         leadLag.retTim = leadLagRetTim; 
         leadLag.subMem = outCluStats; 
         leadLag.retMem = outCluStats2; 
-        chanDat.leadLag2 = leadLag; 
+        chanDat.leadLag3 = leadLag; 
         disp('interim save')
         save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat');
         end
@@ -272,7 +272,7 @@ if ~isfield(chanDat, 'garble')
     leadLag.retTim = leadLagRetTim; 
     leadLag.subMem = outCluStats; 
     leadLag.retMem = outCluStats2; 
-    chanDat.leadLag2 = leadLag; 
+    chanDat.leadLag3 = leadLag; 
     
     clear HFB1 HFB2 pow2 leadLag subMiss subHit miss_on hit_on 
     disp('attempting saving')
@@ -283,7 +283,7 @@ if ~isfield(chanDat, 'garble')
         disp('channel leadLag already complete!')
     end
     else
-        chanDat.leadLag2 = 1; 
+        chanDat.leadLag3 = 1; 
         disp('non-reactive channel save')
         save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat'); 
         disp(['save success: ' chanFiles(idx).folder '/' chanFiles(idx).name])

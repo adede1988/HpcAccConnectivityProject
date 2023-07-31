@@ -29,13 +29,13 @@ function [outCluStats] = conditionCluTest(HFB1, pow2, missidx, hitidx, outCluSta
         end
         disp('................leadLag calcualted')
         permCount = 1000; 
-%         obsT = zeros([ size(missTemp, [2,3]),permCount]); 
-        test = reshape(cell2mat(arrayfun(@(x) arrayfun(@(y) ...
-                corrdiff(mean(hitTemp(:, y, x)), mean(missTemp(:, y, x)), 101, 101), ...
-                1:301),...
-                1:size(missTemp,3), 'uniformoutput', false)), size(missTemp, [2,3]));
+        obsT = zeros([ size(missTemp, [2,3]),permCount]); 
+%         test = reshape(cell2mat(arrayfun(@(x) arrayfun(@(y) ...
+%                 corrdiff(mean(hitTemp(:, y, x)), mean(missTemp(:, y, x)), 101, 101), ...
+%                 1:301),...
+%                 1:size(missTemp,3), 'uniformoutput', false)), size(missTemp, [2,3]));
         nullT = zeros([ size(missTemp, [2,3]),permCount]);
-%         kVal = min([length(missidx), length(hitidx)]) - 1; 
+        kVal = min([length(missidx), length(hitidx)]) - 1; 
         for p = 1:permCount
             if mod(p, 100) ==0
                 disp(['................permutation: ' num2str(p)])
@@ -43,10 +43,10 @@ function [outCluStats] = conditionCluTest(HFB1, pow2, missidx, hitidx, outCluSta
             % subsample to the lower trial count-1
             h = 1:length(hitidx); 
             m = 1:length(missidx); 
-%             h = randsample(h, kVal, true); 
-%             m = randsample(m, kVal, true); 
-%             obsT(:,:,p) = reshape(cell2mat(arrayfun(@(x) arrayfun(@(y) myT(hitTemp(h, y, x), missTemp(m, y, x),  1), 1:301),...
-%                 1:size(obsT,2), 'uniformoutput', false)), size(missTemp, [2,3]));
+            h = randsample(h, kVal, true); 
+            m = randsample(m, kVal, true); 
+            obsT(:,:,p) = reshape(cell2mat(arrayfun(@(x) arrayfun(@(y) myT(hitTemp(h, y, x), missTemp(m, y, x),  1), 1:301),...
+                1:size(obsT,2), 'uniformoutput', false)), size(missTemp, [2,3]));
             allidx = [h,m+1000];
             h1 = randsample(1:length(allidx), length(hitidx), false); 
             m1 = [1:length(allidx)];
@@ -64,22 +64,21 @@ function [outCluStats] = conditionCluTest(HFB1, pow2, missidx, hitidx, outCluSta
             %hits drawn from misses
             h2 = h2(h2>1000) - 1000; 
 
-            nullT(:,:,p) = reshape(cell2mat(arrayfun(@(x) arrayfun(@(y) ...
-                corrdiff(mean([squeeze(hitTemp(h1, y, x)); squeeze(missTemp(h2, y, x))]),...
-                         mean([squeeze(hitTemp(m1, y, x)); squeeze(missTemp(m2, y, x))]),...
-                         101, 101), 1:301),...
-                1:size(missTemp,3), 'uniformoutput', false)), size(missTemp, [2,3]));
-            
-            
-%             reshape(cell2mat(arrayfun(@(x) arrayfun(@(y) myT(hitTemp(h, y, x), missTemp(m, y, x),  2), 1:301),...
-%                 1:size(obsT,2), 'uniformoutput', false)), size(missTemp, [2,3]));
+            nullT(:,:,p) = reshape(cell2mat(arrayfun(@(x) arrayfun(@(y) myT(hitTemp(h, y, x), missTemp(m, y, x),  2), 1:301),...
+                 1:size(obsT,2), 'uniformoutput', false)), size(missTemp, [2,3]));
+
+%              reshape(cell2mat(arrayfun(@(x) arrayfun(@(y) ...
+%                 corrdiff(mean([squeeze(hitTemp(h1, y, x)); squeeze(missTemp(h2, y, x))]),...
+%                          mean([squeeze(hitTemp(m1, y, x)); squeeze(missTemp(m2, y, x))]),...
+%                          101, 101), 1:301),...
+%                 1:size(missTemp,3), 'uniformoutput', false)), size(missTemp, [2,3]));
             
 
         end
     
-%         test2 = squeeze(mean(obsT, 3)); 
+        test2 = squeeze(mean(obsT, 3)); 
         
-        [h, p, clusterinfo] = cluster_test(test, nullT); 
+        [h, p, clusterinfo] = cluster_test(test2, nullT); 
 
         LLtim = -150:150;  
         %get the max LL X time position of positive clusters
@@ -114,7 +113,7 @@ function [outCluStats] = conditionCluTest(HFB1, pow2, missidx, hitidx, outCluSta
                 %stat 12: mean correlation Miss
                 outCluStats(chan,1,cc,12) = mean(missTemp(:,clusterinfo.pos_clusters(pidx(cc)).inds), 'all');
                 %stat 13: min correlation Miss
-                outCluStats(chan,1,cc,3) = min(missTemp(:,clusterinfo.pos_clusters(pidx(cc)).inds),[], 'all');
+                outCluStats(chan,1,cc,13) = min(missTemp(:,clusterinfo.pos_clusters(pidx(cc)).inds),[], 'all');
                 %stat 14: max correlation Miss
                 outCluStats(chan,1,cc,14) = max(missTemp(:,clusterinfo.pos_clusters(pidx(cc)).inds),[], 'all');
                 %stat 15: median correlation Miss
@@ -156,7 +155,7 @@ function [outCluStats] = conditionCluTest(HFB1, pow2, missidx, hitidx, outCluSta
                 %stat 12: mean correlation Miss
                 outCluStats(chan,2,cc,12) = mean(missTemp(:,clusterinfo.neg_clusters(pidx(cc)).inds), 'all');
                 %stat 13: min correlation Miss
-                outCluStats(chan,2,cc,3) = min(missTemp(:,clusterinfo.neg_clusters(pidx(cc)).inds),[], 'all');
+                outCluStats(chan,2,cc,13) = min(missTemp(:,clusterinfo.neg_clusters(pidx(cc)).inds),[], 'all');
                 %stat 14: max correlation Miss
                 outCluStats(chan,2,cc,14) = max(missTemp(:,clusterinfo.neg_clusters(pidx(cc)).inds),[], 'all');
                 %stat 15: median correlation Miss
