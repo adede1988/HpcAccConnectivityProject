@@ -47,22 +47,22 @@ function [outCluStats] = conditionCluTest(HFB1, pow2, missidx, hitidx, outCluSta
             m = randsample(m, kVal, true); 
             obsT(:,:,p) = reshape(cell2mat(arrayfun(@(x) arrayfun(@(y) myT(hitTemp(h, y, x), missTemp(m, y, x),  1), 1:301),...
                 1:size(obsT,2), 'uniformoutput', false)), size(missTemp, [2,3]));
-            allidx = [h,m+1000];
-            h1 = randsample(1:length(allidx), length(hitidx), false); 
-            m1 = [1:length(allidx)];
-            m1(h1) = []; 
-            %OG miss idx -> new miss or hit idx
-            m2 = allidx(m1); 
-            h2 = allidx(h1); 
-
-            %misses drawn from hits
-            m1 = m2(m2<1000); 
-            %hits drawn from hits
-            h1 = h2(h2<1000); 
-            %misses drawn from misses
-            m2 = m2(m2>1000) - 1000; 
-            %hits drawn from misses
-            h2 = h2(h2>1000) - 1000; 
+%             allidx = [h,m+1000];
+%             h1 = randsample(1:length(allidx), length(hitidx), false); 
+%             m1 = [1:length(allidx)];
+%             m1(h1) = []; 
+%             %OG miss idx -> new miss or hit idx
+%             m2 = allidx(m1); 
+%             h2 = allidx(h1); 
+% 
+%             %misses drawn from hits
+%             m1 = m2(m2<1000); 
+%             %hits drawn from hits
+%             h1 = h2(h2<1000); 
+%             %misses drawn from misses
+%             m2 = m2(m2>1000) - 1000; 
+%             %hits drawn from misses
+%             h2 = h2(h2>1000) - 1000; 
 
             nullT(:,:,p) = reshape(cell2mat(arrayfun(@(x) arrayfun(@(y) myT(hitTemp(h, y, x), missTemp(m, y, x),  2), 1:301),...
                  1:size(obsT,2), 'uniformoutput', false)), size(missTemp, [2,3]));
