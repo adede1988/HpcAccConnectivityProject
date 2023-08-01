@@ -45,8 +45,10 @@ function [outCluStats] = conditionCluTest(HFB1, pow2, missidx, hitidx, outCluSta
             m = 1:length(missidx); 
             h = randsample(h, kVal, true); 
             m = randsample(m, kVal, true); 
-            obsT(:,:,p) = reshape(cell2mat(arrayfun(@(x) arrayfun(@(y) myT(hitTemp(h, y, x), missTemp(m, y, x),  1), 1:301),...
-                1:size(obsT,2), 'uniformoutput', false)), size(missTemp, [2,3]));
+            obsT(:,:,p) = myArrayT(hitTemp(h, :, :), missTemp(m, :, :),  1);
+
+
+
 %             allidx = [h,m+1000];
 %             h1 = randsample(1:length(allidx), length(hitidx), false); 
 %             m1 = [1:length(allidx)];
@@ -64,8 +66,8 @@ function [outCluStats] = conditionCluTest(HFB1, pow2, missidx, hitidx, outCluSta
 %             %hits drawn from misses
 %             h2 = h2(h2>1000) - 1000; 
 
-            nullT(:,:,p) = reshape(cell2mat(arrayfun(@(x) arrayfun(@(y) myT(hitTemp(h, y, x), missTemp(m, y, x),  2), 1:301),...
-                 1:size(obsT,2), 'uniformoutput', false)), size(missTemp, [2,3]));
+            nullT(:,:,p) = myArrayT(hitTemp(h, :, :), missTemp(m, :, :),  2);
+
 
 %              reshape(cell2mat(arrayfun(@(x) arrayfun(@(y) ...
 %                 corrdiff(mean([squeeze(hitTemp(h1, y, x)); squeeze(missTemp(h2, y, x))]),...
