@@ -1,4 +1,6 @@
-function [errorChans] = getAllChanDat(chanFiles, sub)
+function [errorChans, metaDat] = getAllChanDat(chanFiles, sub)
+
+metaDat = []; 
 
 Ei = 1; 
 
@@ -18,6 +20,7 @@ clear subIDs
     %% load data 
     curSub = chanFiles(cellfun(@(x) strcmp(x, subIDs_uni{sub}), subIDs_all)); 
     curSubReact = zeros(length(curSub), 1); %indicator variable for HFB reactive channels
+
 %     curIdx = []; 
     flag = true;
     for chan = 1:length(curSub)
@@ -25,9 +28,28 @@ clear subIDs
         chanDat.reactive = 1; 
         chanDat.goodSub = 1; 
         chanDat.allBrod = 1; 
-        if isfield(chanDat, 'HFB') && isfield(chanDat, 'leadLag') && isfield(chanDat, 'ISPC')%check for complete processing
-             reactive = reactiveTest(chanDat.HFB);
-             
+        if isfield(chanDat, 'HFB') && isfield(chanDat, 'leadLag3') && isfield(chanDat, 'ISPC')%check for complete processing
+            %only reactive channels have leadlag calculations 
+            %KNOWN ISSUE CORRECTED IN NEXT RUN: HFB for RT locked encoding
+            %data had the wrong baseline. This caused spurious reactive
+            %detections. inclChan in the leadLag3 struct was not
+            %contaminated by this because HFB was recalculated on chan2
+            %data (see singleChanPipeline in the lead Lag analysis block
+            %Mostly channels that should not have been included had leadLag
+            %calculations run. However, it did happen occasionally that a
+            %channel which should have had calcualtions run was missed.
+             if isstruct(chanDat.leadLag3)
+                reactive = chanDat.leadLag3.inclChan; 
+                if ismember(chan, reactive)
+                    reactive = 1;
+                else
+                    reactive = 0; 
+                end
+             else
+                reactive = 0; 
+             end
+
+
              if sum(reactive>0)>0
                 curSubReact(chan) = 1; 
 %                 curIdx = [curIdx Ei]; 
@@ -63,21 +85,32 @@ clear subIDs
         %channels
 
         HFB = allDat(1).HFB;
-        leadLag = allDat(1).leadLag;  
+        leadLag = allDat(1).leadLag3;  
+        %hard code extra space for variable number of detected significant
+        %clusters! 
+        leadLag.subMem(:,:,end+1:100, :) = nan; 
+        leadLag.retMem(:,:,end+1:100, :) = nan; 
         TF = allDat(1).TF; 
         ISPC = allDat(1).ISPC;
         HFB_names = fieldnames(HFB); 
         TF_names = fieldnames(TF); 
         ispc_names = fieldnames(ISPC); 
         leadLag_names = fieldnames(leadLag); 
-
+        Nreact = sum(curSubReact); 
         %eliminate non-reactive channels from connectivity measures (ISPC and leadLag) %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+
 
         for chan = 1:length(allDat)
             for fi = 1:length(leadLag_names)
-                dimVals = size(allDat(chan).leadLag.(leadLag_names{fi}));  
+                dimVals = size(allDat(chan).leadLag3.(leadLag_names{fi}));  
                 if ismember(length(curSubReact), dimVals) %check that there's a channel dimension in the field
-                    allDat(chan).leadLag.(leadLag_names{fi})(curSubReact==0, :, :) = []; 
+                    S.subs = repmat({':'}, 1, ndims(allDat(chan).leadLag3.(leadLag_names{fi})));
+                    S.subs{1} = find(curSubReact==0);
+                    S.type = '()';
+                    allDat(chan).leadLag3.(leadLag_names{fi}) = subsasgn(allDat(chan).leadLag3.(leadLag_names{fi}), S, []); 
                 end
             end
             for fi = 1:length(ispc_names)
@@ -98,10 +131,10 @@ clear subIDs
         end
 
         for fi = 1:length(leadLag_names)
-            dimVals = size(allDat(1).leadLag.(leadLag_names{fi}));
+            dimVals = size(allDat(1).leadLag3.(leadLag_names{fi}));
             if ismember(sum(curSubReact), dimVals) %connectivity measures can avoid the hard code w/ channel count dimension
                 leadLag.(leadLag_names{fi}) = zeros([sum(curSubReact), ...
-                                                size(allDat(1).leadLag.(leadLag_names{fi})) ]);
+                                                size(allDat(1).leadLag3.(leadLag_names{fi})) ]);
             end
         end
 
@@ -132,9 +165,10 @@ clear subIDs
 
             %leadLag
             for fi = 1:length(leadLag_names)
-                dimVals = size(allDat(chan).leadLag.(leadLag_names{fi}));
-                if ismember(sum(curSubReact), dimVals) 
-                    leadLag.(leadLag_names{fi})(chan,:,:,:) = allDat(chan).leadLag.(leadLag_names{fi});
+                dimVals = size(allDat(chan).leadLag3.(leadLag_names{fi}));
+                if ismember(sum(curSubReact), dimVals) && fi>1 %skip the inclChan variable
+                    tmp = allDat(chan).leadLag3.(leadLag_names{fi});
+                    leadLag.(leadLag_names{fi})(chan,:,:,1:size(tmp,3),:) = tmp;
                 end
             end
 
@@ -153,7 +187,7 @@ clear subIDs
      
             %free up space
             allDat(chan).HFB = 1; 
-            allDat(chan).leadLag = 1; 
+            allDat(chan).leadLag3 = 1; 
             allDat(chan).ISPC = 1;
             allDat(chan).TF = 1; 
            
@@ -169,30 +203,33 @@ clear subIDs
         metaDat.chi = [allDat.chi];
         clear allDat
 
+        metaDat.HFB = HFB; 
+        metaDat.TF = TF; 
+        metaDat.leadLag = leadLag; 
+        metaDat.ISPC = ISPC; 
+
         %save the outputs one at a time: 
-        HFBout = metaDat; 
-        HFBout.HFB = HFB; 
-        clear HFB
-        save(['R:\MSS\Johnson_Lab\dtf8829\SUMDAT\' metaDat.site '_' metaDat.subID '_HFB' '.mat'], 'HFBout', '-v7.3')
-        clear HFBout
-
-        TFout = metaDat; 
-        TFout.TF = TF; 
-        clear TF
-        save(['R:\MSS\Johnson_Lab\dtf8829\SUMDAT\' metaDat.site '_' metaDat.subID '_TF' '.mat'], 'TFout', '-v7.3')
-        clear TFout 
-
-        ISPCout = metaDat; 
-        ISPCout.ISPC = ISPC; 
-        clear ISPC
-        save(['R:\MSS\Johnson_Lab\dtf8829\SUMDAT\' metaDat.site '_' metaDat.subID '_ISPC' '.mat'], 'ISPCout', '-v7.3')
-        clear ISPCout 
-
-        LLout = metaDat; 
-        LLout.LL = leadLag; 
-        clear leadLag
-        save(['R:\MSS\Johnson_Lab\dtf8829\SUMDAT\' metaDat.site '_' metaDat.subID '_LL' '.mat'], 'LLout', '-v7.3')
-        clear LLout 
+   
+        save(['R:\MSS\Johnson_Lab\dtf8829\SUMDAT\' metaDat.site '_' metaDat.subID '_all' '.mat'], 'metaDat', '-v7.3')
+%         clear HFBout
+% 
+%         TFout = metaDat; 
+%         TFout.TF = TF; 
+%         clear TF
+%         save(['R:\MSS\Johnson_Lab\dtf8829\SUMDAT\' metaDat.site '_' metaDat.subID '_TF' '.mat'], 'TFout', '-v7.3')
+%         clear TFout 
+% 
+%         ISPCout = metaDat; 
+%         ISPCout.ISPC = ISPC; 
+%         clear ISPC
+%         save(['R:\MSS\Johnson_Lab\dtf8829\SUMDAT\' metaDat.site '_' metaDat.subID '_ISPC' '.mat'], 'ISPCout', '-v7.3')
+%         clear ISPCout 
+% 
+%         LLout = metaDat; 
+%         LLout.LL = leadLag; 
+%         clear leadLag
+%         save(['R:\MSS\Johnson_Lab\dtf8829\SUMDAT\' metaDat.site '_' metaDat.subID '_LL' '.mat'], 'LLout', '-v7.3')
+%         clear LLout 
 
 
 
@@ -205,7 +242,8 @@ clear subIDs
     end
 
     catch
-        disp(['sub ' num2str(sub) 'fail'])
+        disp(['sub ' num2str(sub) ' ' curSub(chan).name 'fail'])
+        metaDat = []; 
         Ei = EiSave; 
     end
 

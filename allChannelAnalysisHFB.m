@@ -29,9 +29,32 @@ chanFiles = chanFiles(test);
 
 
 errorChans = cell(64,1); 
+allDat = cell(64,1); 
 parfor sub = 1:64
-    errorChans{sub} = getAllChanDat(chanFiles, sub); 
+    if isempty(allDat{sub})
+        [errorChans{sub}, allDat{sub}] = getAllChanDat(chanFiles, sub); 
+    end
 end
+
+
+
+%% aggregating lead lag information across subjects
+
+
+allBrod = getAllBrodLabs(allDat);
+
+targBrod = allBrod; %([allBrod.subN]>5); 
+targBrod(cellfun(@(x) strcmp('ERROR', x), {targBrod.lab})) = []; 
+[allCon, allConN] = getAllConnections(targBrod, allDat);
+
+MTL_all = squeeze(sum(allCon([12,20], :, :,:,1), [1,2]) ) ./ sum(allConN([12,20], :),'all'); 
+all_all = squeeze(sum(allCon(:, :, :,:,1), [1,2]) ) ./ sum(allConN(:, :),'all'); 
+
+imagesc( MTL_all')
+
+imagesc(allDat{1}.leadLag.encTim, -150:150, all_all')
+
+test = squeeze(sum(allCon([12,20], :, 84, 160, 1), 1));
 
 
 %% get the leadLag data for all over 16 year olds

@@ -19,6 +19,8 @@ chanFiles = chanFiles(test);
 
 errorChans = cell(length(chanFiles),1); 
 
+
+
 clustersHipUp = cell(length(chanFiles),1); 
 clustersNotUp = cell(length(chanFiles),1); 
 clustersHipDown = cell(length(chanFiles),1); 

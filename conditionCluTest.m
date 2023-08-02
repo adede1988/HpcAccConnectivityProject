@@ -7,6 +7,7 @@ function [outCluStats] = conditionCluTest(HFB1, pow2, missidx, hitidx, outCluSta
         missTemp = zeros(length(missidx), 301, length(dstim)); 
         hitTemp = zeros(length(hitidx), 301, length(dstim)); 
         
+        tic
         for offSet = -150:150 %negative means current Channel leads, positive means other channel leads
             
             if offSet<0
@@ -14,19 +15,31 @@ function [outCluStats] = conditionCluTest(HFB1, pow2, missidx, hitidx, outCluSta
             elseif offSet>0
                 HFB2 = [zeros([abs(offSet), size(pow2,2)] );  pow2(1:end-abs(offSet),:)];
             end
-            %sub miss
-            for tt = 1:length(missidx)
-                missTemp(tt, offSet+151, :) = arrayfun(@(x) corr(HFB1(x-50:x+50, missidx(tt)), HFB2(x-50:x+50, missidx(tt))), ...
-                                   dstim+abs(min(alltim))+1 );
-            end
-            %sub hit
-            for tt = 1:length(hitidx)
-                hitTemp(tt, offSet+151, :) = arrayfun(@(x) corr(HFB1(x-50:x+50, hitidx(tt)), HFB2(x-50:x+50, hitidx(tt))), ...
-                               dstim+abs(min(alltim))+1 );
-            end
-    
+            %sub miss 
+         
+
+            missTemp(:, offSet+151, :) = reshape(cell2mat( arrayfun(@(x) myArrayCorr(HFB1(x-50:x+50, missidx), HFB2(x-50:x+50, missidx)), ...
+                                               dstim+abs(min(alltim))+1 , 'uniformoutput', false)), [ length(missidx), length(dstim)] );
+
+
+            hitTemp(:, offSet+151, :) = reshape(cell2mat( arrayfun(@(x) myArrayCorr(HFB1(x-50:x+50, hitidx), HFB2(x-50:x+50, hitidx)), ...
+                                               dstim+abs(min(alltim))+1 , 'uniformoutput', false)), [ length(hitidx), length(dstim)] );
+
+          
+
+%             for tt = 1:length(missidx)
+%                 missTemp(tt, offSet+151, :) = arrayfun(@(x) corr(HFB1(x-50:x+50, missidx(tt)), HFB2(x-50:x+50, missidx(tt))), ...
+%                                    dstim+abs(min(alltim))+1 );
+%             end
+%             %sub hit
+%             for tt = 1:length(hitidx)
+%                 hitTemp(tt, offSet+151, :) = arrayfun(@(x) corr(HFB1(x-50:x+50, hitidx(tt)), HFB2(x-50:x+50, hitidx(tt))), ...
+%                                dstim+abs(min(alltim))+1 );
+%             end
+
     
         end
+        toc
         disp('................leadLag calcualted')
         permCount = 1000; 
         obsT = zeros([ size(missTemp, [2,3]),permCount]); 
@@ -84,8 +97,8 @@ function [outCluStats] = conditionCluTest(HFB1, pow2, missidx, hitidx, outCluSta
 
         LLtim = -150:150;  
         %get the max LL X time position of positive clusters
-        if min([clusterinfo.pos_clusters.p])<.05
-            pidx = find([clusterinfo.pos_clusters.p]<.05);
+        if min([clusterinfo.pos_clusters.p])<.15
+            pidx = find([clusterinfo.pos_clusters.p]<.15);
             for cc = 1:length(pidx)
 
                 %stat 1: num points
@@ -126,8 +139,8 @@ function [outCluStats] = conditionCluTest(HFB1, pow2, missidx, hitidx, outCluSta
 
 
         %get the max LL X time position of negative clusters
-        if min([clusterinfo.neg_clusters.p])<.05
-            pidx = find([clusterinfo.neg_clusters.p]<.05);
+        if min([clusterinfo.neg_clusters.p])<.15
+            pidx = find([clusterinfo.neg_clusters.p]<.15);
             for cc = 1:length(pidx)
 
                 %stat 1: num points
