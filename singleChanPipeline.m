@@ -100,7 +100,7 @@ chanDat.retRtim = [-2000:500];
 %                          retOn   : -450 : -50   ms
 %                          retRT   : -2000: -1600 ms
 
-if ~isfield(chanDat, 'HFB11')
+if ~isfield(chanDat, 'HFB')
     HFB = getHFB(chanDat, highfrex); 
 
     chanDat.HFB = HFB; 
@@ -125,36 +125,36 @@ if ~isfield(chanDat, 'garble')
         chanDat = rmfield(chanDat, 'leadLag');
     end
   
-
-    if isfield(chanDat, 'leadLag3') %check for previous work! 
-        chanDat = rmfield(chanDat, 'leadLag3');
-         leadLag = struct; 
-        reactive = reactiveTest(chanDat.HFB);
-        includedChans = []; 
-        start = 1; 
-        outCluStats = nan(length(chanFiles), 2, 30, 15); %subsequent memory
-        outCluStats2 = nan(length(chanFiles), 2, 30, 15); %retrieval
-%         leadLag = chanDat.leadLag3; 
-        
-%         if isstruct(leadLag) %is this a reactive channel with previous leadLag calculation? 
-%             start = max(leadLag.inclChan); %start value for looping below
-%             includedChans = leadLag.inclChan; %previous work done on these channels
-%             outCluStats = leadLag.subMem; 
-%             outCluStats2 = leadLag.retMem; 
-%             reactive = [1,1,1,1]; 
-%         else
-%             reactive = [0,0,0,0]; %if it's not a struct, then this channel itself is not reactive, so skip it
-%         end
-
-    else %if no work has been done, then start from scratch here
+% 
+%     if isfield(chanDat, 'leadLag3') %check for previous work! 
+%         chanDat = rmfield(chanDat, 'leadLag3');
+%         leadLag = struct; 
+%         reactive = reactiveTest(chanDat.HFB);
+%         includedChans = []; 
+%         start = 1; 
+%         outCluStats = nan(length(chanFiles), 2, 30, 15); %subsequent memory
+%         outCluStats2 = nan(length(chanFiles), 2, 30, 15); %retrieval
+% %         leadLag = chanDat.leadLag3; 
+%         
+% %         if isstruct(leadLag) %is this a reactive channel with previous leadLag calculation? 
+% %             start = max(leadLag.inclChan); %start value for looping below
+% %             includedChans = leadLag.inclChan; %previous work done on these channels
+% %             outCluStats = leadLag.subMem; 
+% %             outCluStats2 = leadLag.retMem; 
+% %             reactive = [1,1,1,1]; 
+% %         else
+% %             reactive = [0,0,0,0]; %if it's not a struct, then this channel itself is not reactive, so skip it
+% %         end
+% 
+%     else %if no work has been done, then start from scratch here
 
         leadLag = struct; 
         reactive = reactiveTest(chanDat.HFB);
         includedChans = []; 
         start = 1; 
-        outCluStats = nan(length(chanFiles), 2, 30, 15); %subsequent memory
-        outCluStats2 = nan(length(chanFiles), 2, 30, 15); %retrieval
-    end
+        outCluStats = nan(length(chanFiles), 2, 200, 15); %subsequent memory
+        outCluStats2 = nan(length(chanFiles), 2, 200, 15); %retrieval
+%     end
 
 
 

@@ -88,8 +88,8 @@ clear subIDs
         leadLag = allDat(1).leadLag3;  
         %hard code extra space for variable number of detected significant
         %clusters! 
-        leadLag.subMem(:,:,end+1:100, :) = nan; 
-        leadLag.retMem(:,:,end+1:100, :) = nan; 
+        leadLag.subMem(:,:,end+1:1000, :) = nan; 
+        leadLag.retMem(:,:,end+1:1000, :) = nan; 
         TF = allDat(1).TF; 
         ISPC = allDat(1).ISPC;
         HFB_names = fieldnames(HFB); 

@@ -8,8 +8,8 @@
 
 %local paths: 
 
-% codePre = 'R:\MSS\Johnson_Lab\dtf8829\GitHub\';
-% datPre = 'R:\MSS\Johnson_Lab\dtf8829\';
+codePre = 'R:\MSS\Johnson_Lab\dtf8829\GitHub\';
+datPre = 'R:\MSS\Johnson_Lab\dtf8829\';
 
 %% set paths
 
@@ -47,14 +47,14 @@ targBrod = allBrod; %([allBrod.subN]>5);
 targBrod(cellfun(@(x) strcmp('ERROR', x), {targBrod.lab})) = []; 
 [allCon, allConN] = getAllConnections(targBrod, allDat);
 
-MTL_all = squeeze(sum(allCon([12,20], :, :,:,1), [1,2]) ) ./ sum(allConN([12,20], :),'all'); 
-all_all = squeeze(sum(allCon(:, :, :,:,1), [1,2]) ) ./ sum(allConN(:, :),'all'); 
+MTL_all = squeeze(sum(allCon([13,24], :, :,:,1), [1,2]) ) ./ sum(allConN([13,24], :),'all'); 
+all_all = squeeze(sum(allCon(:, :, :,:,1), [1,2]) ) ./ sum(allConN,'all'); 
 
-imagesc( MTL_all')
+imagesc(allDat{1}.leadLag.encTim, -150:150,  MTL_all')
 
 imagesc(allDat{1}.leadLag.encTim, -150:150, all_all')
 
-test = squeeze(sum(allCon([12,20], :, 84, 160, 1), 1));
+
 
 
 %% get the leadLag data for all over 16 year olds

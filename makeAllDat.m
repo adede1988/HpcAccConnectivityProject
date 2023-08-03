@@ -1,7 +1,7 @@
 function [allDat] = makeAllDat(trials, times, sampRate)
 
 
-%error here: probably need to be upsampling the time as well. 
+%error here: probably need to be upsampling the time as well. IMPLEMENTED
 if sampRate ~= 1000
     %upsample the data
     for tt = 1:length(trials)
