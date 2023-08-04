@@ -160,11 +160,11 @@ if ~isfield(chanDat, 'garble')
 
     if sum(reactive==1)>0
     %chan X time X offSet
-    leadLagEncTim = chanDat.enctim(51:25:end-50);
+    leadLagEncTim = chanDat.enctim(501:25:end-500);
 %     subMiss = zeros([length(chanFiles), length(leadLagEncTim), length([-150:150])]);
 %     subHit = subMiss; 
     
-    leadLagRetTim = chanDat.retOtim(51:25:end-50); 
+    leadLagRetTim = chanDat.retOtim(501:25:end-500); 
 %     miss_on = zeros([length(chanFiles), length(leadLagRetTim), length([-150:150])]);
 %     hit_on = miss_on; 
 

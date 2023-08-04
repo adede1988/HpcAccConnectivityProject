@@ -18,11 +18,11 @@ function [outCluStats] = conditionCluTest(HFB1, pow2, missidx, hitidx, outCluSta
             %sub miss 
          
 
-            missTemp(:, offSet+151, :) = reshape(cell2mat( arrayfun(@(x) myArrayCorr(HFB1(x-50:x+50, missidx), HFB2(x-50:x+50, missidx)), ...
+            missTemp(:, offSet+151, :) = reshape(cell2mat( arrayfun(@(x) myArrayCorr(HFB1(x-500:x+500, missidx), HFB2(x-500:x+500, missidx)), ...
                                                dstim+abs(min(alltim))+1 , 'uniformoutput', false)), [ length(missidx), length(dstim)] );
 
 
-            hitTemp(:, offSet+151, :) = reshape(cell2mat( arrayfun(@(x) myArrayCorr(HFB1(x-50:x+50, hitidx), HFB2(x-50:x+50, hitidx)), ...
+            hitTemp(:, offSet+151, :) = reshape(cell2mat( arrayfun(@(x) myArrayCorr(HFB1(x-500:x+500, hitidx), HFB2(x-500:x+500, hitidx)), ...
                                                dstim+abs(min(alltim))+1 , 'uniformoutput', false)), [ length(hitidx), length(dstim)] );
 
           
@@ -42,6 +42,126 @@ function [outCluStats] = conditionCluTest(HFB1, pow2, missidx, hitidx, outCluSta
 
     
         end
+
+%% debug scratch larger time window sampling
+% 
+% 
+% dstim = dstim(1:141);
+% 
+% %store the trials X offset X time info for each trial type
+%         missTemp = zeros(length(missidx), 301, length(dstim)); 
+%         hitTemp = zeros(length(hitidx), 301, length(dstim)); 
+%         
+%      
+%         for offSet = -150:150 %negative means current Channel leads, positive means other channel leads
+%             
+%             if offSet<0
+%                 HFB2 = [pow2(abs(offSet)+1:end,:); zeros([abs(offSet), size(pow2,2)] ) ] ;
+%             elseif offSet>0
+%                 HFB2 = [zeros([abs(offSet), size(pow2,2)] );  pow2(1:end-abs(offSet),:)];
+%             end
+%             %sub miss 
+%          
+% 
+%             missTemp(:, offSet+151, :) = reshape(cell2mat( arrayfun(@(x) myArrayCorr(HFB1(x-500:x+500, missidx), HFB2(x-50:x+50, missidx)), ...
+%                                                dstim+abs(min(alltim))+1 , 'uniformoutput', false)), [ length(missidx), length(dstim)] );
+% 
+% 
+%             hitTemp(:, offSet+151, :) = reshape(cell2mat( arrayfun(@(x) myArrayCorr(HFB1(x-50:x+50, hitidx), HFB2(x-50:x+50, hitidx)), ...
+%                                                dstim+abs(min(alltim))+1 , 'uniformoutput', false)), [ length(hitidx), length(dstim)] );
+% 
+%           
+%             
+% 
+% 
+% 
+% %             for tt = 1:length(missidx)
+% %                 missTemp(tt, offSet+151, :) = arrayfun(@(x) corr(HFB1(x-50:x+50, missidx(tt)), HFB2(x-50:x+50, missidx(tt))), ...
+% %                                    dstim+abs(min(alltim))+1 );
+% %             end
+% %             %sub hit
+% %             for tt = 1:length(hitidx)
+% %                 hitTemp(tt, offSet+151, :) = arrayfun(@(x) corr(HFB1(x-50:x+50, hitidx(tt)), HFB2(x-50:x+50, hitidx(tt))), ...
+% %                                dstim+abs(min(alltim))+1 );
+% %             end
+% 
+%     
+%         end
+% 
+% 
+% 
+% 
+% 
+% 
+% 
+% %% debug scratch high temporal resolution
+% 
+%         newTim = alltim(alltim>=-950 & alltim<=4000); 
+%         missTemp = zeros(length(missidx), 301, length(alltim)-100); 
+%         hitTemp = zeros(length(hitidx), 301, length(alltim)-100); 
+%         alltimidx = 51:length(alltim)-50; 
+%      
+%         for offSet = -150:150 %negative means current Channel leads, positive means other channel leads
+%             
+%             if offSet<0
+%                 HFB2 = [pow2(abs(offSet)+1:end,:); zeros([abs(offSet), size(pow2,2)] ) ] ;
+%             elseif offSet>0
+%                 HFB2 = [zeros([abs(offSet), size(pow2,2)] );  pow2(1:end-abs(offSet),:)];
+%             end
+%             %sub miss 
+%          
+% 
+%             missTemp(:, offSet+151, :) = reshape(cell2mat( arrayfun(@(x) myArrayCorr(HFB1(x-50:x+50, missidx), HFB2(x-50:x+50, missidx)), ...
+%                                                51:length(alltim)-50 , 'uniformoutput', false)), [   length(missidx), length(alltim)-100] );
+% 
+% 
+%             hitTemp(:, offSet+151, :) = reshape(cell2mat( arrayfun(@(x) myArrayCorr(HFB1(x-50:x+50, hitidx), HFB2(x-50:x+50, hitidx)), ...
+%                                                51:length(alltim)-50 , 'uniformoutput', false)), [ length(hitidx),length(alltim)-100] );
+% 
+%           
+%            tmp =  reshape(cell2mat( arrayfun(@(x) myArrayCorr(HFB1(x-50:x+50, hitidx), HFB2(x-50:x+50, hitidx)), ...
+%                                                51:length(alltim)-50 , 'uniformoutput', false)), [ length(hitidx),length(alltim)-100] );
+% 
+% 
+% 
+% %             for tt = 1:length(missidx)
+% %                 missTemp(tt, offSet+151, :) = arrayfun(@(x) corr(HFB1(x-50:x+50, missidx(tt)), HFB2(x-50:x+50, missidx(tt))), ...
+% %                                    dstim+abs(min(alltim))+1 );
+% %             end
+% %             %sub hit
+% %             for tt = 1:length(hitidx)
+% %                 hitTemp(tt, offSet+151, :) = arrayfun(@(x) corr(HFB1(x-50:x+50, hitidx(tt)), HFB2(x-50:x+50, hitidx(tt))), ...
+% %                                dstim+abs(min(alltim))+1 );
+% %             end
+% 
+%     
+%         end
+% 
+% %drilling down on the 13th hit trial, why are there vertical striations?
+% %looks very strange in the heatmap even when I go to high temporal sampling
+% %drilling down to offSet = -50, alltimidx = 3800 where correlation is .84
+% %by contrast, correlation at alltimidx = 3740 is much lower 
+% 
+% curPnt = 3800;
+% figure
+% scatter(HFB1(alltimidx(curPnt)-50:alltimidx(curPnt)+50,hitidx(13)) ./ max(HFB1(alltimidx(curPnt)-50:alltimidx(curPnt)+50,hitidx(13)) ),...
+%     HFB2(alltimidx(curPnt)-50:alltimidx(curPnt)+50,hitidx(13))./ max(HFB2(alltimidx(curPnt)-50:alltimidx(curPnt)+50,hitidx(13))))
+% 
+% 
+% corr(HFB1(alltimidx(3740)-50:alltimidx(3740)+50,hitidx(13)), HFB2(alltimidx(3740)-50:alltimidx(3740)+50,hitidx(13)))
+% 
+% 
+
+
+%%
+
+
+
+
+
+
+
+
         
         disp('................leadLag calcualted')
         permCount = 1000; 

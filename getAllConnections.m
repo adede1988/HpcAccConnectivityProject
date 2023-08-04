@@ -18,10 +18,11 @@ for sub = 1:length(allDat)
                 chan2i = cellfun(@(x) strcmp(b{chan2}, x), {targBrod.lab});
                 if sum(chan2i)>0 %this is one of the target channels! 
                     allConN(chan1i, chan2i) = allConN(chan1i, chan2i) + 1; 
+ 
                     for cc = 1:size(c.subMem, 4)
                         if ~isnan(c.subMem(chan1, chan2, 1, cc, 1)) %&& length(find(tim>=c.subMem(chan1, chan2,1,cc,3) & tim<= c.subMem(chan1,chan2,1,cc,4)))>1
                             if c.subMem(chan1, chan2, 1, cc, 1) > 0
-                          
+                               
 
                             allCon(chan1i, chan2i, tim>=c.subMem(chan1, chan2,1,cc,3) & tim<= c.subMem(chan1,chan2,1,cc,4),...
                                                    LLtim>=c.subMem(chan1, chan2,1,cc,6) & LLtim<=c.subMem(chan1, chan2,1,cc,7),...
@@ -31,6 +32,11 @@ for sub = 1:length(allDat)
                                                    1) + 1;  
                             end
     
+                        else
+                             if find(chan1i) == 13 && find(chan2i) == 20
+                                    'stop'
+                                end
+
                         end
 
                         if ~isnan(c.subMem(chan1, chan2, 2, cc, 2)) %&& length(find(tim>=c.subMem(chan1, chan2,2,cc,3) & tim<= c.subMem(chan1,chan2,2,cc,4)))>1

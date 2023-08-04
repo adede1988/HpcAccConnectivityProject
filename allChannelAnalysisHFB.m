@@ -47,8 +47,8 @@ targBrod = allBrod; %([allBrod.subN]>5);
 targBrod(cellfun(@(x) strcmp('ERROR', x), {targBrod.lab})) = []; 
 [allCon, allConN] = getAllConnections(targBrod, allDat);
 
-MTL_all = squeeze(sum(allCon([13,24], :, :,:,1), [1,2]) ) ./ sum(allConN([13,24], :),'all'); 
-all_all = squeeze(sum(allCon(:, :, :,:,1), [1,2]) ) ./ sum(allConN,'all'); 
+MTL_all = squeeze(sum(allCon([13,20], :, :,:,1), [1,2]) ); ./ sum(allConN([13,24], :),'all'); 
+all_all = squeeze(sum(allCon(:, :, :,:,1), [1,2]) ); ./ sum(allConN,'all'); 
 
 imagesc(allDat{1}.leadLag.encTim, -150:150,  MTL_all')
 
