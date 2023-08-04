@@ -219,7 +219,10 @@ function [outCluStats] = conditionCluTest(HFB1, pow2, missidx, hitidx, outCluSta
         [h, p, clusterinfo] = cluster_test(test2, nullT); 
 
         LLtim = -150:150;  
+        
         %get the max LL X time position of positive clusters
+        if isfield(clusterinfo, 'pos_clusters')
+        if isfield(clusterinfo.pos_clusters, 'p')
         if min([clusterinfo.pos_clusters.p])<.15
             pidx = find([clusterinfo.pos_clusters.p]<.15);
             for cc = 1:length(pidx)
@@ -259,9 +262,11 @@ function [outCluStats] = conditionCluTest(HFB1, pow2, missidx, hitidx, outCluSta
 
             end
         end
-
-
+        end
+        end
         %get the max LL X time position of negative clusters
+        if isfield(clusterinfo, 'neg_clusters')
+        if isfield(clusterinfo.neg_clusters, 'p')
         if min([clusterinfo.neg_clusters.p])<.15
             pidx = find([clusterinfo.neg_clusters.p]<.15);
             for cc = 1:length(pidx)
@@ -302,7 +307,8 @@ function [outCluStats] = conditionCluTest(HFB1, pow2, missidx, hitidx, outCluSta
 
             end
         end
-
+        end
+        end
 
 
 
