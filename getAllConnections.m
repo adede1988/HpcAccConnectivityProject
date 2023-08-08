@@ -33,9 +33,9 @@ for sub = 1:length(allDat)
                             end
     
                         else
-                             if find(chan1i) == 13 && find(chan2i) == 20
-                                    'stop'
-                                end
+%                              if find(chan1i) == 13 && find(chan2i) == 20
+%                                     'stop'
+%                                 end
 
                         end
 

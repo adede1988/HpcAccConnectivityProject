@@ -47,14 +47,77 @@ targBrod = allBrod; %([allBrod.subN]>5);
 targBrod(cellfun(@(x) strcmp('ERROR', x), {targBrod.lab})) = []; 
 [allCon, allConN] = getAllConnections(targBrod, allDat);
 
-MTL_all = squeeze(sum(allCon([13,20], :, :,:,1), [1,2]) ); ./ sum(allConN([13,24], :),'all'); 
-all_all = squeeze(sum(allCon(:, :, :,:,1), [1,2]) ); ./ sum(allConN,'all'); 
+ %; ./ sum(allConN([13,24], :),'all'); 
+all_all = squeeze(sum(allCon(:, :, :,:,2), [1,2]) ); %; ./ sum(allConN,'all'); 
 
-imagesc(allDat{1}.leadLag.encTim, -150:150,  MTL_all')
+
 
 imagesc(allDat{1}.leadLag.encTim, -150:150, all_all')
 
 
+figure %MTL connectivity
+%where do we have paired electrodes recorded with the MTL? 
+plot(sum(allConN([13,24], :),1))
+xticks([1:size(allConN,1)])
+xticklabels({targBrod.lab})
+ylabel('number of pair electrodes')
+xlabel('regions of pair electrodes')
+title('regions recorded simultaneously with MTL')
+
+
+% hits > misses MTL connectivity
+tim = allDat{1}.leadLag.encTim;
+MTL_all = squeeze(sum(allCon([13,20], :, :,:,1), [1,2]) );
+p_bin = leadLagFigure(MTL_all, tim, 'MTL', 'MTL to ALL subsequent hit > subsequent miss'); 
+[vals, locs] = max(MTL_all); 
+[valAll, loc2] = max(vals); 
+offset = loc2; 
+timePnt = locs(loc2); 
+LLtim = [-150:150];
+targTim = tim(timePnt); 
+targOff = LLtim(offset);
+
+
+%misses > hits MTL connectivity
+MTL_all = squeeze(sum(allCon([13,20], :, :,:,2), [1,2]) );
+p_bin = leadLagFigure(MTL_all, tim, 'MTL', 'MTL to ALL subsequent hit < subsequent miss'); 
+
+[vals, locs] = max(MTL_all); 
+[valAll, loc2] = max(vals); 
+offset = loc2; 
+timePnt = locs(loc2); 
+targTim2 = tim(timePnt); 
+targOff2 = LLtim(offset);
+
+out = getExampleConnection(targBrod, allDat, [13,20], targTim, targOff,targTim2, targOff2); 
+
+%hits > misses ALL connectivity
+all_all = squeeze(sum(allCon(:, :, :,:,1), [1,2]) );
+p_bin = leadLagFigure(all_all, tim, 'ALL', 'ALL to ALL subsequent hit > subsequent miss'); 
+
+%misses > hits ALL connectivity
+all_all = squeeze(sum(allCon(:, :, :,:,2), [1,2]) );
+p_bin = leadLagFigure(all_all, tim, 'ALL', 'ALL to ALL subsequent hit < subsequent miss'); 
+
+
+
+figure
+MTL_all = squeeze(sum(allCon([13,20], :, :,:,2), [1,2]) );
+imagesc(allDat{1}.leadLag.encTim, -150:150,  MTL_all')
+title('MTL to ALL subsequent hit < subsequent miss')
+ylabel('MTL lags                    MTL leads')
+
+
+figure %all to all connectivity
+all_all = squeeze(sum(allCon(:, :, :,:,1), [1,2]) ); %; ./ sum(allConN,'all'); 
+imagesc(allDat{1}.leadLag.encTim, -150:150, all_all')
+ylabel('lagging connections                    leading connections')
+title('ALL to ALL subsequent hit > subsequent miss')
+figure %all to all connectivity
+all_all = squeeze(sum(allCon(:, :, :,:,2), [1,2]) ); %; ./ sum(allConN,'all'); 
+imagesc(allDat{1}.leadLag.encTim, -150:150, all_all')
+ylabel('lagging connections                    leading connections')
+title('ALL to ALL subsequent hit < subsequent miss')
 
 
 %% get the leadLag data for all over 16 year olds

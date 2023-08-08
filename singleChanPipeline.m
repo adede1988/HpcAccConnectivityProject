@@ -121,6 +121,152 @@ end
 
 
 if ~isfield(chanDat, 'garble')
+
+        leadLag = struct; 
+        reactive = reactiveTest(chanDat.HFB);
+        includedChans = []; 
+        start = 1; 
+
+
+          
+        leadLagEncTim = chanDat.enctim(501:25:end-500);
+        leadLagRetTim = chanDat.retOtim(501:25:end-500);
+
+        %correlation matrices
+        %partner chan, hit/miss, offset, time
+        outCluStats = nan(length(chanFiles), 2, 301, length(leadLagEncTim)); %subsequent memory
+        outCluStats2 = nan(length(chanFiles), 2, 301, length(leadLagRetTim)); %retrieval
+
+
+
+
+    if sum(reactive==1)>0
+
+    
+    %trial index values
+    subMiss = find(chanDat.use & chanDat.misses); 
+    subHit = find(chanDat.use & chanDat.hits); 
+    miss_on = find(chanDat.retInfo(:,1)==2);
+    hit_on = find(chanDat.retInfo(:,1)==1); 
+   
+
+
+
+
+
+
+    if start<length(chanFiles) %is there even any work left to be done? 
+
+    for chan = start:length(chanFiles)
+        disp(['leadLag analysis with channel: ' num2str(chan) ' of ' num2str(length(chanFiles))])
+        tic
+
+        chanDat2 = load([chanFiles(chan).folder '/CHANRAW/' chanFiles(chan).name]).chanDat; 
+        chanDat2.HFB = getHFB(chanDat2, highfrex);
+        reactive2 = reactiveTest(chanDat2.HFB);
+        if sum(reactive2==1)>0
+            includedChans = [includedChans chan]; 
+        %need to grab the HFB data at higher resolution, so calculate from
+        %scratch 
+    
+        %ENCODING DATA%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %CHAN 1
+        [pow, mulTim, mulFrex] = getChanMultiTF(chanDat.enc, highfrex, chanDat.fsample, chanDat.enctim, 1);  
+        pow = arrayfun(@(x) myChanZscore(pow(:,:,x), [find(mulTim>=-450,1), find(mulTim>=-50,1)] ), 1:size(pow,3), 'UniformOutput',false ); %z-score
+        pow = cell2mat(pow); %organize
+        highnumfrex = length(mulFrex); 
+        pow = reshape(pow, size(pow,1), size(pow,2)/highnumfrex, []); %organize
+        pow = squeeze(mean(pow, 3)); %take the mean over frequencies
+    
+        HFB1 = pow; 
+        clear pow
+    
+        %CHAN 2
+        [pow2, mulTim, mulFrex] = getChanMultiTF(chanDat2.enc, highfrex, chanDat.fsample, chanDat.enctim, 1);  
+        pow2 = arrayfun(@(x) myChanZscore(pow2(:,:,x), [find(mulTim>=-450,1), find(mulTim>=-50,1)] ), 1:size(pow2,3), 'UniformOutput',false ); %z-score
+        pow2 = cell2mat(pow2); %organize
+        highnumfrex = length(mulFrex); 
+        pow2 = reshape(pow2, size(pow2,1), size(pow2,2)/highnumfrex, []); %organize
+        pow2 = squeeze(mean(pow2, 3)); %take the mean over frequencies
+        
+        disp('encoding: ')
+        outCluStats(chan,:,:,:) = getLL(HFB1, pow2, subMiss, subHit, chanDat.enctim, leadLagEncTim);
+
+
+      
+
+
+    
+        %RERTRIEVAL DATA%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %CHAN 1
+        [pow, mulTim, mulFrex] = getChanMultiTF(chanDat.retOn, highfrex, chanDat.fsample, chanDat.retOtim, 1);  
+        pow = arrayfun(@(x) myChanZscore(pow(:,:,x), [find(mulTim>=-450,1), find(mulTim>=-50,1)] ), 1:size(pow,3), 'UniformOutput',false ); %z-score
+        pow = cell2mat(pow); %organize
+        highnumfrex = length(mulFrex); 
+        pow = reshape(pow, size(pow,1), size(pow,2)/highnumfrex, []); %organize
+        pow = squeeze(mean(pow, 3)); %take the mean over frequencies
+    
+        HFB1 = pow; 
+        clear pow
+    
+        %CHAN 2
+        [pow2, mulTim, mulFrex] = getChanMultiTF(chanDat2.retOn, highfrex, chanDat.fsample, chanDat.retOtim, 1);  
+        pow2 = arrayfun(@(x) myChanZscore(pow2(:,:,x), [find(mulTim>=-450,1), find(mulTim>=-50,1)] ), 1:size(pow2,3), 'UniformOutput',false ); %z-score
+        pow2 = cell2mat(pow2); %organize
+        highnumfrex = length(mulFrex); 
+        pow2 = reshape(pow2, size(pow2,1), size(pow2,2)/highnumfrex, []); %organize
+        pow2 = squeeze(mean(pow2, 3)); %take the mean over frequencies
+        
+
+        disp('retrieval: ')
+        outCluStats2(chan,:,:,:) = getLL(HFB1, pow2, miss_on, hit_on, chanDat.retOtim, leadLagRetTim);
+    
+        x = num2str(toc/60); 
+        disp(['.......................................................' x])
+        leadLag.inclChan = includedChans; 
+        leadLag.encTim = leadLagEncTim; 
+        leadLag.retTim = leadLagRetTim; 
+        leadLag.subMem = outCluStats; 
+        leadLag.retMem = outCluStats2; 
+        chanDat.leadLag4 = leadLag; 
+        disp('interim save')
+        save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat');
+        end
+    end
+
+    leadLag.inclChan = includedChans; 
+    leadLag.encTim = leadLagEncTim; 
+    leadLag.retTim = leadLagRetTim; 
+    leadLag.subMem = outCluStats; 
+    leadLag.retMem = outCluStats2; 
+    chanDat.leadLag4 = leadLag; 
+    
+    clear HFB1 HFB2 pow2 leadLag subMiss subHit miss_on hit_on 
+    disp('attempting saving')
+    save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat'); 
+    disp(['save success: ' chanFiles(idx).folder '/' chanFiles(idx).name])
+    
+    else %there was no work to be done
+        disp('channel leadLag already complete!')
+    end
+    else
+        chanDat.leadLag4 = 1; 
+        disp('non-reactive channel save')
+        save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat'); 
+        disp(['save success: ' chanFiles(idx).folder '/' chanFiles(idx).name])
+    end
+else
+    disp('already done with leadLag')
+
+end
+
+
+%% Lead lag analysis
+
+
+
+
+if ~isfield(chanDat, 'leadLag3')
     if isfield(chanDat, 'leadLag')
         chanDat = rmfield(chanDat, 'leadLag');
     end
