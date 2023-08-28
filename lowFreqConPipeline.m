@@ -16,7 +16,7 @@ lowtVals = zeros(size(lowDat,1),1);
 hightVals = lowtVals; 
 
 
-for ti = 1:size(lowDat, 2)
+parfor ti = 1:size(lowDat, 2)
    
     modDat = table(lowDat(:,ti), connectionDat.d', connectionDat.allSubs', 'VariableNames', {'connectivity', 'memory', 'sub'}); 
     lme = fitlme(modDat, 'connectivity ~ memory + (1|sub)'); 
@@ -42,7 +42,7 @@ disp('raw t values calculated')
 perms = 1000; 
 lownullTs = zeros([length(hightVals), perms]); 
 highnullTs = lownullTs; 
-for ii = 1:perms
+parfor ii = 1:perms
     
     shuffd = randsample(connectionDat.d, length(connectionDat.d), false); 
     sliceT = lownullTs(:,ii); 
@@ -81,7 +81,7 @@ if (sum(cd.lowp<.05) > 0) || (sum(cd.highp<.05) > 0)
         cursub = connectionDat.allSubs(subSelect); 
         tmpT = zeros(size(lowDat,1),1); %low frequency
         tmpT2 = tmpT; %high frequency
-        for ti = 1:size(lowDat,2)
+        parfor ti = 1:size(lowDat,2)
             modDat = table(cur(:,ti), curd', cursub', 'VariableNames', {'connectivity', 'memory', 'sub'}); 
             lme = fitlme(modDat, 'connectivity ~ memory + (1|sub)'); 
             tmpT(ti) = lme.Coefficients(2,4); %t-value associated with memory!
@@ -94,7 +94,7 @@ if (sum(cd.lowp<.05) > 0) || (sum(cd.highp<.05) > 0)
        
         lownullTs = zeros([length(hightVals), perms]); 
         highnullTs = lownullTs;  
-        for ii = 1:perms
+        parfor ii = 1:perms
             shuffd = randsample(curd, length(curd), false); 
             slice1 = lownullTs(:,ii); 
             slice2 = highnullTs(:,ii); 
