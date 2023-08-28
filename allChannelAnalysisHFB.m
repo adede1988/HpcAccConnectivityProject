@@ -31,6 +31,7 @@ chanFiles = chanFiles(test);
 errorChans = cell(64,1); 
 allDat = cell(64,1); 
 parfor sub = 1:64
+    sub
     if isempty(allDat{sub})
         [errorChans{sub}, allDat{sub}] = getAllChanDat(chanFiles, sub); 
     end
@@ -45,12 +46,132 @@ allBrod = getAllBrodLabs(allDat);
 
 targBrod = allBrod; %([allBrod.subN]>5); 
 targBrod(cellfun(@(x) strcmp('ERROR', x), {targBrod.lab})) = []; 
-[allCon, allConN] = getAllConnections(targBrod, allDat);
+
+aggTargs = struct; 
+aggTargs(1).lab = {'BA8', 'BA9'};
+aggTargs(1).ROI = 'dlPFC';
+aggTargs(2).lab = {'BA44','BA45', 'BA46'}; 
+aggTargs(2).ROI = 'mlPFC'; 
+aggTargs(3).lab = {'BA47','BA10', 'BA11'}; 
+aggTargs(3).ROI = 'piPFC'; 
+aggTargs(4).lab = {'BA24', 'BA32', 'BA33', 'BA25'}; 
+aggTargs(4).ROI = 'ACC'; 
+aggTargs(5).lab = {'BA21', 'BA22', 'Fusiform (37)'}; 
+aggTargs(5).ROI = 'lTemp'; 
+aggTargs(6).lab = {'BA7', 'BA40', 'BA39'}; 
+aggTargs(6).ROI = 'Par'; 
+aggTargs(7).lab = {'BA19', 'VisualAssoc (18)', 'PrimVisual (17)'};
+aggTargs(7).ROI = 'Vis'; 
+aggTargs(8).lab = {'BA20'}; 
+aggTargs(8).ROI = 'iTemp'; 
+aggTargs(9).lab = {'BA6', 'PrimMotor (4)'}; 
+aggTargs(9).ROI = 'motor'; 
+aggTargs(10).lab = {'Parahip (36)', 'Hippocampus (54)'};
+aggTargs(10).ROI = 'MTL'; 
+aggTargs(11).lab = {'BA23', 'BA31'};
+aggTargs(11).ROI = 'PCC'; 
+
+
+
+
+[sigConSub, sigConRet] = getSigConnection(aggTargs, allDat);
+tim = allDat{1}.leadLag.encTim;
+timHFB = allDat{1}.HFB.encMulTim; 
+
+for ii = 1:length(timHFB)
+    if ~ismember(timHFB(ii), tim)
+        timHFB(ii) = 99999; 
+    end
+end
+timMask = zeros(size(timHFB)); 
+timMask(timHFB<99999) = 1; 
+[sigHFBSub, sigHFBRet] = getSigHFB(aggTargs, allDat, timMask); 
+[sigTFSub, sigTFRet] = getSigTF(aggTargs, allDat, timMask);
+
+%% scratch d' calculation needs to be integrated into get all later
+dprime = []; 
+for sub = 1:length(allDat)
+    if ~isempty(allDat{sub}) && allDat{sub}.age > 16
+        T = sum(allDat{sub}.retInfo(:,1)==1 | allDat{sub}.retInfo(:,1)==2); 
+        Hr = sum(allDat{sub}.retInfo(:,1)==1) / T; 
+        T = sum(allDat{sub}.retInfo(:,1)==3 | allDat{sub}.retInfo(:,1)==4); 
+        F = sum(allDat{sub}.retInfo(:,1)==4);
+        if F == 0
+            F = 1; 
+        end
+        Fr = F / T; 
+       
+        allDat{sub}.d = norminv(Hr) - norminv(Fr); 
+        dprime = [dprime, allDat{sub}.d];
+
+    end
+end
+
+
+
+[conN, conID] = getSigISPC(aggTargs, allDat, timMask);
+
+
+% [allCon, allConRet, allConN] = getAverageConnection(aggTargs, allDat);
 
  %; ./ sum(allConN([13,24], :),'all'); 
-all_all = squeeze(sum(allCon(:, :, :,:,2), [1,2]) ); %; ./ sum(allConN,'all'); 
+% MTL_LTL_hit = squeeze(sum(allCon(10, 5, 1,:,:), [1,2]) )  ./ allConN(10, 5); 
+% MTL_LTL_miss = squeeze(sum(allCon(10, 5, 2,:,:), [1,2]) ) ./ allConN(10, 5);
+% imagesc(MTL_LTL_hit)
 
 
+
+% for ii = 1:11
+%     for jj = 1:11
+%         plotMat = (squeeze(allCon(ii,jj,1,:,:)) - squeeze(allCon(ii,jj,2,:,:))) ./ allConN(ii,jj); 
+%         figure
+%         imagesc(tim, [-150:50:150], plotMat)
+%         yline(0)
+%         xline(0)
+%         caxis([-.05, .05])
+%         colorbar
+%         title([aggTargs(ii).ROI ' to ' aggTargs(jj).ROI])
+%     end
+% end
+
+
+hitOverMiss = VideoWriter(join(['G:\My Drive\Johnson\MTL_PFC_networkFigs\leadLagAll\' 'hitOverMiss_sig.avi'],''));
+open(hitOverMiss); 
+f = figure;
+f.Position = [100 100 1000 600];
+for tt = 1:100
+    makeTimePointPlot(sigConSub, aggTargs,sigHFBSub, tt, tim)
+    frame = getframe(gcf);
+    writeVideo(hitOverMiss, frame); 
+end
+
+close(hitOverMiss)
+
+
+
+
+
+% 
+% hitOverMiss = VideoWriter(join(['G:\My Drive\Johnson\MTL_PFC_networkFigs\leadLagAll\' 'hitOverMissRet.avi'],''));
+% open(hitOverMiss); 
+% f = figure;
+% f.Position = [100 100 600 600];
+% for tt = 1:100
+%     makeTimePointPlot(allConRet, allConN, aggTargs, tt, tim)
+%     frame = getframe(gcf);
+%     writeVideo(hitOverMiss, frame); 
+% end
+% 
+% close(hitOverMiss)
+
+
+
+
+
+MTL_all_hit = squeeze(sum(allCon([20,13],[1:12,14:19,21:33],1,:,:), [1,2])) ./ sum(allConN([20,13],[1:12,14:19,21:33]), 'all'); 
+MTL_all_miss = squeeze(sum(allCon([20,13],[1:12,14:19,21:33],2,:,:), [1,2])) ./ sum(allConN([20,13],[1:12,14:19,21:33]), 'all'); 
+
+imagesc(all_all_hit)
 
 imagesc(allDat{1}.leadLag.encTim, -150:150, all_all')
 
@@ -67,8 +188,8 @@ title('regions recorded simultaneously with MTL')
 
 % hits > misses MTL connectivity
 tim = allDat{1}.leadLag.encTim;
-MTL_all = squeeze(sum(allCon([13,20], :, :,:,1), [1,2]) );
-p_bin = leadLagFigure(MTL_all, tim, 'MTL', 'MTL to ALL subsequent hit > subsequent miss'); 
+MTL_all = squeeze(sum(allCon([13,20], :, 2,:,:), [1,2]) );
+p_bin = leadLagFigure((MTL_all_hit - MTL_all_miss)', tim, 'MTL', 'MTL to ALL subsequent hit > subsequent miss'); 
 [vals, locs] = max(MTL_all); 
 [valAll, loc2] = max(vals); 
 offset = loc2; 
@@ -93,7 +214,7 @@ out = getExampleConnection(targBrod, allDat, [13,20], targTim, targOff,targTim2,
 
 %hits > misses ALL connectivity
 all_all = squeeze(sum(allCon(:, :, :,:,1), [1,2]) );
-p_bin = leadLagFigure(all_all, tim, 'ALL', 'ALL to ALL subsequent hit > subsequent miss'); 
+p_bin = leadLagFigure((all_all_hit - all_all_miss)', tim, 'ALL', 'ALL to ALL subsequent hit > subsequent miss'); 
 
 %misses > hits ALL connectivity
 all_all = squeeze(sum(allCon(:, :, :,:,2), [1,2]) );

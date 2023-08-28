@@ -12,6 +12,13 @@ function allBrod = getAllBrodLabs(allDat)
             curDat = allDat{ii}; 
             curBrod = curDat.brodmann; 
             curMeet = curDat.meetLabs(:,3); 
+            meetHip = cellfun(@(x) strcmp('hip', x), curMeet);
+            if sum(meetHip)>0
+                hipidx = find(meetHip);
+                for hi = 1:length(hipidx)
+                    curBrod{hipidx(hi)} = 'Hippocampus (54)';
+                end
+            end
             knownLabs = {allBrod.lab}; 
             curUni = unique(curBrod); 
             for Li = 1:length(curUni)

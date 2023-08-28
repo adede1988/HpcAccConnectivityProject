@@ -20,7 +20,11 @@ clear subIDs
     %% load data 
     curSub = chanFiles(cellfun(@(x) strcmp(x, subIDs_uni{sub}), subIDs_all)); 
     curSubReact = zeros(length(curSub), 1); %indicator variable for HFB reactive channels
-
+    chanDat = load([curSub(1).folder '/' curSub(1).name]).chanDat; 
+    if isfile(['R:\MSS\Johnson_Lab\dtf8829\SUMDAT\' chanDat.site '_' chanDat.subID '_all' '.mat'])
+        metaDat = load(['R:\MSS\Johnson_Lab\dtf8829\SUMDAT\' chanDat.site '_' chanDat.subID '_all' '.mat']).metaDat;
+        metaDat.leadLag = rmfield(metaDat.leadLag, {'subMem', 'retMem'});
+    else
 %     curIdx = []; 
     flag = true;
     for chan = 1:length(curSub)
@@ -28,7 +32,7 @@ clear subIDs
         chanDat.reactive = 1; 
         chanDat.goodSub = 1; 
         chanDat.allBrod = 1; 
-        if isfield(chanDat, 'HFB') && isfield(chanDat, 'leadLag3') && isfield(chanDat, 'ISPC')%check for complete processing
+        if isfield(chanDat, 'HFB') && isfield(chanDat, 'leadLag4') && isfield(chanDat, 'ISPC')%check for complete processing
             %only reactive channels have leadlag calculations 
             %KNOWN ISSUE CORRECTED IN NEXT RUN: HFB for RT locked encoding
             %data had the wrong baseline. This caused spurious reactive
@@ -38,8 +42,8 @@ clear subIDs
             %Mostly channels that should not have been included had leadLag
             %calculations run. However, it did happen occasionally that a
             %channel which should have had calcualtions run was missed.
-             if isstruct(chanDat.leadLag3)
-                reactive = chanDat.leadLag3.inclChan; 
+             if isstruct(chanDat.leadLag4)
+                reactive = chanDat.leadLag4.inclChan; 
                 if ismember(chan, reactive)
                     reactive = 1;
                 else
@@ -85,11 +89,11 @@ clear subIDs
         %channels
 
         HFB = allDat(1).HFB;
-        leadLag = allDat(1).leadLag3;  
+        leadLag = allDat(1).leadLag4;  
         %hard code extra space for variable number of detected significant
         %clusters! 
-        leadLag.subMem(:,:,end+1:1000, :) = nan; 
-        leadLag.retMem(:,:,end+1:1000, :) = nan; 
+%         leadLag.subMem(:,:,end+1:1000, :) = nan; 
+%         leadLag.retMem(:,:,end+1:1000, :) = nan; 
         TF = allDat(1).TF; 
         ISPC = allDat(1).ISPC;
         HFB_names = fieldnames(HFB); 
@@ -105,12 +109,12 @@ clear subIDs
 
         for chan = 1:length(allDat)
             for fi = 1:length(leadLag_names)
-                dimVals = size(allDat(chan).leadLag3.(leadLag_names{fi}));  
+                dimVals = size(allDat(chan).leadLag4.(leadLag_names{fi}));  
                 if ismember(length(curSubReact), dimVals) %check that there's a channel dimension in the field
-                    S.subs = repmat({':'}, 1, ndims(allDat(chan).leadLag3.(leadLag_names{fi})));
+                    S.subs = repmat({':'}, 1, ndims(allDat(chan).leadLag4.(leadLag_names{fi})));
                     S.subs{1} = find(curSubReact==0);
                     S.type = '()';
-                    allDat(chan).leadLag3.(leadLag_names{fi}) = subsasgn(allDat(chan).leadLag3.(leadLag_names{fi}), S, []); 
+                    allDat(chan).leadLag4.(leadLag_names{fi}) = subsasgn(allDat(chan).leadLag4.(leadLag_names{fi}), S, []); 
                 end
             end
             for fi = 1:length(ispc_names)
@@ -131,10 +135,10 @@ clear subIDs
         end
 
         for fi = 1:length(leadLag_names)
-            dimVals = size(allDat(1).leadLag3.(leadLag_names{fi}));
+            dimVals = size(allDat(1).leadLag4.(leadLag_names{fi}));
             if ismember(sum(curSubReact), dimVals) %connectivity measures can avoid the hard code w/ channel count dimension
                 leadLag.(leadLag_names{fi}) = zeros([sum(curSubReact), ...
-                                                size(allDat(1).leadLag3.(leadLag_names{fi})) ]);
+                                                size(allDat(1).leadLag4.(leadLag_names{fi})) ]);
             end
         end
 
@@ -165,10 +169,10 @@ clear subIDs
 
             %leadLag
             for fi = 1:length(leadLag_names)
-                dimVals = size(allDat(chan).leadLag3.(leadLag_names{fi}));
+                dimVals = size(allDat(chan).leadLag4.(leadLag_names{fi}));
                 if ismember(sum(curSubReact), dimVals) && fi>1 %skip the inclChan variable
-                    tmp = allDat(chan).leadLag3.(leadLag_names{fi});
-                    leadLag.(leadLag_names{fi})(chan,:,:,1:size(tmp,3),:) = tmp;
+                    tmp = allDat(chan).leadLag4.(leadLag_names{fi});
+                    leadLag.(leadLag_names{fi})(chan,:,:,:,:) = tmp;
                 end
             end
 
@@ -176,6 +180,11 @@ clear subIDs
             for fi = 1:length(TF_names) 
                 TF.(TF_names{fi})(chan,:,:) = allDat(chan).TF.(TF_names{fi});     
             end
+
+
+
+
+
 
             %ISPC
             for fi = 1:length(ispc_names)
@@ -188,10 +197,34 @@ clear subIDs
             %free up space
             allDat(chan).HFB = 1; 
             allDat(chan).leadLag3 = 1; 
+            allDat(chan).leadLag2 = 1; 
+            allDat(chan).leadLag4 = 1; 
             allDat(chan).ISPC = 1;
             allDat(chan).TF = 1; 
            
         end
+
+
+
+  
+for fi = 5:16
+    ISPC.(ispc_names{fi}) = multiDmirror(ISPC.(ispc_names{fi}));
+end
+
+
+zachLabs = readtable('R:\MSS\Johnson_Lab\dtf8829\GitHub\HpcAccConnectivityProject/brodmann_by_subj.csv');
+zachLabs = zachLabs(cell2mat(cellfun(@(x) strcmp(x, allDat(1).subID), {zachLabs.subj}, 'uniformoutput', false )), :);
+zachLabs(isnan(zachLabs.x), :) = []; 
+zachLabs(curSubReact==0, :) = []; 
+brod_new = table2array(zachLabs(:,5)); 
+brod_old = {allDat.brodmann}; 
+
+if ~strcmp(brod_old{1}, 'ERROR')
+    disp(['match to old brod:' num2str(strcmp(brod_new{1}, brod_old{1})) ])
+else
+    disp(brod_new{1})
+end
+   
        
         metaDat = allDat(1);
         metanames = fieldnames(metaDat); 
@@ -199,7 +232,7 @@ clear subIDs
         metaDat.reactiveChans = curSubReact; 
         metaDat.elecpos = allDat(1).elecpos(curSubReact==1,:); 
         metaDat.meetLabs = allDat(1).labels(curSubReact==1,:);
-        metaDat.brodmann = {allDat.brodmann}; 
+        metaDat.brodmann = brod_new; 
         metaDat.chi = [allDat.chi];
         clear allDat
 
@@ -240,6 +273,7 @@ clear subIDs
             allDat(subIDX(chan)).goodSub = 0; 
         end
     end
+    end
 
     catch
         disp(['sub ' num2str(sub) ' ' curSub(chan).name 'fail'])
@@ -247,7 +281,7 @@ clear subIDs
         Ei = EiSave; 
     end
 
-% end
+ 
 
 
 end

@@ -120,7 +120,7 @@ end
 
 
 
-if ~isfield(chanDat, 'garble')
+if ~isfield(chanDat, 'leadLag4')
 
         leadLag = struct; 
         reactive = reactiveTest(chanDat.HFB);
@@ -562,7 +562,7 @@ end
 
 %% get ISPC and PPC values 
 
-if ~isfield(chanDat, 'ISPC')
+if ~isfield(chanDat, 'gtras')
     disp('working on ISPC')
     ISPCout = struct; 
     %store the downsample index (di) 
