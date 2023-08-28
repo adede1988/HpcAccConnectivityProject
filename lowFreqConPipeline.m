@@ -65,7 +65,7 @@ end
 
 disp('permutation on full set complete')
 
-if true %sum(cd.lowp<.05) >0 || sum(cd.highp<.05)
+if (sum(cd.lowp<.05) > 0) || (sum(cd.highp<.05) > 0)
     %low / high X subjectLeftOut X time
     permP = ones([2, connectionDat.subN, length(connectionDat.tim)]); 
     connectionDat.lowPermP = squeeze(permP(1,:,:)); 
@@ -113,13 +113,14 @@ if true %sum(cd.lowp<.05) >0 || sum(cd.highp<.05)
         end
       
         %low frequency
-        [~, connectionDat.lowPermP(1, subOut,:), ~] = cluster_test(tmpT, lownullTs); 
+        [~, connectionDat.lowPermP(subOut,:), ~] = cluster_test(tmpT, lownullTs); 
         %high frequency
-        [~, connectionDat.highPermP(2, subOut,:), ~] = cluster_test(tmpT2, highnullTs); 
+        [~, connectionDat.highPermP(subOut,:), ~] = cluster_test(tmpT2, highnullTs); 
         save([cndFiles(idx).folder '/' cndFiles(idx).name], 'connectionDat')
     end
 else
-%     permP = ones([2, length(connectionDat.uniqueSubs), size(allP)]); 
+    connectionDat.lowPermP = ones([connectionDat.subN, length(connectionDat.tim)]); 
+    connectionDat.highPermP = ones([connectionDat.subN, length(connectionDat.tim)]); 
 end
 
 save([cndFiles(idx).folder '/' cndFiles(idx).name], 'connectionDat')

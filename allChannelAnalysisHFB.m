@@ -90,6 +90,7 @@ timMask(timHFB<99999) = 1;
 
 %% scratch d' calculation needs to be integrated into get all later
 dprime = []; 
+acc = []; 
 for sub = 1:length(allDat)
     if ~isempty(allDat{sub}) && allDat{sub}.age > 16
         T = sum(allDat{sub}.retInfo(:,1)==1 | allDat{sub}.retInfo(:,1)==2); 
@@ -97,7 +98,10 @@ for sub = 1:length(allDat)
         T = sum(allDat{sub}.retInfo(:,1)==3 | allDat{sub}.retInfo(:,1)==4); 
         F = sum(allDat{sub}.retInfo(:,1)==4);
         if F == 0
+            acc = [acc, Hr - F/T]; 
             F = 1; 
+        else
+            acc = [acc, Hr - F/T]; 
         end
         Fr = F / T; 
        
