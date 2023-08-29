@@ -12,7 +12,7 @@ highDat = connectionDat.highBand(connectionDat.hmSort, :,4); %z-score hit data o
 lowDat = log10((lowDat - min(lowDat,[],'all')) + .1);
 highDat = log10((highDat - min(highDat,[], 'all')) + .1); 
 
-lowtVals = zeros(size(lowDat,1),1);
+lowtVals = zeros(size(lowDat,2),1);
 hightVals = lowtVals; 
 
 %do the initial model fit: 
@@ -83,6 +83,8 @@ disp('permutation on full set complete')
 if (sum(connectionDat.lowp<.05) > 0) || (sum(connectionDat.highp<.05) > 0)
     %low / high X subjectLeftOut X time
     permP = ones([2, connectionDat.subN, length(connectionDat.tim)]); 
+    connectionDat.lowPermT = zeros(connectionDat.subN, length(connectionDat.tim)); 
+    connectionDat.highPermT = zeros(connectionDat.subN, length(connectionDat.tim)); 
     connectionDat.lowPermP = squeeze(permP(1,:,:)); 
     connectionDat.highPermP = squeeze(permP(2,:,:)); 
     %try leaving out each subject one at a time to confirm if results
@@ -94,7 +96,7 @@ if (sum(connectionDat.lowp<.05) > 0) || (sum(connectionDat.highp<.05) > 0)
         cur2 = highDat(subSelect,:); 
         curd = connectionDat.d(subSelect); 
         cursub = connectionDat.allSubs(subSelect); 
-        tmpT = zeros(size(lowDat,1),1); %low frequency
+        tmpT = zeros(size(lowDat,2),1); %low frequency
         tmpT2 = tmpT; %high frequency
         for ti = 1:size(lowDat,2)
             modDat = table(cur(:,ti), curd', cursub', 'VariableNames', {'connectivity', 'memory', 'sub'}); 
@@ -106,7 +108,9 @@ if (sum(connectionDat.lowp<.05) > 0) || (sum(connectionDat.highp<.05) > 0)
             tmpT2(ti) = lme.Coefficients(2,4); %t-value associated with memory!
         end
 
-       
+        connectionDat.lowPermT(subOut,:) = tmpT; 
+        connectionDat.highPermT(subOut,:) = tmpT2; 
+        
         lownullTs = zeros([length(hightVals), perms]); 
         highnullTs = lownullTs;  
         curUSubs = connectionDat.uniqueSubs;
@@ -125,11 +129,11 @@ if (sum(connectionDat.lowp<.05) > 0) || (sum(connectionDat.highp<.05) > 0)
             slice1 = lownullTs(:,ii); 
             slice2 = highnullTs(:,ii); 
             for ti = 1:size(lowDat,2)
-                modDat = table(cur(:,ti), shuffd', cursub', 'VariableNames', {'connectivity', 'memory', 'sub'}); 
+                modDat = table(cur(:,ti), shuffd, cursub', 'VariableNames', {'connectivity', 'memory', 'sub'}); 
                 lme = fitlme(modDat, 'connectivity ~ memory + (1|sub)'); 
                 slice1(ti) = lme.Coefficients(2,4); %t-value associated with memory!
     
-                modDat = table(cur2(:,ti), shuffd', cursub', 'VariableNames', {'connectivity', 'memory', 'sub'}); 
+                modDat = table(cur2(:,ti), shuffd, cursub', 'VariableNames', {'connectivity', 'memory', 'sub'}); 
                 lme = fitlme(modDat, 'connectivity ~ memory + (1|sub)'); 
                 slice2(ti) = lme.Coefficients(2,4); %t-value associated with memory!
             end
