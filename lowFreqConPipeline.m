@@ -65,7 +65,7 @@ end
 
 disp('permutation on full set complete')
 
-if (sum(cd.lowp<.05) > 0) || (sum(cd.highp<.05) > 0)
+if (sum(connectionDat.lowp<.05) > 0) || (sum(connectionDat.highp<.05) > 0)
     %low / high X subjectLeftOut X time
     permP = ones([2, connectionDat.subN, length(connectionDat.tim)]); 
     connectionDat.lowPermP = squeeze(permP(1,:,:)); 
