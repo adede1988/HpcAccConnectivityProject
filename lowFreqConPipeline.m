@@ -3,19 +3,21 @@ function [] = lowFreqConPipeline(cndFiles, idx)
 
 connectionDat = load([cndFiles(idx).folder '/' cndFiles(idx).name]).connectionDat;
 disp(cndFiles(idx).name)  
-%% implementation of linear mixed effects model! 
 
+%using z-scored PPC data
 lowDat = connectionDat.lowBand(connectionDat.hmSort, :,4); %z-score hit data only
 highDat = connectionDat.highBand(connectionDat.hmSort, :,4); %z-score hit data only
 
-%log transform 
+%log transform to achieve normality 
 lowDat = log10((lowDat - min(lowDat,[],'all')) + .1);
 highDat = log10((highDat - min(highDat,[], 'all')) + .1); 
 
 lowtVals = zeros(size(lowDat,1),1);
 hightVals = lowtVals; 
 
-
+%do the initial model fit: 
+%connectivity ~ memory + (1|subject) 
+% where n is electrode pair nested in subject
 for ti = 1:size(lowDat, 2)
    
     modDat = table(lowDat(:,ti), connectionDat.d', connectionDat.allSubs', 'VariableNames', {'connectivity', 'memory', 'sub'}); 
@@ -29,7 +31,7 @@ for ti = 1:size(lowDat, 2)
 
 end
 
-connectionDat.lottVals = lowtVals; 
+connectionDat.lowtVals = lowtVals; 
 connectionDat.hightVals = hightVals; 
 
 disp('raw t values calculated')
@@ -39,12 +41,22 @@ disp('raw t values calculated')
 %         
 % 
 
+%do permutation test, refitting the model 1000 times shuffling the memory
+%performance values randomly each time keeping the data such that each
+%subject has one value for memory performance over all their electrodes
 perms = 1000; 
 lownullTs = zeros([length(hightVals), perms]); 
 highnullTs = lownullTs; 
+
+subidx = cellfun(@(y) cellfun(@(x) strcmp(x,y), connectionDat.allSubs), ...
+                 connectionDat.uniqueSubs, 'UniformOutput', false); 
+
 for ii = 1:perms
-    
-    shuffd = randsample(connectionDat.d, length(connectionDat.d), false); 
+    shuffd = zeros(size(connectionDat.d));
+    shuffVals = randsample(connectionDat.subD, length(connectionDat.subD), false); 
+    for sub = 1:length(subidx)
+        shuffd(subidx{sub}) = shuffVals(sub); 
+    end
     sliceT = lownullTs(:,ii); 
     sliceT2 = highnullTs(:,ii); 
     for ti = 1:size(lowDat,2)
@@ -59,7 +71,10 @@ for ii = 1:perms
     highnullTs(:,ii) = sliceT2; 
 end
 
-
+connectionDat.low975 = prctile(lownullTs, 97.5, 2); 
+connectionDat.low025 = prctile(lownullTs, 2.5, 2); 
+connectionDat.high975 = prctile(highnullTs, 97.5, 2); 
+connectionDat.high025 = prctile(highnullTs, 2.5, 2);
 [~,connectionDat.lowp, ~] = cluster_test(lowtVals, lownullTs); 
 [~,connectionDat.highp, ~] = cluster_test(hightVals, highnullTs); 
 
@@ -94,8 +109,19 @@ if (sum(connectionDat.lowp<.05) > 0) || (sum(connectionDat.highp<.05) > 0)
        
         lownullTs = zeros([length(hightVals), perms]); 
         highnullTs = lownullTs;  
+        curUSubs = connectionDat.uniqueSubs;
+        curUSubs(subOut) = [];
+        cursubD = connectionDat.subD; 
+        cursubD(subOut) = []; 
+        subidx = cellfun(@(y) cellfun(@(x) strcmp(x,y), cursub), ...
+                 curUSubs, 'UniformOutput', false); 
+        
         for ii = 1:perms
-            shuffd = randsample(curd, length(curd), false); 
+            shuffd = zeros(length(cursub),1);
+            shuffVals = randsample(cursubD, length(cursubD), false); 
+            for sub = 1:length(subidx)
+                shuffd(subidx{sub}) = shuffVals(sub); 
+            end
             slice1 = lownullTs(:,ii); 
             slice2 = highnullTs(:,ii); 
             for ti = 1:size(lowDat,2)
@@ -126,7 +152,7 @@ end
 save([cndFiles(idx).folder '/' cndFiles(idx).name], 'connectionDat')
 
 
-toc
+
 
 
 
