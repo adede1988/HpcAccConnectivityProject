@@ -5,12 +5,29 @@ connectionDat = load([cndFiles(idx).folder '/' cndFiles(idx).name]).connectionDa
 disp(cndFiles(idx).name)  
 
 %using z-scored PPC data
-lowDat = connectionDat.lowBand(connectionDat.hmSort, :,4); %z-score hit data only
-highDat = connectionDat.highBand(connectionDat.hmSort, :,4); %z-score hit data only
+lowDat = connectionDat.lowBand(connectionDat.hmSort, :,4); %raw ppc
+highDat = connectionDat.highBand(connectionDat.hmSort, :,4); %raw ppc
 
 %log transform to achieve normality 
 lowDat = log10((lowDat - min(lowDat,[],'all')) + .1);
 highDat = log10((highDat - min(highDat,[], 'all')) + .1); 
+
+%rank transform the d' data
+connectionDat.dOrig = connectionDat.d; 
+connectionDat.subDOrig = connectionDat.subD; 
+[dVals, rankd] = sort(connectionDat.subD); 
+rankd = norminv((rankd - .5)/length(rankd) ); %rankit transform
+if ~isempty(find(diff(dVals)==0))
+    connectionDat.repeatedDvals = 'yes'; 
+else
+    connectionDat.repeatedDvals = 'no'; 
+end
+for sub = 1:length(rankd)
+    connectionDat.d(connectionDat.d==connectionDat.subD(sub)) = rankd(sub); 
+end
+connectionDat.subD = rankd; 
+
+
 
 lowtVals = zeros(size(lowDat,2),1);
 hightVals = lowtVals; 
@@ -35,11 +52,7 @@ connectionDat.lowtVals = lowtVals;
 connectionDat.hightVals = hightVals; 
 
 disp('raw t values calculated')
-%         %potentially use this to get a normally distributed rank value for
-%         %d'
-% %         rankit = INVNORMAL ((Rank of X - 0.5)/ n)
-%         
-% 
+
 
 %do permutation test, refitting the model 1000 times shuffling the memory
 %performance values randomly each time keeping the data such that each
