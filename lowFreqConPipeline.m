@@ -35,7 +35,7 @@ hightVals = lowtVals;
 %do the initial model fit: 
 %connectivity ~ memory + (1|subject) 
 % where n is electrode pair nested in subject
-for ti = 1:size(lowDat, 2)
+parfor ti = 1:size(lowDat, 2)
    
     modDat = table(lowDat(:,ti), connectionDat.d', connectionDat.allSubs', 'VariableNames', {'connectivity', 'memory', 'sub'}); 
     lme = fitlme(modDat, 'connectivity ~ memory + (1|sub)'); 
@@ -64,7 +64,7 @@ highnullTs = lownullTs;
 subidx = cellfun(@(y) cellfun(@(x) strcmp(x,y), connectionDat.allSubs), ...
                  connectionDat.uniqueSubs, 'UniformOutput', false); 
 
-for ii = 1:perms
+parfor ii = 1:perms
     shuffd = zeros(size(connectionDat.d));
     shuffVals = randsample(connectionDat.subD, length(connectionDat.subD), false); 
     for sub = 1:length(subidx)

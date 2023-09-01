@@ -111,7 +111,7 @@ for sub = 1:length(allDat)
     end
 end
 
-
+aggTargs = getSigISPC2(aggTargs, allDat, timMask); 
 
 [conN, conID] = getSigISPC(aggTargs, allDat, timMask);
 
