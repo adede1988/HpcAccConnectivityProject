@@ -5,12 +5,12 @@ connectionDat = load([cndFiles(idx).folder '/' cndFiles(idx).name]).connectionDa
 disp(cndFiles(idx).name)  
 
 %using z-scored PPC data
-lowDat = connectionDat.lowBand(connectionDat.hmSort, :,4); %raw ppc
-highDat = connectionDat.highBand(connectionDat.hmSort, :,4); %raw ppc
+lowDat = connectionDat.lowBand(connectionDat.hmSort, :,2); %raw ppc
+highDat = connectionDat.highBand(connectionDat.hmSort, :,2); %raw ppc
 
 %log transform to achieve normality 
-lowDat = log10((lowDat - min(lowDat,[],'all')) + .1);
-highDat = log10((highDat - min(highDat,[], 'all')) + .1); 
+% lowDat = log10((lowDat - min(lowDat,[],'all')) + .1);
+% highDat = log10((highDat - min(highDat,[], 'all')) + .1); 
 
 %rank transform the d' data
 connectionDat.dOrig = connectionDat.d; 
@@ -31,25 +31,30 @@ connectionDat.subD = rankd;
 
 lowtVals = zeros(size(lowDat,2),1);
 hightVals = lowtVals; 
+lowpRaw = lowtVals; 
+highpRaw = hightVals; 
 
 %do the initial model fit: 
 %connectivity ~ memory + (1|subject) 
 % where n is electrode pair nested in subject
-parfor ti = 1:size(lowDat, 2)
+for ti = 1:size(lowDat, 2)
    
     modDat = table(lowDat(:,ti), connectionDat.d', connectionDat.allSubs', 'VariableNames', {'connectivity', 'memory', 'sub'}); 
-    lme = fitlme(modDat, 'connectivity ~ memory + (1|sub)'); 
+    lme = fitlme(modDat, 'memory ~ connectivity + (1|sub)'); 
     lowtVals(ti) = lme.Coefficients(2,4); %t-value associated with memory! 
-
+    lowpRaw(ti) = lme.Coefficients(2,6); 
    
     modDat = table(highDat(:,ti), connectionDat.d', connectionDat.allSubs', 'VariableNames', {'connectivity', 'memory', 'sub'}); 
-    lme = fitlme(modDat, 'connectivity ~ memory + (1|sub)'); 
+    lme = fitlme(modDat, 'memory ~ connectivity + (1|sub)'); 
     hightVals(ti) = lme.Coefficients(2,4); %t-value associated with memory! 
+    highpRaw(ti) = lme.Coefficients(2,6); 
 
 end
 
 connectionDat.lowtVals = lowtVals; 
 connectionDat.hightVals = hightVals; 
+connectionDat.lowpRaw = lowpRaw; 
+connectionDat.highpRaw = highpRaw; 
 
 disp('raw t values calculated')
 
@@ -64,7 +69,7 @@ highnullTs = lownullTs;
 subidx = cellfun(@(y) cellfun(@(x) strcmp(x,y), connectionDat.allSubs), ...
                  connectionDat.uniqueSubs, 'UniformOutput', false); 
 
-parfor ii = 1:perms
+for ii = 1:perms
     shuffd = zeros(size(connectionDat.d));
     shuffVals = randsample(connectionDat.subD, length(connectionDat.subD), false); 
     for sub = 1:length(subidx)
@@ -74,10 +79,10 @@ parfor ii = 1:perms
     sliceT2 = highnullTs(:,ii); 
     for ti = 1:size(lowDat,2)
         modDat = table(lowDat(:,ti), shuffd', connectionDat.allSubs', 'VariableNames', {'connectivity', 'memory', 'sub'}); 
-        lme = fitlme(modDat, 'connectivity ~ memory + (1|sub)'); 
+        lme = fitlme(modDat, 'memory ~ connectivity + (1|sub)'); 
         sliceT(ti) = lme.Coefficients(2,4); %t-value associated with memory! 
         modDat = table(highDat(:,ti), shuffd', connectionDat.allSubs', 'VariableNames', {'connectivity', 'memory', 'sub'}); 
-        lme = fitlme(modDat, 'connectivity ~ memory + (1|sub)'); 
+        lme = fitlme(modDat, 'memory ~ connectivity + (1|sub)'); 
         sliceT2(ti) = lme.Coefficients(2,4); %t-value associated with memory! 
     end
     lownullTs(:,ii) = sliceT; 
@@ -93,11 +98,13 @@ connectionDat.high025 = prctile(highnullTs, 2.5, 2);
 
 disp('permutation on full set complete')
 
-if (sum(connectionDat.lowp<.05) > 0) || (sum(connectionDat.highp<.05) > 0)
+if true %(sum(connectionDat.lowp<.05) > 0) || (sum(connectionDat.highp<.05) > 0)
     %low / high X subjectLeftOut X time
     permP = ones([2, connectionDat.subN, length(connectionDat.tim)]); 
     connectionDat.lowPermT = zeros(connectionDat.subN, length(connectionDat.tim)); 
     connectionDat.highPermT = zeros(connectionDat.subN, length(connectionDat.tim)); 
+    connectionDat.lowPermpRaw = connectionDat.lowPermT; 
+    connectionDat.highPermpRaw = connectionDat.lowPermpRaw; 
     connectionDat.lowPermP = squeeze(permP(1,:,:)); 
     connectionDat.highPermP = squeeze(permP(2,:,:)); 
     %try leaving out each subject one at a time to confirm if results
@@ -111,18 +118,25 @@ if (sum(connectionDat.lowp<.05) > 0) || (sum(connectionDat.highp<.05) > 0)
         cursub = connectionDat.allSubs(subSelect); 
         tmpT = zeros(size(lowDat,2),1); %low frequency
         tmpT2 = tmpT; %high frequency
+        tmpP = tmpT; 
+        tmpP2 = tmpT; 
         for ti = 1:size(lowDat,2)
             modDat = table(cur(:,ti), curd', cursub', 'VariableNames', {'connectivity', 'memory', 'sub'}); 
-            lme = fitlme(modDat, 'connectivity ~ memory + (1|sub)'); 
+            lme = fitlme(modDat, 'memory ~ connectivity + (1|sub)'); 
             tmpT(ti) = lme.Coefficients(2,4); %t-value associated with memory!
+            tmpP(ti) = lme.Coefficients(2,6); %p-value
 
             modDat = table(cur2(:,ti), curd', cursub', 'VariableNames', {'connectivity', 'memory', 'sub'}); 
-            lme = fitlme(modDat, 'connectivity ~ memory + (1|sub)'); 
+            lme = fitlme(modDat, 'memory ~ connectivity + (1|sub)'); 
             tmpT2(ti) = lme.Coefficients(2,4); %t-value associated with memory!
+            tmpP2(ti) = lme.Coefficients(2,6); %p-value
         end
 
         connectionDat.lowPermT(subOut,:) = tmpT; 
         connectionDat.highPermT(subOut,:) = tmpT2; 
+
+        connectionDat.lowPermpRaw(subOut,:) = tmpP; 
+        connectionDat.highPermpRaw(subOut,:) = tmpP2; 
         
         lownullTs = zeros([length(hightVals), perms]); 
         highnullTs = lownullTs;  
@@ -143,11 +157,11 @@ if (sum(connectionDat.lowp<.05) > 0) || (sum(connectionDat.highp<.05) > 0)
             slice2 = highnullTs(:,ii); 
             for ti = 1:size(lowDat,2)
                 modDat = table(cur(:,ti), shuffd, cursub', 'VariableNames', {'connectivity', 'memory', 'sub'}); 
-                lme = fitlme(modDat, 'connectivity ~ memory + (1|sub)'); 
+                lme = fitlme(modDat, 'memory ~ connectivity + (1|sub)'); 
                 slice1(ti) = lme.Coefficients(2,4); %t-value associated with memory!
     
                 modDat = table(cur2(:,ti), shuffd, cursub', 'VariableNames', {'connectivity', 'memory', 'sub'}); 
-                lme = fitlme(modDat, 'connectivity ~ memory + (1|sub)'); 
+                lme = fitlme(modDat, 'memory ~ connectivity + (1|sub)'); 
                 slice2(ti) = lme.Coefficients(2,4); %t-value associated with memory!
             end
             lownullTs(:,ii) = slice1; 

@@ -46,7 +46,9 @@ for reg = 1:length(aggTargs)
                     sh(:,regi,:,:,:) = []; 
                     sm(:,regi,:,:,:) = []; 
                  
-
+                    %taking the mean across partner channels
+                    %this would be a good location to explore graph
+                    %theoretic metrics? 
                     regRes(1, :, :, :,  ri) = squeeze(mean(sh,2)); 
                     regRes(2, :, :, :,  ri) = squeeze(mean(sm,2)); 
 

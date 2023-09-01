@@ -45,6 +45,6 @@ cndFiles = cndFiles(test);
 
 
 tic
-lowFreqConPipeline_singleReg(cndFiles, start); 
+lowFreqConPipeline(cndFiles, start); 
 toc
 

@@ -5,12 +5,18 @@ connectionDat = load([cndFiles(idx).folder '/' cndFiles(idx).name]).connectionDa
 disp(cndFiles(idx).name)  
 
 %using z-scored PPC data
-lowDat = connectionDat.lowBand(:, :,4); %raw ppc
-highDat = connectionDat.highBand(:, :,4); %raw ppc
+lowDat = connectionDat.lowBand(:, :,2); %raw ppc
+highDat = connectionDat.highBand(:, :,2); %raw ppc
 
-%log transform to achieve normality 
-lowDat = log10((lowDat - min(lowDat,[],'all')) + .1);
-highDat = log10((highDat - min(highDat,[], 'all')) + .1); 
+% lowDat = lowDat - min(lowDat, [], 2); 
+% highDat = highDat - min(highDat, [], 2); 
+% 
+% lowDat = lowDat ./ max(lowDat, [], 2); 
+% highDat = highDat ./ max(highDat, [], 2); 
+% 
+% %log transform to achieve normality 
+% lowDat = log10((lowDat - min(lowDat,[],'all')) + .1);
+% highDat = log10((highDat - min(highDat,[], 'all')) + .1); 
 
 %rank transform the d' data
 connectionDat.dOrig = connectionDat.d; 
