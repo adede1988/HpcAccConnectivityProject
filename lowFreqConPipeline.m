@@ -13,19 +13,27 @@ highDat = connectionDat.highBand(connectionDat.hmSort, :,2); %raw ppc
 % highDat = log10((highDat - min(highDat,[], 'all')) + .1); 
 
 %rank transform the d' data
-connectionDat.dOrig = connectionDat.d; 
-connectionDat.subDOrig = connectionDat.subD; 
-[dVals, rankd] = sort(connectionDat.subD); 
-rankd = norminv((rankd - .5)/length(rankd) ); %rankit transform
-if ~isempty(find(diff(dVals)==0))
-    connectionDat.repeatedDvals = 'yes'; 
+if ~isfield(connectionDat, 'dOrig')
+    connectionDat.dOrig = connectionDat.d; 
+    connectionDat.subDOrig = connectionDat.subD; 
 else
-    connectionDat.repeatedDvals = 'no'; 
+    connectionDat.d = connectionDat.dOrig; 
+    connectionDat.subD = connectionDat.subDOrig; 
 end
+[dVals, rankd] = sort(connectionDat.subD); 
+dVals = dVals(rankd); 
+% rankd = norminv((rankd - .5)/length(rankd) ); %rankit transform
+% if ~isempty(find(diff(dVals)==0))
+%     connectionDat.repeatedDvals = 'yes'; 
+% else
+%     connectionDat.repeatedDvals = 'no'; 
+% end
 for sub = 1:length(rankd)
-    connectionDat.d(connectionDat.d==connectionDat.subD(sub)) = rankd(sub); 
+    connectionDat.d(connectionDat.dOrig==dVals(sub)) = rankd(sub); 
+    connectionDat.subD(connectionDat.subDOrig==dVals(sub)) = rankd(sub); 
 end
-connectionDat.subD = rankd; 
+connectionDat.subD = norminv((connectionDat.subD -.5) / length(connectionDat.subD)); 
+connectionDat.d = norminv((connectionDat.d - .5) / length(connectionDat.subD)); 
 
 
 
@@ -38,14 +46,31 @@ highpRaw = hightVals;
 %connectivity ~ memory + (1|subject) 
 % where n is electrode pair nested in subject
 for ti = 1:size(lowDat, 2)
-   
-    modDat = table(lowDat(:,ti), connectionDat.d', connectionDat.allSubs', 'VariableNames', {'connectivity', 'memory', 'sub'}); 
+    [conVals, rankCon] = sort(lowDat(:,ti)); 
+    ranks = zeros(length(rankCon),1); 
+    for ii = 1:length(rankCon)
+        ranks(ii) = find(rankCon==ii); 
+    end
+
+    modDat = table(norminv((ranks - .5) / length(ranks)), connectionDat.d', connectionDat.allSubs',connectionDat.dOrig', lowDat(:,ti),...
+        'VariableNames', {'connectivity', 'memory', 'sub', 'ogMem', 'ogCon'}); 
     lme = fitlme(modDat, 'memory ~ connectivity + (1|sub)'); 
+%     modDat = table(lowDat(:,ti), connectionDat.d', connectionDat.allSubs', 'VariableNames', {'connectivity', 'memory', 'sub'}); 
+%     lme = fitlme(modDat, 'memory ~ connectivity + (1|sub)'); 
     lowtVals(ti) = lme.Coefficients(2,4); %t-value associated with memory! 
     lowpRaw(ti) = lme.Coefficients(2,6); 
    
-    modDat = table(highDat(:,ti), connectionDat.d', connectionDat.allSubs', 'VariableNames', {'connectivity', 'memory', 'sub'}); 
+    [conVals, rankCon] = sort(highDat(:,ti)); 
+    ranks = zeros(length(rankCon),1); 
+    for ii = 1:length(rankCon)
+        ranks(ii) = find(rankCon==ii); 
+    end
+
+    modDat = table(norminv((ranks - .5) / length(ranks)), connectionDat.d', connectionDat.allSubs',connectionDat.dOrig', highDat(:,ti),...
+        'VariableNames', {'connectivity', 'memory', 'sub', 'ogMem' 'ogCon'}); 
     lme = fitlme(modDat, 'memory ~ connectivity + (1|sub)'); 
+%     modDat = table(highDat(:,ti), connectionDat.d', connectionDat.allSubs', 'VariableNames', {'connectivity', 'memory', 'sub'}); 
+%     lme = fitlme(modDat, 'memory ~ connectivity + (1|sub)'); 
     hightVals(ti) = lme.Coefficients(2,4); %t-value associated with memory! 
     highpRaw(ti) = lme.Coefficients(2,6); 
 
@@ -78,11 +103,34 @@ for ii = 1:perms
     sliceT = lownullTs(:,ii); 
     sliceT2 = highnullTs(:,ii); 
     for ti = 1:size(lowDat,2)
-        modDat = table(lowDat(:,ti), shuffd', connectionDat.allSubs', 'VariableNames', {'connectivity', 'memory', 'sub'}); 
+        [conVals, rankCon] = sort(lowDat(:,ti)); 
+        ranks = zeros(length(rankCon),1); 
+        for ii = 1:length(rankCon)
+            ranks(ii) = find(rankCon==ii); 
+        end
+    
+        modDat = table(norminv((ranks - .5) / length(ranks)), shuffd', connectionDat.allSubs',connectionDat.dOrig', lowDat(:,ti),...
+            'VariableNames', {'connectivity', 'memory', 'sub', 'ogMem', 'ogCon'}); 
         lme = fitlme(modDat, 'memory ~ connectivity + (1|sub)'); 
+
+% 
+%         modDat = table(lowDat(:,ti), shuffd', connectionDat.allSubs', 'VariableNames', {'connectivity', 'memory', 'sub'}); 
+%         lme = fitlme(modDat, 'memory ~ connectivity + (1|sub)'); 
         sliceT(ti) = lme.Coefficients(2,4); %t-value associated with memory! 
-        modDat = table(highDat(:,ti), shuffd', connectionDat.allSubs', 'VariableNames', {'connectivity', 'memory', 'sub'}); 
-        lme = fitlme(modDat, 'memory ~ connectivity + (1|sub)'); 
+
+        [conVals, rankCon] = sort(highDat(:,ti)); 
+        ranks = zeros(length(rankCon),1); 
+        for ii = 1:length(rankCon)
+            ranks(ii) = find(rankCon==ii); 
+        end
+        
+        modDat = table(norminv((ranks - .5) / length(ranks)), shuffd', connectionDat.allSubs',connectionDat.dOrig', highDat(:,ti),...
+        'VariableNames', {'connectivity', 'memory', 'sub', 'ogMem' 'ogCon'}); 
+        lme = fitlme(modDat, 'memory ~ connectivity + (1|sub)');
+
+
+%         modDat = table(highDat(:,ti), shuffd', connectionDat.allSubs', 'VariableNames', {'connectivity', 'memory', 'sub'}); 
+%         lme = fitlme(modDat, 'memory ~ connectivity + (1|sub)'); 
         sliceT2(ti) = lme.Coefficients(2,4); %t-value associated with memory! 
     end
     lownullTs(:,ii) = sliceT; 
@@ -97,6 +145,10 @@ connectionDat.high025 = prctile(highnullTs, 2.5, 2);
 [~,connectionDat.highp, ~] = cluster_test(hightVals, highnullTs); 
 
 disp('permutation on full set complete')
+
+
+
+
 
 if true %(sum(connectionDat.lowp<.05) > 0) || (sum(connectionDat.highp<.05) > 0)
     %low / high X subjectLeftOut X time
@@ -121,12 +173,23 @@ if true %(sum(connectionDat.lowp<.05) > 0) || (sum(connectionDat.highp<.05) > 0)
         tmpP = tmpT; 
         tmpP2 = tmpT; 
         for ti = 1:size(lowDat,2)
-            modDat = table(cur(:,ti), curd', cursub', 'VariableNames', {'connectivity', 'memory', 'sub'}); 
+
+            [conVals, rankCon] = sort(cur(:,ti)); 
+            ranks = zeros(length(rankCon),1); 
+            for ii = 1:length(rankCon)
+                ranks(ii) = find(rankCon==ii); 
+            end
+            modDat = table(norminv((ranks - .5) / length(ranks)), curd', cursub', 'VariableNames', {'connectivity', 'memory', 'sub'}); 
             lme = fitlme(modDat, 'memory ~ connectivity + (1|sub)'); 
             tmpT(ti) = lme.Coefficients(2,4); %t-value associated with memory!
             tmpP(ti) = lme.Coefficients(2,6); %p-value
 
-            modDat = table(cur2(:,ti), curd', cursub', 'VariableNames', {'connectivity', 'memory', 'sub'}); 
+            [conVals, rankCon] = sort(cur(:,ti)); 
+            ranks = zeros(length(rankCon),1); 
+            for ii = 1:length(rankCon)
+                ranks(ii) = find(rankCon==ii); 
+            end
+            modDat = table(norminv((ranks - .5) / length(ranks)), cursub', 'VariableNames', {'connectivity', 'memory', 'sub'}); 
             lme = fitlme(modDat, 'memory ~ connectivity + (1|sub)'); 
             tmpT2(ti) = lme.Coefficients(2,4); %t-value associated with memory!
             tmpP2(ti) = lme.Coefficients(2,6); %p-value
@@ -156,11 +219,21 @@ if true %(sum(connectionDat.lowp<.05) > 0) || (sum(connectionDat.highp<.05) > 0)
             slice1 = lownullTs(:,ii); 
             slice2 = highnullTs(:,ii); 
             for ti = 1:size(lowDat,2)
-                modDat = table(cur(:,ti), shuffd, cursub', 'VariableNames', {'connectivity', 'memory', 'sub'}); 
+                [conVals, rankCon] = sort(cur(:,ti)); 
+                ranks = zeros(length(rankCon),1); 
+                for ii = 1:length(rankCon)
+                    ranks(ii) = find(rankCon==ii); 
+                end
+                modDat = table(norminv((ranks - .5) / length(ranks)), shuffd, cursub', 'VariableNames', {'connectivity', 'memory', 'sub'}); 
                 lme = fitlme(modDat, 'memory ~ connectivity + (1|sub)'); 
                 slice1(ti) = lme.Coefficients(2,4); %t-value associated with memory!
     
-                modDat = table(cur2(:,ti), shuffd, cursub', 'VariableNames', {'connectivity', 'memory', 'sub'}); 
+                [conVals, rankCon] = sort(cur(:,ti)); 
+                ranks = zeros(length(rankCon),1); 
+                for ii = 1:length(rankCon)
+                    ranks(ii) = find(rankCon==ii); 
+                end
+                modDat = table(norminv((ranks - .5) / length(ranks)), shuffd, cursub', 'VariableNames', {'connectivity', 'memory', 'sub'}); 
                 lme = fitlme(modDat, 'memory ~ connectivity + (1|sub)'); 
                 slice2(ti) = lme.Coefficients(2,4); %t-value associated with memory!
             end
@@ -185,17 +258,63 @@ save([cndFiles(idx).folder '/' cndFiles(idx).name], 'connectionDat')
 
 
 
+%% what if I ask, is there a relationship between the proportion of >1.6449 z-scores and memory
+
+lowDat = connectionDat.lowBand(connectionDat.hmSort, :,4); %raw ppc
+highDat = connectionDat.highBand(connectionDat.hmSort, :,4); %raw ppc
+
+subPropLow = zeros(length(connectionDat.uniqueSubs),size(lowDat,2)); 
+subPropHigh = subPropLow; 
+
+for sub = 1:length(connectionDat.uniqueSubs)
+    subSelect = cellfun(@(x) strcmp(connectionDat.uniqueSubs{sub}, x), connectionDat.allSubs); 
+    subPropLow(sub,:) = sum(lowDat(subSelect,:) > 1.6449, 1) ./ sum(subSelect); 
+    subPropHigh(sub,:) = sum(highDat(subSelect,:) > 1.6449, 1) ./ sum(subSelect); 
 
 
+end
+
+propRLow = zeros(length(connectionDat.tim),1); 
+propRHigh = propRLow; 
+
+for ti = 1:length(connectionDat.tim)
+propRLow(ti) = corr(subPropLow(:,ti), connectionDat.subDOrig', 'type', 'Spearman');
+propRHigh(ti) = corr(subPropHigh(:,ti), connectionDat.subDOrig', 'type', 'Spearman');
 
 
+end
 
 
+propRLowNull = zeros([length(propRLow), perms]); 
+propRHighNull = propRLowNull; 
+
+parfor ii = 1:perms
+ii
+    shuffMem = randsample(connectionDat.subDOrig, length(connectionDat.subDOrig), false); 
+    tmp = squeeze(propRLowNull(:,ii)); 
+    tmp2 = squeeze(propRHighNull(:,ii)); 
+    for ti = 1:length(connectionDat.tim)
+        tmp(ti) = corr(subPropLow(:,ti), shuffMem', 'type', 'Spearman');
+        tmp2(ti) = corr(subPropHigh(:,ti), shuffMem', 'type', 'Spearman');
+    
+    
+    end
+
+    propRLowNull(:,ii) = tmp; 
+    propRHighNull(:,ii) = tmp2; 
+end
 
 
+connectionDat.propRLow = propRLow; 
+connectionDat.propRHigh = propRHigh; 
+connectionDat.propRLow975 = prctile(propRLowNull, 97.5, 2); 
+connectionDat.propRLow025 = prctile(propRLowNull, 2.5, 2); 
+connectionDat.propRHigh975 = prctile(propRHighNull, 97.5, 2); 
+connectionDat.propRHigh025 = prctile(propRHighNull, 2.5, 2); 
+[~, connectionDat.propRHighp, ~] = cluster_test(propRHigh, propRHighNull);
+[~, connectionDat.propRlowp, ~] = cluster_test(propRLow, propRLowNull); 
 
-
-
+save([cndFiles(idx).folder '/' cndFiles(idx).name], 'connectionDat')
 
 
 end
