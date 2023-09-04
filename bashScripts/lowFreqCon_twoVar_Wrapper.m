@@ -33,7 +33,7 @@ addpath([codePre 'myFrequentUse'])
 
 %% initialize 
 
-datFolder = [datPre 'LowFreqConDat_memOnly']; 
+datFolder = [datPre 'LowFreqConDat_mem_HM']; 
 cndFiles = dir(datFolder);
 test = cellfun(@(x) length(x)>0, strfind({cndFiles.name}, '.mat'));
 cndFiles = cndFiles(test); 
@@ -45,6 +45,6 @@ cndFiles = cndFiles(test);
 
 
 tic
-lowFreqConPipeline_singleVar(cndFiles, start); 
+lowFreqConPipeline_twoVar(cndFiles, start); 
 toc
 
