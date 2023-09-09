@@ -12,7 +12,7 @@ subIDs_uni = unique(subIDs_all);
 clear subIDs
 
 % for sub = 1:length(subIDs_uni)
-    sub
+%     sub
     Ei = 1; 
     EiSave = Ei; 
     try
@@ -21,9 +21,25 @@ clear subIDs
     curSub = chanFiles(cellfun(@(x) strcmp(x, subIDs_uni{sub}), subIDs_all)); 
     curSubReact = zeros(length(curSub), 1); %indicator variable for HFB reactive channels
     chanDat = load([curSub(1).folder '/' curSub(1).name]).chanDat; 
+    T = sum(chanDat.retInfo(:,1)==1 | chanDat.retInfo(:,1)==2); 
+    Hr = sum(chanDat.retInfo(:,1)==1) / T; 
+    T = sum(chanDat.retInfo(:,1)==3 | chanDat.retInfo(:,1)==4); 
+    F = sum(chanDat.retInfo(:,1)==4);
+    if F == 0
+        acc =  Hr - F/T; 
+        F = 1; 
+    else
+        acc =  Hr - F/T; 
+    end
+    Fr = F / T; 
+   
+    d = norminv(Hr) - norminv(Fr); 
+
+    if acc>0 && chanDat.age > 13 %memory and age filters
+
     if isfile(['R:\MSS\Johnson_Lab\dtf8829\SUMDAT\' chanDat.site '_' chanDat.subID '_all' '.mat'])
         metaDat = load(['R:\MSS\Johnson_Lab\dtf8829\SUMDAT\' chanDat.site '_' chanDat.subID '_all' '.mat']).metaDat;
-        metaDat.leadLag = rmfield(metaDat.leadLag, {'subMem', 'retMem'});
+%         metaDat.leadLag = rmfield(metaDat.leadLag, {'subMem', 'retMem'});
     else
 %     curIdx = []; 
     flag = true;
@@ -206,7 +222,8 @@ clear subIDs
 
 
 
-  
+  %connectivity was only calculated in one direction, so mirror the matrix
+  %to copy the connectivity data (should be symmetric) 
 for fi = 5:16
     ISPC.(ispc_names{fi}) = multiDmirror(ISPC.(ispc_names{fi}));
 end
@@ -274,14 +291,15 @@ end
         end
     end
     end
-
+    end %memory and age filter end
     catch
         disp(['sub ' num2str(sub) ' ' curSub(chan).name 'fail'])
         metaDat = []; 
         Ei = EiSave; 
+
     end
 
- 
+   
 
 
 end

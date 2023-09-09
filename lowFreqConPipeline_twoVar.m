@@ -1,10 +1,10 @@
-function [] = lowFreqConPipeline_twoVar(cndFiles, idx)
+function [] = lowFreqConPipeline_twoVar(cndFiles, idx, outprefix)
 
 
 connectionDat = load([cndFiles(idx).folder '/' cndFiles(idx).name]).connectionDat;
 disp(cndFiles(idx).name)  
 
-%using z-scored PPC data
+%using raw PPC data
 lowDat = connectionDat.lowBand(:, :,2); %raw ppc
 highDat = connectionDat.highBand(:, :,2); %raw ppc
 
@@ -161,7 +161,7 @@ highp = lowp;
 
 connectionDat.lowp = lowp; 
 connectionDat.highp = highp;
-save([cndFiles(idx).folder '/' cndFiles(idx).name], 'connectionDat')
+save([cndFiles(idx).folder '/'  outprefix '_' cndFiles(idx).name], 'connectionDat')
 disp('permutation on full set complete')
 
 %cross validate using leave one out 
@@ -284,7 +284,7 @@ if (sum(connectionDat.lowp<.05, 'all') > 0) || (sum(connectionDat.highp<.05,'all
         [~, connectionDat.lowCrossP(subOut,:,3), ~] = cluster_test(tmpT(:,3), lownullTs(:,3,:)); 
         %high frequency interaction
         [~, connectionDat.highCrossP(subOut,:,3), ~] = cluster_test(tmpT2(:,3), highnullTs(:,3,:));
-        save([cndFiles(idx).folder '/' cndFiles(idx).name], 'connectionDat')
+        save([cndFiles(idx).folder '/' outprefix '_' cndFiles(idx).name], 'connectionDat')
         end
     end
 else
@@ -292,7 +292,7 @@ else
     connectionDat.highCrossP = ones([connectionDat.subN, length(connectionDat.tim),3]); 
 end
 
-save([cndFiles(idx).folder '/' cndFiles(idx).name], 'connectionDat')
+save([cndFiles(idx).folder '/' outprefix '_' cndFiles(idx).name], 'connectionDat')
 
 
 

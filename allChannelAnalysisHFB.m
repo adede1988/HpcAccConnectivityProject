@@ -39,7 +39,7 @@ end
 
 
 
-%% aggregating lead lag information across subjects
+%% define regions of interest
 
 
 allBrod = getAllBrodLabs(allDat);
@@ -74,7 +74,7 @@ aggTargs(11).ROI = 'PCC';
 
 
 
-[sigConSub, sigConRet] = getSigConnection(aggTargs, allDat);
+[sigConSub, sigConRet, aggTargs] = getSigConnection(aggTargs, allDat);
 tim = allDat{1}.leadLag.encTim;
 timHFB = allDat{1}.HFB.encMulTim; 
 

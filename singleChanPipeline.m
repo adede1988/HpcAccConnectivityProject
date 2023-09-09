@@ -562,7 +562,7 @@ end
 
 %% get ISPC and PPC values 
 
-if ~isfield(chanDat, 'gtras')
+if ~isfield(chanDat, 'ISPC')
     disp('working on ISPC')
     ISPCout = struct; 
     %store the downsample index (di) 
