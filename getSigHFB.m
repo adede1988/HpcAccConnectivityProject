@@ -35,7 +35,7 @@ for reg1 = 1:length(aggTargs)
     missVals = permute(squeeze(regRes(2,:,:)), [2,1]);
     
     tVals = myArrayT(hitVals, missVals,1);
-    perms = 100; 
+    perms = 1000; 
     
     nullTs = squeeze(zeros([size(tVals), perms])); 
     parfor ii = 1:perms

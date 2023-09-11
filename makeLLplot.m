@@ -41,10 +41,11 @@ colorbar
 cluSubi = 4;
 Xidx = repmat(1:size(tVals,2), [size(tVals,1),1]);
 Yidx = repmat(1:size(tVals,1), [size(tVals,2),1])';
+negClu = []; 
 if isfield(clusterinfo, 'neg_clusters')
-    negClu = find([clusterinfo.neg_clusters.p]<.05);
-else
-    negClu = []; 
+    if isfield(clusterinfo.neg_clusters, 'p')
+        negClu = find([clusterinfo.neg_clusters.p]<.05);
+    end    
 end
 if ~isempty(negClu)
     for cc = 1:length(negClu)
@@ -103,11 +104,11 @@ if ~isempty(negClu)
         
     end
 end
-
+posClu = []; 
 if isfield(clusterinfo, 'pos_clusters')
-    posClu = find([clusterinfo.pos_clusters.p]<.05);
-else
-    posClu = []; 
+    if isfield(clusterinfo.pos_clusters, 'p')
+        posClu = find([clusterinfo.pos_clusters.p]<.05);
+    end
 end
 if ~isempty(posClu)
     for cc = 1:length(posClu)
