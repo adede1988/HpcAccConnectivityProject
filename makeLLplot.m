@@ -98,6 +98,25 @@ if ~isempty(negClu)
                 
         
             end
+
+            %make subject means
+            subHits = zeros(length(unique(regSubs)),1); 
+            subMisses = zeros(length(unique(regSubs)),1); 
+            uniqueSubs = unique(regSubs); 
+            for sub = 1:length(subHits)
+                subHits(sub) = mean(PLH(regSubs==uniqueSubs(sub)));
+                subMisses(sub) = mean(PLM(regSubs==uniqueSubs(sub)));
+                plot([0,1], [subMisses(sub), subHits(sub)], 'color', 'k')
+
+            end
+            scatter(ones(length(uniqueSubs),1), subHits, 35,  'red', 'filled')
+            scatter(zeros(length(uniqueSubs),1), subMisses, 35,  'red', 'filled')
+            
+
+            ylabel('leadLag strength (r)')
+
+
+
             ylabel('leadLag strength (r)')
             cluSubi = cluSubi + 1; 
         end
@@ -112,6 +131,7 @@ if isfield(clusterinfo, 'pos_clusters')
 end
 if ~isempty(posClu)
     for cc = 1:length(posClu)
+        subplot 423
         tmp = clusterinfo.pos_clusters(posClu(cc)).inds;
         curp = ones(size(tmp)); 
         curp(tmp) = 0; 
