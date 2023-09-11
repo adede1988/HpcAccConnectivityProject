@@ -79,8 +79,8 @@ aggTargs(11).ROI = 'PCC';
 
 %% make time mask to match other conditions to the time of the leadlag HFB data
 
-tim = allDat{1}.leadLag.encTim;
-timHFB = allDat{1}.HFB.encMulTim; 
+tim = allDat{3}.leadLag.encTim;
+timHFB = allDat{3}.HFB.encMulTim; 
 
 for ii = 1:length(timHFB)
     if ~ismember(timHFB(ii), tim)
