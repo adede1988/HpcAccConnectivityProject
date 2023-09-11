@@ -1,10 +1,10 @@
-function [sigConSub, sigConRet, aggTargs] = getSigConnection(aggTargs, allDat)
+function [] = getSigConnection(aggTargs, allDat)
 dimVals = size(allDat{3}.leadLag.subMem, [4,5]);
 dimVals2 = size(allDat{3}.leadLag.retMem, [4,5]); 
 %reg X reg X tVals / corr diff / p values X offset X time
-sigConSub = zeros([length(aggTargs), length(aggTargs), 3,  dimVals] );
-sigConRet = zeros([length(aggTargs), length(aggTargs), 3,  dimVals2] ); 
-
+% sigConSub = zeros([length(aggTargs), length(aggTargs), 3,  dimVals] );
+% sigConRet = zeros([length(aggTargs), length(aggTargs), 3,  dimVals2] ); 
+% path = 'G:\My Drive\Johnson\MTL_PFC_networkFigs\HFB_leadLag230910\';
 for reg1 = 1:length(aggTargs)
     reg1
     for reg2 = 1:length(aggTargs)
@@ -12,13 +12,35 @@ for reg1 = 1:length(aggTargs)
         disp(['working on: ' num2str(reg1) ' X ' num2str(reg2)])
         regRes = nan([2, dimVals, 100]);
         regRes2 = nan([2, dimVals2, 100]); %retrieval 
+        regSubs = nan([100,1]);
+        regSubIDs = cell(100,1); 
+        regd = regSubs; 
+        regacc = regSubs; 
         ri = 1; 
         for sub = 1:length(allDat)
            
+
+            
             if ~isempty(allDat{sub})
+
+
+                T = sum(allDat{sub}.retInfo(:,1)==1 | allDat{sub}.retInfo(:,1)==2); 
+                Hr = sum(allDat{sub}.retInfo(:,1)==1) / T; 
+                T = sum(allDat{sub}.retInfo(:,1)==3 | allDat{sub}.retInfo(:,1)==4); 
+                F = sum(allDat{sub}.retInfo(:,1)==4);
+                if F == 0
+                    acc = Hr - F/T; 
+                    F = 1; 
+                else
+                    acc = Hr - F/T; 
+                end
+                Fr = F / T; 
+               
+                d = norminv(Hr) - norminv(Fr); 
+
                 c = allDat{sub}.leadLag; 
                 b = allDat{sub}.brodmann; 
-                
+                ID = allDat{sub}.subID;
                 reg1i = find(cellfun(@(x) sum(strcmp(aggTargs(reg1).lab, x)), b));
                 reg2i = find(cellfun(@(x) sum(strcmp(aggTargs(reg2).lab, x)), b));
 
@@ -28,6 +50,10 @@ for reg1 = 1:length(aggTargs)
                             if reg1i(i1) ~= reg2i(i2)
                             regRes(:, :, :, ri) = c.subMem(reg1i(i1), reg2i(i2), :, :, :); 
                             regRes2(:,:, :, ri) = c.retMem(reg1i(i1), reg2i(i2), :, :, :); 
+                            regSubs(ri) = sub; 
+                            regSubIDs{ri} = ID; 
+                            regd(ri) = d; 
+                            regacc(ri) = acc; 
                             ri = ri + 1; 
                             end
                         end
@@ -42,45 +68,34 @@ for reg1 = 1:length(aggTargs)
             end
         end
         if ri < 100
-            regRes(:,:,:,:,:,ri:end) = []; 
-            regRes2(:,:,:,:,:,ri:end) = [];
+            regRes(:,:,:,ri:end) = []; 
+            regRes2(:,:,:,ri:end) = [];
+            regSubs(ri:end) = []; 
+            regSubIDs(ri:end) = []; 
         end
 
-        hitVals = permute(squeeze(regRes(1,:,:,:)), [3,1,2]);
-        missVals = permute(squeeze(regRes(2,:,:,:)), [3,1,2]);
-        tVals = myArrayT(hitVals, missVals,1);
-        perms = 1000; 
+        % package necessary data for cluster analysis
+        
+        LLdat = struct; 
+        LLdat.regRes = regRes; 
+        LLdat.regRes2 = regRes2; 
+        LLdat.regSubs = regSubs; 
+        LLdat.regSubIDs = regSubIDs; 
+        LLdat.aggTargs = aggTargs; 
+        LLdat.reg1 = reg1; 
+        LLdat.reg2 = reg2; 
+        LLdat.d = regd; 
+        LLdat.acc = regacc; 
+        LLdat.n_sub = length(unique(regSubs));
+        LLdat.n_pair = length(regSubs); 
+        LLdat.encTim = allDat{3}.leadLag.encTim;  
+        LLdat.retTim = allDat{3}.leadLag.retTim;  
+        
 
-        nullTs = zeros([size(tVals), perms]); 
-        parfor ii = 1:perms
-
-            nullTs(:,:,ii) = myArrayT(hitVals, missVals, 2);
-        end
-
-        [h, p, clusterinfo] = cluster_test(tVals, nullTs); 
-            
-        sigConSub(reg1, reg2, 1, :, :) = tVals; 
-        sigConSub(reg1, reg2, 2, :, :) = squeeze(mean(hitVals,1)) - squeeze(mean(missVals,1)); 
-        sigConSub(reg1, reg2, 3, :, :) = p; 
-
-        hitVals = permute(squeeze(regRes2(1,:,:,:)), [3,1,2]);
-        missVals = permute(squeeze(regRes2(2,:,:,:)), [3,1,2]);
-        tVals = myArrayT(hitVals, missVals,1);
-        perms = 1000; 
-
-        nullTs = zeros([size(tVals), perms]); 
-        parfor ii = 1:perms
-
-            nullTs(:,:,ii) = myArrayT(hitVals, missVals, 2);
-        end
-
-        [h, p, clusterinfo] = cluster_test(tVals, nullTs); 
-            
-        sigConRet(reg1, reg2, 1, :, :) = tVals; 
-        sigConRet(reg1, reg2, 2, :, :) = squeeze(mean(hitVals,1)) - squeeze(mean(missVals,1)); 
-        sigConRet(reg1, reg2, 3, :, :) = p; 
+        save(['R:\MSS\Johnson_Lab\dtf8829\QuestConnect\HFB_LL_KEY_STATS\' aggTargs(reg1).ROI '_' aggTargs(reg2).ROI '.mat'], 'LLdat', '-v7.3')
 
 
+      
 
 
 
@@ -93,11 +108,20 @@ end
 
 
 
-
-
-
-
-
-
-
 end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

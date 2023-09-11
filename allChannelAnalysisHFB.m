@@ -33,7 +33,7 @@ allDat = cell(64,1);
 parfor sub = 1:64
     sub
     if isempty(allDat{sub})
-        [errorChans{sub}, allDat{sub}] = getAllChanDat(chanFiles, sub); 
+        [errorChans{sub}, allDat{sub}] = getAllChanDat(chanFiles, sub); %includes age and memory filter
     end
 end
 
@@ -72,9 +72,13 @@ aggTargs(11).lab = {'BA23', 'BA31'};
 aggTargs(11).ROI = 'PCC'; 
 
 
+%% extract stats on leadLag HFB analysis for sending to cluster
+
+ getSigConnection(aggTargs, allDat);
 
 
-[sigConSub, sigConRet, aggTargs] = getSigConnection(aggTargs, allDat);
+%% make time mask to match other conditions to the time of the leadlag HFB data
+
 tim = allDat{1}.leadLag.encTim;
 timHFB = allDat{1}.HFB.encMulTim; 
 
@@ -85,6 +89,9 @@ for ii = 1:length(timHFB)
 end
 timMask = zeros(size(timHFB)); 
 timMask(timHFB<99999) = 1; 
+
+%% 
+
 [sigHFBSub, sigHFBRet] = getSigHFB(aggTargs, allDat, timMask); 
 [sigTFSub, sigTFRet] = getSigTF(aggTargs, allDat, timMask);
 
