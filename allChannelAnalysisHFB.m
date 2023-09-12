@@ -39,6 +39,71 @@ end
 
 
 
+%% get age, sex, memory performance, subject list
+age = []; 
+sex = cell(50,1); 
+acc = []; 
+d = []; 
+subID = cell(50,1); 
+si = 1; 
+for sub = 1:length(allDat)
+    if ~isempty(allDat{sub})
+        age(si) = allDat{sub}.age;
+        sex{si} = allDat{sub}.sex{1}; 
+        T = sum(allDat{sub}.retInfo(:,1)==1 | allDat{sub}.retInfo(:,1)==2); 
+        Hr = sum(allDat{sub}.retInfo(:,1)==1) / T; 
+        T = sum(allDat{sub}.retInfo(:,1)==3 | allDat{sub}.retInfo(:,1)==4); 
+        F = sum(allDat{sub}.retInfo(:,1)==4);
+        if F == 0
+            acc(si) = Hr - F/T; 
+            F = 1; 
+        else
+            acc(si) = Hr - F/T; 
+        end
+        Fr = F / T; 
+       
+        d(si) = norminv(Hr) - norminv(Fr); 
+
+        subID{si} = allDat{sub}.subID; 
+        if si==25
+            disp(sub)
+        end
+        si = si+1; 
+
+
+    end
+
+end
+
+
+figure
+subplot 221
+scatter(age, d, 50, 'filled')
+xlabel('age')
+ylabel("memory(d')")
+title('memory as a function of age')
+
+subplot 222
+
+scatter(age, acc, 50, 'filled')
+xlabel('age')
+ylabel("memory (HR - FR)")
+title('memory as a function of age')
+
+subplot 223
+histogram(d)
+xlabel("memory (d')")
+ylabel("count")
+title('distribution of memory performance')
+
+subplot 224
+scatter (d, acc, 50, 'filled')
+xlabel("memory (d')")
+ylabel("memory (acc)")
+title("comparison of memory measures")
+
+
+
 %% define regions of interest
 
 
@@ -71,6 +136,60 @@ aggTargs(10).ROI = 'MTL';
 aggTargs(11).lab = {'BA23', 'BA31'};
 aggTargs(11).ROI = 'PCC'; 
 
+for reg = 1:11
+    aggTargs(reg).count = 0; 
+    aggTargs(reg).subIDs = cell(1,1); 
+
+end
+counter = zeros(length(chanFiles), 11); 
+subIDs = cell(length(chanFiles),11); 
+parfor ii = 1:length(chanFiles)
+    ii
+    chanDat = load([chanFiles(ii).folder '/' chanFiles(ii).name]).chanDat; 
+    if isfield(chanDat, 'HFB') && isfield(chanDat, 'leadLag4') && isfield(chanDat, 'ISPC')%check for complete processing
+    T = sum(chanDat.retInfo(:,1)==1 | chanDat.retInfo(:,1)==2); 
+    Hr = sum(chanDat.retInfo(:,1)==1) / T; 
+    T = sum(chanDat.retInfo(:,1)==3 | chanDat.retInfo(:,1)==4); 
+    F = sum(chanDat.retInfo(:,1)==4);
+    if F == 0
+        acc =  Hr - F/T; 
+        F = 1; 
+    else
+        acc =  Hr - F/T; 
+    end
+    Fr = F / T; 
+   
+    d = norminv(Hr) - norminv(Fr); 
+
+    if acc>0 && chanDat.age > 13 %memory
+    if ~strcmp(chanDat.subID, "SLCH010") && ~strcmp(chanDat.subID, "OH30") %subjects not ready for full integration yet
+        %find which ROI (if any) it's in
+        for reg = 1:11
+            for b = 1:length(aggTargs(reg).lab)
+                if strcmp(aggTargs(reg).lab{b}, chanDat.brodmann)
+                    counter(ii, reg) = 1; 
+                    subIDs{ii, reg} = chanDat.subID; 
+                end
+            end
+
+        end
+
+
+    end
+    end
+    end
+    
+end
+
+for reg = 1:11
+    aggTargs(reg).count = sum(counter(:,reg));
+    curSubs = subIDs(:,reg);
+    curSubs(cellfun(@(x) isempty(x), curSubs)) = [];
+    aggTargs(reg).subIDs = length(unique(curSubs)); 
+
+end
+
+
 
 %% extract stats on leadLag HFB analysis for sending to cluster
 
@@ -90,10 +209,21 @@ end
 timMask = zeros(size(timHFB)); 
 timMask(timHFB<99999) = 1; 
 
+tim = allDat{3}.leadLag.retTim;
+timHFB = allDat{3}.HFB.onMulTim; 
+
+for ii = 1:length(timHFB)
+    if ~ismember(timHFB(ii), tim)
+        timHFB(ii) = 99999; 
+    end
+end
+timMask2 = zeros(size(timHFB)); 
+timMask2(timHFB<99999) = 1; 
+
 %% 
 
-[sigHFBSub, sigHFBRet] = getSigHFB(aggTargs, allDat, timMask); 
-[sigTFSub, sigTFRet] = getSigTF(aggTargs, allDat, timMask);
+[sigHFBSub, sigHFBRet] = getSigHFB(aggTargs, allDat, timMask, timMask2); 
+[sigTFSub, sigTFRet] = getSigTF(aggTargs, allDat, timMask, timMask2);
 
 %% scratch d' calculation needs to be integrated into get all later
 dprime = []; 

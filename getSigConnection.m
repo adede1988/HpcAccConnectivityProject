@@ -14,8 +14,13 @@ for reg1 = 1:length(aggTargs)
         regRes2 = nan([2, dimVals2, 100]); %retrieval 
         regSubs = nan([100,1]);
         regSubIDs = cell(100,1); 
+        chani = cell(100,1); 
         regd = regSubs; 
         regacc = regSubs; 
+        submissRT = regd; 
+        subhitRT = regd; 
+        retmissRT = regd; 
+        rethitRT = regd; 
         ri = 1; 
         for sub = 1:length(allDat)
            
@@ -38,6 +43,11 @@ for reg1 = 1:length(aggTargs)
                
                 d = norminv(Hr) - norminv(Fr); 
 
+                smRT = mean(allDat{sub}.encInfo(allDat{sub}.misses & allDat{sub}.use, 4));
+                shRT = mean(allDat{sub}.encInfo(allDat{sub}.hits & allDat{sub}.use, 4));
+                rmRT = mean(allDat{sub}.retInfo(allDat{sub}.retInfo(:,1)==2, 3));
+                rhRT = mean(allDat{sub}.retInfo(allDat{sub}.retInfo(:,1)==1, 3));
+
                 c = allDat{sub}.leadLag; 
                 b = allDat{sub}.brodmann; 
                 ID = allDat{sub}.subID;
@@ -54,6 +64,11 @@ for reg1 = 1:length(aggTargs)
                             regSubIDs{ri} = ID; 
                             regd(ri) = d; 
                             regacc(ri) = acc; 
+                            submissRT(ri) = smRT; 
+                            subhitRT(ri) = shRT; 
+                            retmissRT(ri) = rmRT; 
+                            rethitRT(ri) = rhRT; 
+                            chani{ri} = [num2str(reg1i(i1)) '_' num2str(reg2i(i2))];
                             ri = ri + 1; 
                             end
                         end
@@ -72,6 +87,13 @@ for reg1 = 1:length(aggTargs)
             regRes2(:,:,:,ri:end) = [];
             regSubs(ri:end) = []; 
             regSubIDs(ri:end) = []; 
+            regd(ri:end) = []; 
+            regacc(ri:end) = []; 
+            chani(ri:end) = [];
+            submissRT(ri:end) = []; 
+            subhitRT(ri:end) = []; 
+            retmissRT(ri:end) = []; 
+            rethitRT(ri:end) = [];
         end
 
         % package necessary data for cluster analysis
@@ -90,7 +112,12 @@ for reg1 = 1:length(aggTargs)
         LLdat.n_pair = length(regSubs); 
         LLdat.encTim = allDat{3}.leadLag.encTim;  
         LLdat.retTim = allDat{3}.leadLag.retTim;  
-        
+        LLdat.submissRT = submissRT; 
+        LLdat.subhitRT = subhitRT; 
+        LLdat.retmissRT = retmissRT; 
+        LLdat.rethitRT = rethitRT;
+        LLdat.chani = chani; 
+            
 
         save(['R:\MSS\Johnson_Lab\dtf8829\QuestConnect\HFB_LL_KEY_STATS\' aggTargs(reg1).ROI '_' aggTargs(reg2).ROI '.mat'], 'LLdat', '-v7.3')
 
