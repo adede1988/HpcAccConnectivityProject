@@ -27,20 +27,20 @@ else
     connectionDat.d = connectionDat.dOrig; 
     connectionDat.subD = connectionDat.subDOrig; 
 end
-[dVals, rankd] = sort(connectionDat.subD); 
-dVals = dVals(rankd); 
-% rankd = norminv((rankd - .5)/length(rankd) ); %rankit transform
-% if ~isempty(find(diff(dVals)==0))
-%     connectionDat.repeatedDvals = 'yes'; 
-% else
-%     connectionDat.repeatedDvals = 'no'; 
+% [dVals, rankd] = sort(connectionDat.subD); 
+% dVals = dVals(rankd); 
+% % rankd = norminv((rankd - .5)/length(rankd) ); %rankit transform
+% % if ~isempty(find(diff(dVals)==0))
+% %     connectionDat.repeatedDvals = 'yes'; 
+% % else
+% %     connectionDat.repeatedDvals = 'no'; 
+% % end
+% for sub = 1:length(rankd)
+%     connectionDat.d(connectionDat.dOrig==dVals(sub)) = rankd(sub); 
+%     connectionDat.subD(connectionDat.subDOrig==dVals(sub)) = rankd(sub); 
 % end
-for sub = 1:length(rankd)
-    connectionDat.d(connectionDat.dOrig==dVals(sub)) = rankd(sub); 
-    connectionDat.subD(connectionDat.subDOrig==dVals(sub)) = rankd(sub); 
-end
-connectionDat.subD = norminv((connectionDat.subD -.5) / length(connectionDat.subD)); 
-connectionDat.d = norminv((connectionDat.d - .5) / length(connectionDat.subD)); 
+% connectionDat.subD = norminv((connectionDat.subD -.5) / length(connectionDat.subD)); 
+% connectionDat.d = norminv((connectionDat.d - .5) / length(connectionDat.subD)); 
 
 
 

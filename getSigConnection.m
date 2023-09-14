@@ -9,6 +9,7 @@ for reg1 = 1:length(aggTargs)
     reg1
     for reg2 = 1:length(aggTargs)
         tic
+        
         disp(['working on: ' num2str(reg1) ' X ' num2str(reg2)])
         regRes = nan([2, dimVals, 100]);
         regRes2 = nan([2, dimVals2, 100]); %retrieval 
@@ -21,6 +22,13 @@ for reg1 = 1:length(aggTargs)
         subhitRT = regd; 
         retmissRT = regd; 
         rethitRT = regd; 
+        %at some point later it'd be better if these were done by trial
+        %before averaging but that's not possible without redoing the
+        %signal processing
+        regResLat = nan([2,100]); %latency of strongest connection (regardless of leadlag)
+        regRes2Lat = nan([2,100]); 
+        regResOff = nan([2,dimVals(2), 100]); %calcualte weighted mean of the offset at each time point
+        regRes2Off = nan([2,dimVals2(2), 100]); 
         ri = 1; 
         for sub = 1:length(allDat)
            
@@ -69,6 +77,29 @@ for reg1 = 1:length(aggTargs)
                             retmissRT(ri) = rmRT; 
                             rethitRT(ri) = rhRT; 
                             chani{ri} = [num2str(reg1i(i1)) '_' num2str(reg2i(i2))];
+                            
+                            tim = allDat{sub}.leadLag.encTim; 
+                            %sub Hit latency:                            
+                            regResLat(1,ri) = getLatency(squeeze(c.subMem(reg1i(i1), reg2i(i2), 1, :, :)), tim, shRT);  
+                            %sub Miss latency: 
+                            regResLat(2,ri) = getLatency(squeeze(c.subMem(reg1i(i1), reg2i(i2), 2, :, :)), tim, smRT); 
+                            tim = allDat{sub}.leadLag.retTim; 
+                            %ret Hit latency: 
+                            regRes2Lat(1,ri) = getLatency(squeeze(c.retMem(reg1i(i1), reg2i(i2), 1, :, :)), tim, rhRT);  
+                            %sub Miss latency: 
+                            regRes2Lat(2,ri) = getLatency(squeeze(c.subMem(reg1i(i1), reg2i(i2), 2, :, :)), tim, rmRT); 
+
+                            
+                            regResOff(1,:,ri) = getOffset(squeeze(c.subMem(reg1i(i1), reg2i(i2), 1, :, :))); 
+                            regResOff(2,:,ri) = getOffset(squeeze(c.subMem(reg1i(i1), reg2i(i2), 2, :, :))); 
+                            regRes2Off(1,:,ri) = getOffset(squeeze(c.retMem(reg1i(i1), reg2i(i2), 1, :, :))); 
+                            regRes2Off(2,:,ri) = getOffset(squeeze(c.retMem(reg1i(i1), reg2i(i2), 2, :, :))); 
+                            
+
+          
+
+
+
                             ri = ri + 1; 
                             end
                         end
@@ -94,6 +125,10 @@ for reg1 = 1:length(aggTargs)
             subhitRT(ri:end) = []; 
             retmissRT(ri:end) = []; 
             rethitRT(ri:end) = [];
+            regResLat(:,ri:end) = []; %latency of strongest connection (regardless of leadlag)
+            regRes2Lat(:,ri:end) = []; 
+            regResOff(:,:,ri:end) = []; %calcualte weighted mean of the offset at each time point
+            regRes2Off(:,:,ri:end) = []; 
         end
 
         % package necessary data for cluster analysis
@@ -117,6 +152,10 @@ for reg1 = 1:length(aggTargs)
         LLdat.retmissRT = retmissRT; 
         LLdat.rethitRT = rethitRT;
         LLdat.chani = chani; 
+        LLdat.regResLat = regResLat; %latency of strongest connection (regardless of leadlag)
+        LLdat.regRes2Lat = regRes2Lat; 
+        LLdat.regResOff = regResOff; %calcualte weighted mean of the offset at each time point
+        LLdat.regRes2Off = regRes2Off; 
             
 
         save(['R:\MSS\Johnson_Lab\dtf8829\QuestConnect\HFB_LL_KEY_STATS\' aggTargs(reg1).ROI '_' aggTargs(reg2).ROI '.mat'], 'LLdat', '-v7.3')
