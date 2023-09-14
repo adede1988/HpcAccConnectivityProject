@@ -16,4 +16,4 @@ module load matlab/r2022b
 
 echo "getting started: ${SLURM_ARRAY_TASK_ID}"
 
-matlab -singleCompThread -batch "start=${SLURM_ARRAY_TASK_ID}; PCCstatsWrapper;"
+matlab -singleCompThread -batch "start=${SLURM_ARRAY_TASK_ID}; PCCstatsWrapperHM;"

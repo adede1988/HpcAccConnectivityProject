@@ -8,30 +8,30 @@ disp(cndFiles(idx).name)
 %% ENCODING! 
 
 %using raw PPC data HITS ONLY
-lowDat = connectionDat.lowBand(connectionDat.hmSort, :,2); %raw ppc
-highDat = connectionDat.highBand(connectionDat.hmSort, :,2); %raw ppc
+lowDat = connectionDat.lowBand(:, :,2); %raw ppc
+highDat = connectionDat.highBand(:, :,2); %raw ppc
 
 
 
-%t vals for memory
+%t vals for HM
 lowtVals = zeros(size(lowDat,2),1); 
 hightVals = lowtVals; 
 
-d = [connectionDat.d, connectionDat.d]; 
+
 
 %do the initial model fit: 
-%connectivity ~ memory + (1|subject) 
+%connectivity ~ HM + (1|subject) 
 % where n is electrode pair nested in subject
 for ti = 1:size(lowDat, 2)
    
-    modDat = table(lowDat(:,ti), connectionDat.d, connectionDat.allSubs, ...
-        'VariableNames', {'connectivity',  'memory', 'sub'}); 
-    lme = fitlme(modDat, 'connectivity ~ memory  +  (1|sub)'); 
+    modDat = table(lowDat(:,ti), connectionDat.hmSort, [connectionDat.allSubs; connectionDat.allSubs], ...
+        'VariableNames', {'connectivity',  'HM', 'sub'}); 
+    lme = fitlme(modDat, 'connectivity ~ HM  +  (1|sub)'); 
     lowtVals(ti) = lme.Coefficients(2,4); 
   
-    modDat = table(highDat(:,ti), connectionDat.d, connectionDat.allSubs, ...
-        'VariableNames', {'connectivity',  'memory', 'sub'}); 
-    lme = fitlme(modDat, 'connectivity ~ memory  +  (1|sub)'); 
+    modDat = table(highDat(:,ti), connectionDat.hmSort, [connectionDat.allSubs; connectionDat.allSubs], ...
+        'VariableNames', {'connectivity',  'HM', 'sub'}); 
+    lme = fitlme(modDat, 'connectivity ~ HM  +  (1|sub)'); 
     lowtVals(ti) = lme.Coefficients(2,4); 
 
 end
@@ -42,37 +42,38 @@ connectionDat.hightVals = hightVals;
 disp('raw t values calculated')
 
 
-%do permutation test, refitting the model 1000 times shuffling the memory
+%do permutation test, refitting the model 1000 times shuffling the HM
 %performance values randomly each time keeping the data such that each
-%subject has one value for memory performance over all their electrodes
+%subject has one value for HM performance over all their electrodes
 perms = 10; 
-lownullTs = zeros([size(hightVals), perms]); 
+lownullTs = zeros([length(hightVals), perms]); 
 highnullTs = lownullTs; 
 
-subidx = cellfun(@(y) cellfun(@(x) strcmp(x,y), connectionDat.allSubs), ...
+subidx = cellfun(@(y) cellfun(@(x) strcmp(x,y), [connectionDat.allSubs; connectionDat.allSubs]), ...
                  connectionDat.uniqueSubs, 'UniformOutput', false); 
 
-for ii = 1:perms
+parfor ii = 1:perms
 %     if mod(ii, 100)==0
 %         disp(['...........................' num2str(ii) 'permutations complete'])
 %     end
-    shuffd = zeros(size(connectionDat.d));
+    shuffHM = zeros(size(connectionDat.hmSort));
    
-    shuffVals = randsample(connectionDat.subD, length(connectionDat.subD), false); 
+    
     for sub = 1:length(subidx)
-        shuffd(subidx{sub}) = shuffVals(sub);
+        curVals = connectionDat.hmSort(subidx{sub});
+        shuffHM(subidx{sub}) = randsample(curVals, length(curVals), false);
     end
     sliceT = lownullTs(:,ii); 
     sliceT2 = highnullTs(:,ii); 
     for ti = 1:size(lowDat,2)
-         modDat = table(lowDat(:,ti), shuffd, connectionDat.allSubs, ...
-        'VariableNames', {'connectivity',  'memory', 'sub'}); 
-        lme = fitlme(modDat, 'connectivity ~ memory  +  (1|sub)'); 
+         modDat = table(lowDat(:,ti), shuffHM, [connectionDat.allSubs; connectionDat.allSubs], ...
+        'VariableNames', {'connectivity',  'HM', 'sub'}); 
+        lme = fitlme(modDat, 'connectivity ~ HM  +  (1|sub)'); 
         sliceT(ti) = lme.Coefficients(2,4); 
 
-         modDat = table(highDat(:,ti), shuffd, connectionDat.allSubs, ...
-        'VariableNames', {'connectivity',  'memory', 'sub'}); 
-        lme = fitlme(modDat, 'connectivity ~ memory  +  (1|sub)'); 
+         modDat = table(highDat(:,ti), shuffHM, [connectionDat.allSubs; connectionDat.allSubs], ...
+        'VariableNames', {'connectivity',  'HM', 'sub'}); 
+        lme = fitlme(modDat, 'connectivity ~ HM  +  (1|sub)'); 
         sliceT2(ti) = lme.Coefficients(2,4);  
     end
     lownullTs(:,ii) = sliceT; 
@@ -93,31 +94,33 @@ save([cndFiles(idx).folder '/' cndFiles(idx).name], 'connectionDat')
 disp('permutation on encoding complete')
 
 
-%% retrieval 
+%% ENCODING! 
 
 %using raw PPC data HITS ONLY
-lowDat = connectionDat.lowBand2(connectionDat.hmSort, :,2); %raw ppc
-highDat = connectionDat.highBand2(connectionDat.hmSort, :,2); %raw ppc
+lowDat = connectionDat.lowBand2(:, :,2); %raw ppc
+highDat = connectionDat.highBand2(:, :,2); %raw ppc
 
 
 
-%t vals for memory
+%t vals for HM
 lowtVals = zeros(size(lowDat,2),1); 
 hightVals = lowtVals; 
 
+
+
 %do the initial model fit: 
-%connectivity ~ memory + (1|subject) 
+%connectivity ~ HM + (1|subject) 
 % where n is electrode pair nested in subject
 for ti = 1:size(lowDat, 2)
    
-    modDat = table(lowDat(:,ti), connectionDat.d, connectionDat.allSubs, ...
-        'VariableNames', {'connectivity',  'memory', 'sub'}); 
-    lme = fitlme(modDat, 'connectivity ~ memory  +  (1|sub)'); 
+    modDat = table(lowDat(:,ti), connectionDat.hmSort, [connectionDat.allSubs; connectionDat.allSubs], ...
+        'VariableNames', {'connectivity',  'HM', 'sub'}); 
+    lme = fitlme(modDat, 'connectivity ~ HM  +  (1|sub)'); 
     lowtVals(ti) = lme.Coefficients(2,4); 
   
-    modDat = table(highDat(:,ti), connectionDat.d, connectionDat.allSubs, ...
-        'VariableNames', {'connectivity',  'memory', 'sub'}); 
-    lme = fitlme(modDat, 'connectivity ~ memory  +  (1|sub)'); 
+    modDat = table(highDat(:,ti), connectionDat.hmSort, [connectionDat.allSubs; connectionDat.allSubs], ...
+        'VariableNames', {'connectivity',  'HM', 'sub'}); 
+    lme = fitlme(modDat, 'connectivity ~ HM  +  (1|sub)'); 
     lowtVals(ti) = lme.Coefficients(2,4); 
 
 end
@@ -128,37 +131,38 @@ connectionDat.hightVals_ret = hightVals;
 disp('raw t values calculated')
 
 
-%do permutation test, refitting the model 1000 times shuffling the memory
+%do permutation test, refitting the model 1000 times shuffling the HM
 %performance values randomly each time keeping the data such that each
-%subject has one value for memory performance over all their electrodes
-perms = 10; 
-lownullTs = zeros([size(hightVals), perms]); 
+%subject has one value for HM performance over all their electrodes
+perms = 16; 
+lownullTs = zeros([length(hightVals), perms]); 
 highnullTs = lownullTs; 
 
-subidx = cellfun(@(y) cellfun(@(x) strcmp(x,y), connectionDat.allSubs), ...
+subidx = cellfun(@(y) cellfun(@(x) strcmp(x,y), [connectionDat.allSubs; connectionDat.allSubs]), ...
                  connectionDat.uniqueSubs, 'UniformOutput', false); 
 
-for ii = 1:perms
+parfor ii = 1:perms
 %     if mod(ii, 100)==0
 %         disp(['...........................' num2str(ii) 'permutations complete'])
 %     end
-    shuffd = zeros(size(connectionDat.d));
+    shuffHM = zeros(size(connectionDat.hmSort));
    
-    shuffVals = randsample(connectionDat.subD, length(connectionDat.subD), false); 
+    
     for sub = 1:length(subidx)
-        shuffd(subidx{sub}) = shuffVals(sub);
+        curVals = connectionDat.hmSort(subidx{sub});
+        shuffHM(subidx{sub}) = randsample(curVals, length(curVals), false);
     end
     sliceT = lownullTs(:,ii); 
     sliceT2 = highnullTs(:,ii); 
     for ti = 1:size(lowDat,2)
-         modDat = table(lowDat(:,ti), shuffd, connectionDat.allSubs, ...
-        'VariableNames', {'connectivity',  'memory', 'sub'}); 
-        lme = fitlme(modDat, 'connectivity ~ memory  +  (1|sub)'); 
+         modDat = table(lowDat(:,ti), shuffHM, [connectionDat.allSubs; connectionDat.allSubs], ...
+        'VariableNames', {'connectivity',  'HM', 'sub'}); 
+        lme = fitlme(modDat, 'connectivity ~ HM  +  (1|sub)'); 
         sliceT(ti) = lme.Coefficients(2,4); 
 
-         modDat = table(highDat(:,ti), shuffd, connectionDat.allSubs, ...
-        'VariableNames', {'connectivity',  'memory', 'sub'}); 
-        lme = fitlme(modDat, 'connectivity ~ memory  +  (1|sub)'); 
+         modDat = table(highDat(:,ti), shuffHM, [connectionDat.allSubs; connectionDat.allSubs], ...
+        'VariableNames', {'connectivity',  'HM', 'sub'}); 
+        lme = fitlme(modDat, 'connectivity ~ HM  +  (1|sub)'); 
         sliceT2(ti) = lme.Coefficients(2,4);  
     end
     lownullTs(:,ii) = sliceT; 

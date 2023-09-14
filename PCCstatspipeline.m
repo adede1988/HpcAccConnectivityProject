@@ -44,7 +44,7 @@ disp('raw t values calculated')
 %performance values randomly each time keeping the data such that each
 %subject has one value for memory performance over all their electrodes
 perms = 1000; 
-lownullTs = zeros([size(hightVals), perms]); 
+lownullTs = zeros([length(hightVals), perms]); 
 highnullTs = lownullTs; 
 
 subidx = cellfun(@(y) cellfun(@(x) strcmp(x,y), connectionDat.allSubs), ...
@@ -130,7 +130,7 @@ disp('raw t values calculated')
 %performance values randomly each time keeping the data such that each
 %subject has one value for memory performance over all their electrodes
 perms = 1000; 
-lownullTs = zeros([size(hightVals), perms]); 
+lownullTs = zeros([length(hightVals), perms]); 
 highnullTs = lownullTs; 
 
 subidx = cellfun(@(y) cellfun(@(x) strcmp(x,y), connectionDat.allSubs), ...
