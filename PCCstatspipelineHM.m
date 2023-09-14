@@ -1,4 +1,4 @@
-function [] = PCCstatspipeline(cndFiles, idx)
+function [] = PCCstatspipelineHM(cndFiles, idx)
 
 
 connectionDat = load([cndFiles(idx).folder '/' cndFiles(idx).name]).connectionDat;
@@ -16,6 +16,8 @@ highDat = connectionDat.highBand(connectionDat.hmSort, :,2); %raw ppc
 %t vals for memory
 lowtVals = zeros(size(lowDat,2),1); 
 hightVals = lowtVals; 
+
+d = [connectionDat.d, connectionDat.d]; 
 
 %do the initial model fit: 
 %connectivity ~ memory + (1|subject) 
