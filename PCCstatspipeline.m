@@ -43,7 +43,7 @@ disp('raw t values calculated')
 %do permutation test, refitting the model 1000 times shuffling the memory
 %performance values randomly each time keeping the data such that each
 %subject has one value for memory performance over all their electrodes
-perms = 10; 
+perms = 1000; 
 lownullTs = zeros([size(hightVals), perms]); 
 highnullTs = lownullTs; 
 
@@ -129,7 +129,7 @@ disp('raw t values calculated')
 %do permutation test, refitting the model 1000 times shuffling the memory
 %performance values randomly each time keeping the data such that each
 %subject has one value for memory performance over all their electrodes
-perms = 10; 
+perms = 1000; 
 lownullTs = zeros([size(hightVals), perms]); 
 highnullTs = lownullTs; 
 
