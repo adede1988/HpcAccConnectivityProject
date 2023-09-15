@@ -51,9 +51,9 @@ subidx = cellfun(@(y) cellfun(@(x) strcmp(x,y), connectionDat.allSubs), ...
                  connectionDat.uniqueSubs, 'UniformOutput', false); 
 
 for ii = 1:perms
-%     if mod(ii, 100)==0
-%         disp(['...........................' num2str(ii) 'permutations complete'])
-%     end
+    if mod(ii, 100)==0
+        disp(['...........................' num2str(ii) 'permutations complete'])
+    end
     shuffd = zeros(size(connectionDat.d));
    
     shuffVals = randsample(connectionDat.subD, length(connectionDat.subD), false); 
@@ -137,9 +137,9 @@ subidx = cellfun(@(y) cellfun(@(x) strcmp(x,y), connectionDat.allSubs), ...
                  connectionDat.uniqueSubs, 'UniformOutput', false); 
 
 for ii = 1:perms
-%     if mod(ii, 100)==0
-%         disp(['...........................' num2str(ii) 'permutations complete'])
-%     end
+    if mod(ii, 100)==0
+        disp(['...........................' num2str(ii) 'permutations complete'])
+    end
     shuffd = zeros(size(connectionDat.d));
    
     shuffVals = randsample(connectionDat.subD, length(connectionDat.subD), false); 

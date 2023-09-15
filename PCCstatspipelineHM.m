@@ -53,9 +53,9 @@ subidx = cellfun(@(y) cellfun(@(x) strcmp(x,y), [connectionDat.allSubs; connecti
                  connectionDat.uniqueSubs, 'UniformOutput', false); 
 
 for ii = 1:perms
-%     if mod(ii, 100)==0
-%         disp(['...........................' num2str(ii) 'permutations complete'])
-%     end
+    if mod(ii, 100)==0
+        disp(['...........................' num2str(ii) 'permutations complete'])
+    end
     shuffHM = zeros(size(connectionDat.hmSort));
    
     
@@ -142,9 +142,9 @@ subidx = cellfun(@(y) cellfun(@(x) strcmp(x,y), [connectionDat.allSubs; connecti
                  connectionDat.uniqueSubs, 'UniformOutput', false); 
 
 for ii = 1:perms
-%     if mod(ii, 100)==0
-%         disp(['...........................' num2str(ii) 'permutations complete'])
-%     end
+    if mod(ii, 100)==0
+        disp(['...........................' num2str(ii) 'permutations complete'])
+    end
     shuffHM = zeros(size(connectionDat.hmSort));
    
     
