@@ -32,7 +32,7 @@ for ti = 1:size(lowDat, 2)
     modDat = table(highDat(:,ti), connectionDat.hmSort, [connectionDat.allSubs; connectionDat.allSubs], ...
         'VariableNames', {'connectivity',  'HM', 'sub'}); 
     lme = fitlme(modDat, 'connectivity ~ HM  +  (1|sub)'); 
-    lowtVals(ti) = lme.Coefficients(2,4); 
+    hightVals(ti) = lme.Coefficients(2,4); 
 
 end
 
@@ -45,14 +45,14 @@ disp('raw t values calculated')
 %do permutation test, refitting the model 1000 times shuffling the HM
 %performance values randomly each time keeping the data such that each
 %subject has one value for HM performance over all their electrodes
-perms = 10; 
+perms = 1000; 
 lownullTs = zeros([length(hightVals), perms]); 
 highnullTs = lownullTs; 
 
 subidx = cellfun(@(y) cellfun(@(x) strcmp(x,y), [connectionDat.allSubs; connectionDat.allSubs]), ...
                  connectionDat.uniqueSubs, 'UniformOutput', false); 
 
-parfor ii = 1:perms
+for ii = 1:perms
 %     if mod(ii, 100)==0
 %         disp(['...........................' num2str(ii) 'permutations complete'])
 %     end
@@ -121,7 +121,7 @@ for ti = 1:size(lowDat, 2)
     modDat = table(highDat(:,ti), connectionDat.hmSort, [connectionDat.allSubs; connectionDat.allSubs], ...
         'VariableNames', {'connectivity',  'HM', 'sub'}); 
     lme = fitlme(modDat, 'connectivity ~ HM  +  (1|sub)'); 
-    lowtVals(ti) = lme.Coefficients(2,4); 
+    hightVals(ti) = lme.Coefficients(2,4); 
 
 end
 
@@ -134,14 +134,14 @@ disp('raw t values calculated')
 %do permutation test, refitting the model 1000 times shuffling the HM
 %performance values randomly each time keeping the data such that each
 %subject has one value for HM performance over all their electrodes
-perms = 16; 
+perms = 1000; 
 lownullTs = zeros([length(hightVals), perms]); 
 highnullTs = lownullTs; 
 
 subidx = cellfun(@(y) cellfun(@(x) strcmp(x,y), [connectionDat.allSubs; connectionDat.allSubs]), ...
                  connectionDat.uniqueSubs, 'UniformOutput', false); 
 
-parfor ii = 1:perms
+for ii = 1:perms
 %     if mod(ii, 100)==0
 %         disp(['...........................' num2str(ii) 'permutations complete'])
 %     end

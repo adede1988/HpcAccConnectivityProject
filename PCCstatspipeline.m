@@ -30,7 +30,7 @@ for ti = 1:size(lowDat, 2)
     modDat = table(highDat(:,ti), connectionDat.d, connectionDat.allSubs, ...
         'VariableNames', {'connectivity',  'memory', 'sub'}); 
     lme = fitlme(modDat, 'connectivity ~ memory  +  (1|sub)'); 
-    lowtVals(ti) = lme.Coefficients(2,4); 
+    hightVals(ti) = lme.Coefficients(2,4); 
 
 end
 
@@ -116,7 +116,7 @@ for ti = 1:size(lowDat, 2)
     modDat = table(highDat(:,ti), connectionDat.d, connectionDat.allSubs, ...
         'VariableNames', {'connectivity',  'memory', 'sub'}); 
     lme = fitlme(modDat, 'connectivity ~ memory  +  (1|sub)'); 
-    lowtVals(ti) = lme.Coefficients(2,4); 
+    hightVals(ti) = lme.Coefficients(2,4); 
 
 end
 
