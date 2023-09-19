@@ -136,67 +136,79 @@ aggTargs(10).ROI = 'MTL';
 aggTargs(11).lab = {'BA23', 'BA31'};
 aggTargs(11).ROI = 'PCC'; 
 
-% for reg = 1:11
-%     aggTargs(reg).count = 0; 
-%     aggTargs(reg).subIDs = cell(1,1); 
-% 
-% end
-% counter = zeros(length(chanFiles), 11); 
-% subIDs = cell(length(chanFiles),11); 
-% parfor ii = 1:length(chanFiles)
-%     ii
-%     chanDat = load([chanFiles(ii).folder '/' chanFiles(ii).name]).chanDat; 
-%     if isfield(chanDat, 'HFB') && isfield(chanDat, 'leadLag4') && isfield(chanDat, 'ISPC')%check for complete processing
-%     T = sum(chanDat.retInfo(:,1)==1 | chanDat.retInfo(:,1)==2); 
-%     Hr = sum(chanDat.retInfo(:,1)==1) / T; 
-%     T = sum(chanDat.retInfo(:,1)==3 | chanDat.retInfo(:,1)==4); 
-%     F = sum(chanDat.retInfo(:,1)==4);
-%     if F == 0
-%         acc =  Hr - F/T; 
-%         F = 1; 
-%     else
-%         acc =  Hr - F/T; 
-%     end
-%     Fr = F / T; 
-%    
-%     d = norminv(Hr) - norminv(Fr); 
-% 
-%     if acc>0 && chanDat.age > 13 %memory
-%     if ~strcmp(chanDat.subID, "SLCH010") && ~strcmp(chanDat.subID, "OH30") %subjects not ready for full integration yet
-%         %find which ROI (if any) it's in
-%         for reg = 1:11
-%             for b = 1:length(aggTargs(reg).lab)
-%                 
-%                 if strcmp(chanDat.brodmann, "ERROR")
-%                     zachLabs = readtable('R:\MSS\Johnson_Lab\dtf8829\GitHub\HpcAccConnectivityProject/brodmann_by_subj.csv');
-%                     zachLabs = zachLabs(cell2mat(cellfun(@(x) strcmp(x, chanDat.subID), {zachLabs.subj}, 'uniformoutput', false )), :);
-%                     chanDat.brodmann = zachLabs.brodmann{chanDat.chi};
-%                     parsave([chanFiles(ii).folder '/' chanFiles(ii).name], chanDat)
-%                 end
-%            
-%                 
-%                 if strcmp(aggTargs(reg).lab{b}, chanDat.brodmann)
-%                     counter(ii, reg) = 1; 
-%                     subIDs{ii, reg} = chanDat.subID; 
-%                 end
-%             end
-% 
-%         end
-% 
-% 
-%     end
-%     end
-%     end
-%     
-% end
-% 
-% for reg = 1:11
-%     aggTargs(reg).count = sum(counter(:,reg));
-%     curSubs = subIDs(:,reg);
-%     curSubs(cellfun(@(x) isempty(x), curSubs)) = [];
-%     aggTargs(reg).subIDs = length(unique(curSubs)); 
-% 
-% end
+for reg = 1:11
+    aggTargs(reg).count = 0; 
+    aggTargs(reg).subIDs = cell(1,1); 
+    aggTargs(reg).countR = 0; 
+    aggTargs(reg).subIDsR = cell(1,1); 
+
+end
+reactCount = zeros(length(chanFiles), 11); 
+counter = zeros(length(chanFiles), 11); 
+subIDs = cell(length(chanFiles),11); 
+subIDsreact = subIDs; 
+parfor ii = 1:length(chanFiles)
+    ii
+    chanDat = load([chanFiles(ii).folder '/' chanFiles(ii).name]).chanDat; 
+    if isfield(chanDat, 'HFB') && isfield(chanDat, 'leadLag4') && isfield(chanDat, 'ISPC')%check for complete processing
+    T = sum(chanDat.retInfo(:,1)==1 | chanDat.retInfo(:,1)==2); 
+    Hr = sum(chanDat.retInfo(:,1)==1) / T; 
+    T = sum(chanDat.retInfo(:,1)==3 | chanDat.retInfo(:,1)==4); 
+    F = sum(chanDat.retInfo(:,1)==4);
+    if F == 0
+        acc =  Hr - F/T; 
+        F = 1; 
+    else
+        acc =  Hr - F/T; 
+    end
+    Fr = F / T; 
+   
+    d = norminv(Hr) - norminv(Fr); 
+
+    if acc>0 && chanDat.age > 13 %memory
+    if ~strcmp(chanDat.subID, "SLCH010") && ~strcmp(chanDat.subID, "OH30") %subjects not ready for full integration yet
+        %find which ROI (if any) it's in
+        for reg = 1:11
+            for b = 1:length(aggTargs(reg).lab)
+                
+                if strcmp(chanDat.brodmann, "ERROR")
+                    zachLabs = readtable('R:\MSS\Johnson_Lab\dtf8829\GitHub\HpcAccConnectivityProject/brodmann_by_subj.csv');
+                    zachLabs = zachLabs(cell2mat(cellfun(@(x) strcmp(x, chanDat.subID), {zachLabs.subj}, 'uniformoutput', false )), :);
+                    chanDat.brodmann = zachLabs.brodmann{chanDat.chi};
+                    parsave([chanFiles(ii).folder '/' chanFiles(ii).name], chanDat)
+                end
+           
+                reactive = reactiveTest_100(chanDat.HFB);
+                if strcmp(aggTargs(reg).lab{b}, chanDat.brodmann)
+                    counter(ii, reg) = 1; 
+                    subIDs{ii, reg} = chanDat.subID; 
+                    if sum(reactive==1)>0
+                        reactCount(ii,reg) = 1; 
+                        subIDsreact{ii, reg} = chanDat.subID; 
+                    end
+                end
+            end
+
+        end
+
+
+    end
+    end
+    end
+    
+end
+
+for reg = 1:11
+    aggTargs(reg).count = sum(counter(:,reg));
+    aggTargs(reg).countR = sum(reactCount(:,reg)); 
+    curSubs = subIDs(:,reg);
+    curSubsR = subIDsreact(:,reg); 
+    curSubs(cellfun(@(x) isempty(x), curSubs)) = [];
+    curSubsR(cellfun(@(x) isempty(x), curSubsR)) = []; 
+    aggTargs(reg).subIDs = length(unique(curSubs)); 
+    aggTargs(reg).subIDsR = length(unique(curSubsR)); 
+
+end
 
 
 
@@ -234,7 +246,7 @@ timMask2(timHFB<99999) = 1;
 [sigHFBSub, sigHFBRet] = getSigHFB(aggTargs, allDat, timMask, timMask2); 
 [sigTFSub, sigTFRet] = getSigTF(aggTargs, allDat, timMask, timMask2);
 
-aggTargs = getSigISPC2(aggTargs, allDat, timMask); 
+% aggTargs = getSigISPC2(aggTargs, allDat, timMask); 
 
 [conN, conID] = getSigISPC(aggTargs, allDat, timMask, timMask2);
 

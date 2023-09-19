@@ -482,15 +482,7 @@ for ii = 1:length(statFiles)
 % 
 %     HFBdat.hitTim_ret = hitMeanTim; 
 %     HFBdat.missTim_ret = missMeanTim;
-    hmSort = zeros(HFBdat.n_pair*2,1);; 
-    ti = 1; 
-    for pi = 1:HFBdat.n_pair
-        hmSort(ti) = 1; 
-        ti = ti+1; 
-        hmSort(ti) = 0; 
-        ti = ti+1; 
-       
-    end
+  
 
 
     figure('position', [100,100,500, 300])
@@ -522,6 +514,7 @@ for ii = 1:length(statFiles)
 
     curDat = [HFBdat.hitTim_ret, HFBdat.missTim_ret];
 
+    hmSort = [ones(length(HFBdat.hitTim_ret),1); zeros(length(HFBdat.missTim_ret),1)];
     modDat = table(curDat', hmSort, [HFBdat.realID; HFBdat.realID], ...
                 'VariableNames', {'latency', 'hitMiss', 'sub'}); 
     lme = fitlme(modDat, 'latency ~  hitMiss +  (1|sub)'); 
