@@ -37,6 +37,83 @@ parfor sub = 1:64
     end
 end
 
+%% PPC vs PLV testing 
+
+%chans X  3 (trialNum, PPC, PLV)
+allPPCPLV = zeros(5000, 3); 
+allPPCPLV2 = zeros(5000, 3); 
+pi = 1; 
+for sub = 1:64
+    sub
+    if ~isempty(allDat{sub})
+        nChan = size(allDat{sub}.ISPC.subMiss,1); 
+        nsubMiss = sum(allDat{sub}.misses & allDat{sub}.use); 
+        nsubHit = sum(allDat{sub}.hits & allDat{sub}.use); 
+        ti = 60; %choose one time point
+        fi = 3; %choose one frequency
+        for ii = 1:nChan
+            for jj = 1:nChan
+                if ii>jj
+                allPPCPLV(pi, 1) = nsubMiss;
+                allPPCPLV(pi, 2) = allDat{sub}.ISPC.subMiss(ii,jj, ti, fi, 2); %get PPC
+                allPPCPLV(pi, 3) = allDat{sub}.ISPC.subMiss(ii,jj, ti, fi, 1); %get PLV
+                allPPCPLV2(pi, 1) = nsubHit;
+                allPPCPLV2(pi, 2) = allDat{sub}.ISPC.subHit(ii, jj, ti, fi, 2); %get PPC
+                allPPCPLV2(pi, 3) = allDat{sub}.ISPC.subHit(ii, jj, ti, fi, 1); %get PLV
+                pi = pi + 1; 
+                end
+            end
+        end
+
+    end
+end
+
+
+tCounts = unique(allPPCPLV(:,1));
+tCounts2 = unique(allPPCPLV2(:,1)); 
+sumPPCPLV = zeros(length(tCounts), 3); 
+sumPPCPLV2 = zeros(length(tCounts2), 3); 
+for ii = 1:length(tCounts)
+    tmp = allPPCPLV(allPPCPLV(:,1)==tCounts(ii), :); 
+    sumPPCPLV(ii,1) = tCounts(ii); 
+    sumPPCPLV(ii,2) = mean(tmp(:,2)); 
+    sumPPCPLV(ii,3) = mean(tmp(:,3)); 
+
+end
+
+for ii = 1:length(tCounts2)
+    tmp = allPPCPLV2(allPPCPLV2(:,1)==tCounts2(ii), :); 
+    sumPPCPLV2(ii,1) = tCounts2(ii); 
+    sumPPCPLV2(ii,2) = mean(tmp(:,2)); 
+    sumPPCPLV2(ii,3) = mean(tmp(:,3)); 
+
+end
+
+figure
+hold off
+scatter(sumPPCPLV(:,1), sumPPCPLV(:,2), 'filled')
+hold on 
+scatter(sumPPCPLV(:,1), sumPPCPLV(:,3), 'filled')
+ylabel("connectivity")
+xlabel("number of trials")
+title('PLV vs. PPC as a function of trial count misses')
+
+figure
+hold off
+scatter(sumPPCPLV2(:,1), sumPPCPLV2(:,2), 'filled')
+hold on 
+scatter(sumPPCPLV2(:,1), sumPPCPLV2(:,3), 'filled')
+ylabel("connectivity")
+xlabel("number of trials")
+title('PLV vs. PPC as a function of trial count hits')
+
+
+figure 
+hold off
+scatter(allPPCPLV2(allPPCPLV2(:,1)>40, 2), allPPCPLV2(allPPCPLV2(:,1)>40, 3).^2, 'filled')
+hold on 
+
+scatter(allPPCPLV2(allPPCPLV2(:,1)<30, 2), allPPCPLV2(allPPCPLV2(:,1)<30, 3).^2, 'filled')
 
 
 %% get age, sex, memory performance, subject list
@@ -250,6 +327,46 @@ timMask2(timHFB<99999) = 1;
 
 [conN, conID] = getSigISPC(aggTargs, allDat, timMask, timMask2);
 
+%% get all region - region PPC to demonstrate choice of bands
+
+%hit/miss X pair X time X frequency
+allConnections = zeros(2, 20000, sum(timMask), 20);
+pi = 1; 
+for sub = 1:64
+    sub
+    if ~isempty(allDat{sub})
+        nChan = size(allDat{sub}.ISPC.subMiss,1); 
+        for ii = 1:nChan
+            for jj = 1:nChan
+                allConnections(1,pi, :, :) = squeeze(allDat{sub}.ISPC.subHit(ii,jj,find(timMask),:,2)); 
+                allConnections(2,pi, :, :) = squeeze(allDat{sub}.ISPC.subMiss(ii,jj,find(timMask),:,2));
+                pi = pi+1; 
+            end
+        end
+        
+
+    end
+end
+ frex = logspace(log10(2), log10(25), 20); 
+figure
+imagesc(allDat{3}.leadLag.encTim, [], squeeze(mean(allConnections(1,:,:,:), 2))')
+yticks([5:5:20])
+yticklabels(round(frex([5:5:20])) )
+set(gca, 'ydir', 'normal')
+ylabel('frequency')
+xlabel('time (ms)')
+title('overall mean TF PPC plot subsequent hit')
+caxis([0.005, .02])
+
+figure
+imagesc(allDat{3}.leadLag.encTim, [], squeeze(mean(allConnections(2,:,:,:), 2))')
+yticks([5:5:20])
+yticklabels(round(frex([5:5:20])) )
+set(gca, 'ydir', 'normal')
+ylabel('frequency')
+xlabel('time (ms)')
+title('overall mean TF PPC plot subsequent miss')
+caxis([0.005, .02])
 %% patch to get center of mass latency information and put it into the HFB summary data files
 [sigHFBSub, sigHFBRet] = getSigHFB_latencyPatch(aggTargs, allDat, timMask, timMask2);
 

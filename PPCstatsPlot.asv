@@ -552,7 +552,7 @@ for ii = 1:length(statFiles)
 end
 
 
-export_fig(join(['G:\My Drive\Johnson\MTL_PFC_networkFigs\PPC_finalizedFigs\' 'PPC_latency_lowEncode' '.jpg'],''), '-r300')
+export_fig(join(['G:\My Drive\Johnson\MTL_PFC_networkFigs\PPC_finalizedFigs\' 'PPC_latency_allEncode' '.jpg'],''), '-r300')
 
 
 
@@ -576,103 +576,6 @@ for ii = 1:length(statFiles)
 
     hitVals = squeeze(PPC.lowBand2(PPC.hmSort,:,2) );
     missVals = squeeze(PPC.lowBand2(~PPC.hmSort,:,2) );
-    tim = PPC.tim2; 
-
-    hitLat = zeros(size(hitVals,1),1); 
-    missLat = zeros(size(missVals,1),1); 
-
-    for ci = 1:PPC.N
-        %hit
-        cur = hitVals(ci,:); 
-        cur = cur(tim>=0 & tim<=PPC.rethitRT(ci));
-        testTim = tim(tim>=0 & tim<=PPC.rethitRT(ci));
-        cur = cur - min(cur); 
-        cur = cur ./ max(cur); 
-        latidx = wmean(1:length(testTim), cur); 
-        hitLat(ci) = testTim(round(latidx)); 
-        %miss
-        cur = missVals(ci,:); 
-        cur = cur(tim>=0 & tim<=PPC.retmissRT(ci));
-        testTim = tim(tim>=0 & tim<=PPC.retmissRT(ci));
-        cur = cur - min(cur); 
-        cur = cur ./ max(cur); 
-        latidx = wmean(1:length(testTim), cur); 
-        missLat(ci) = testTim(round(latidx));
-
-
-    end
-
-
-    curDat = [hitLat; missLat];
-
-
-    hmSort = [ones(length(hitLat),1); zeros(length(missLat),1)];
-    modDat = table(curDat, hmSort, [PPC.allSubs; PPC.allSubs], ...
-                'VariableNames', {'latency', 'hitMiss', 'sub'}); 
-    lme = fitlme(modDat, 'latency ~  hitMiss +  (1|sub)'); 
-    tval = [0,0];
-    tval(1) = lme.Coefficients(2,4); 
-    tval(2) = lme.Coefficients(2,6); 
-    
-    tval(2) = round(tval(2),2);
-
-    if tval(2)<.2
-        tval(2) = tval(2)*5; 
-    else 
-        tval(2) = 1; 
-    end
-    [~, coli] = min(abs(tval(2) - findMap));
-    
-  
-    
-    hold off
-    fill([0,2000,2000,0], [0,0,.8,.8], colormap(coli,:), 'FaceAlpha', .8)
-    xlim([0,2000])
-%     ylim([0, .8])
-    hold on
-    h = histogram(hitLat, [0:100:2000], 'normalization', 'probability', 'facealpha', 1, 'facecolor', 'white');
-    
-    h2 = histogram(missLat, [0:100:2000], 'normalization', 'probability', 'facealpha', 1, 'facecolor', 'white');
-    h = histogram(hitLat, [0:100:2000], 'normalization', 'probability', 'facecolor', 'blue');
-    
-    h2 = histogram(missLat, [0:100:2000], 'normalization', 'probability',  'facecolor', 'red');
-    allMax = max(max(h.Values), max(h2.Values)); 
-    ylim([0, allMax*1.1])
-
-
-    xticklabels([]); 
-    yticklabels([]); 
-
-
-    
-  
-
-end
-
-
-export_fig(join(['G:\My Drive\Johnson\MTL_PFC_networkFigs\PPC_finalizedFigs\' 'PPC_latency_lowRetrieve' '.jpg'],''), '-r300')
-
-
-%% latency plot encoding copying the LL method to put all on one HIGH FREQUENCY
-
-figure('visible', true, 'position', [100,100,1000, 1000])
-colormap = [ flip([.01:.01:1])', ones(100,1), flip([.01:.01:1])'];
-findMap = flip([.01:.01:1]); 
-load("R:\MSS\Johnson_Lab\dtf8829\QuestConnect\HFB_KEY_STATS\ACC.mat")
-ROInames = {HFBdat.aggTargs.ROI};
-for ii = 1:length(statFiles)
-    ii
-    PPC = load([statFiles(ii).folder '/' statFiles(ii).name]).connectionDat; 
-    
-    roiLabs = {PPC.reg1, PPC.reg2};
-    roi_idx = zeros(2,1); 
-    roi_idx(1) = find(cellfun(@(x) strcmp(roiLabs{1}, x), ROInames)); 
-    roi_idx(2) = find(cellfun(@(x) strcmp(roiLabs{2}, x), ROInames)); 
-    subplot(11, 11, (roi_idx(1)-1)*11+roi_idx(2))
-
-
-    hitVals = squeeze(PPC.highBand(PPC.hmSort,:,2) );
-    missVals = squeeze(PPC.highBand(~PPC.hmSort,:,2) );
     tim = PPC.tim; 
 
     hitLat = zeros(size(hitVals,1),1); 
@@ -681,7 +584,7 @@ for ii = 1:length(statFiles)
     for ci = 1:PPC.N
         %hit
         cur = hitVals(ci,:); 
-        cur = cur(tim>=0 & tim<=PPC.subhitRT(ci));
+        cur = cur(tim>=0 & tim<=PPC.rethitRT(ci));
         testTim = tim(tim>=0 & tim<=PPC.subhitRT(ci));
         cur = cur - min(cur); 
         cur = cur ./ max(cur); 
@@ -750,105 +653,7 @@ for ii = 1:length(statFiles)
 end
 
 
-export_fig(join(['G:\My Drive\Johnson\MTL_PFC_networkFigs\PPC_finalizedFigs\' 'PPC_latency_highEncode' '.jpg'],''), '-r300')
-
-
-
-%% latency plot retrieval copying the LL method to put all on one HIGH FREQUENCY
-
-figure('visible', true, 'position', [100,100,1000, 1000])
-colormap = [ flip([.01:.01:1])', ones(100,1), flip([.01:.01:1])'];
-findMap = flip([.01:.01:1]); 
-load("R:\MSS\Johnson_Lab\dtf8829\QuestConnect\HFB_KEY_STATS\ACC.mat")
-ROInames = {HFBdat.aggTargs.ROI};
-for ii = 1:length(statFiles)
-    ii
-    PPC = load([statFiles2(ii).folder '/' statFiles2(ii).name]).connectionDat; 
-    
-    roiLabs = {PPC.reg1, PPC.reg2};
-    roi_idx = zeros(2,1); 
-    roi_idx(1) = find(cellfun(@(x) strcmp(roiLabs{1}, x), ROInames)); 
-    roi_idx(2) = find(cellfun(@(x) strcmp(roiLabs{2}, x), ROInames)); 
-    subplot(11, 11, (roi_idx(1)-1)*11+roi_idx(2))
-
-
-    hitVals = squeeze(PPC.highBand2(PPC.hmSort,:,2) );
-    missVals = squeeze(PPC.highBand2(~PPC.hmSort,:,2) );
-    tim = PPC.tim2; 
-
-    hitLat = zeros(size(hitVals,1),1); 
-    missLat = zeros(size(missVals,1),1); 
-
-    for ci = 1:PPC.N
-        %hit
-        cur = hitVals(ci,:); 
-        cur = cur(tim>=0 & tim<=PPC.rethitRT(ci));
-        testTim = tim(tim>=0 & tim<=PPC.rethitRT(ci));
-        cur = cur - min(cur); 
-        cur = cur ./ max(cur); 
-        latidx = wmean(1:length(testTim), cur); 
-        hitLat(ci) = testTim(round(latidx)); 
-        %miss
-        cur = missVals(ci,:); 
-        cur = cur(tim>=0 & tim<=PPC.retmissRT(ci));
-        testTim = tim(tim>=0 & tim<=PPC.retmissRT(ci));
-        cur = cur - min(cur); 
-        cur = cur ./ max(cur); 
-        latidx = wmean(1:length(testTim), cur); 
-        missLat(ci) = testTim(round(latidx));
-
-
-    end
-
-
-    curDat = [hitLat; missLat];
-
-
-    hmSort = [ones(length(hitLat),1); zeros(length(missLat),1)];
-    modDat = table(curDat, hmSort, [PPC.allSubs; PPC.allSubs], ...
-                'VariableNames', {'latency', 'hitMiss', 'sub'}); 
-    lme = fitlme(modDat, 'latency ~  hitMiss +  (1|sub)'); 
-    tval = [0,0];
-    tval(1) = lme.Coefficients(2,4); 
-    tval(2) = lme.Coefficients(2,6); 
-    
-    tval(2) = round(tval(2),2);
-
-    if tval(2)<.2
-        tval(2) = tval(2)*5; 
-    else 
-        tval(2) = 1; 
-    end
-    [~, coli] = min(abs(tval(2) - findMap));
-    
-  
-    
-    hold off
-    fill([0,2000,2000,0], [0,0,.8,.8], colormap(coli,:), 'FaceAlpha', .8)
-    xlim([0,2000])
-%     ylim([0, .8])
-    hold on
-    h = histogram(hitLat, [0:100:2000], 'normalization', 'probability', 'facealpha', 1, 'facecolor', 'white');
-    
-    h2 = histogram(missLat, [0:100:2000], 'normalization', 'probability', 'facealpha', 1, 'facecolor', 'white');
-    h = histogram(hitLat, [0:100:2000], 'normalization', 'probability', 'facecolor', 'blue');
-    
-    h2 = histogram(missLat, [0:100:2000], 'normalization', 'probability',  'facecolor', 'red');
-    allMax = max(max(h.Values), max(h2.Values)); 
-    ylim([0, allMax*1.1])
-
-
-    xticklabels([]); 
-    yticklabels([]); 
-
-
-    
-  
-
-end
-
-
-export_fig(join(['G:\My Drive\Johnson\MTL_PFC_networkFigs\PPC_finalizedFigs\' 'PPC_latency_highRetrieve' '.jpg'],''), '-r300')
+export_fig(join(['G:\My Drive\Johnson\MTL_PFC_networkFigs\PPC_finalizedFigs\' 'PPC_latency_allEncode' '.jpg'],''), '-r300')
 
 
 

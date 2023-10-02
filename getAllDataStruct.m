@@ -19,10 +19,10 @@ for ii = 1:length(datDirs)
         %check if subject is ready
         masteri = find(cellfun(@(x) ~isempty(x), ...
             (cellfun(@(x) find(strcmp(curDir(jj).name, x)), masterSheet.subID, 'UniformOutput', false))));
-
+        if ~isempty(masteri)
         subDir = dir([curDir(jj).folder '\' curDir(jj).name '\Tasks']);
         %check if the subject has done the target task && has ready data
-        if sum(cellfun(@(x) strcmp(task, x), {subDir.name}))==1 && strcmp('ready', masterSheet.iEEG(masteri))
+        
             ti = find(strcmp(task, {subDir.name}));
 
             taskDir = dir([subDir(ti).folder '\'  subDir(ti).name '\BPM']);
@@ -40,21 +40,22 @@ for ii = 1:length(datDirs)
             allData(si).retDatFn = taskDir(ri).name;
             
             try
-                allData(si).elecNotes = readtable([curDir(jj).folder '\' curDir(jj).name '\' curDir(jj).name '_Elec_Notes.xlsx']);
+                allData(si).elecNotesOG = readtable([curDir(jj).folder '\' curDir(jj).name '\' curDir(jj).name '_Elec_Notes.xlsx']);
             catch
-                allData(si).elecNotes = nan; 
+                allData(si).elecNotesOG = nan; 
             end
+
+            %% load in new electrode notes
+                allData(si).elecNotes = readtable(['R:\MSS\Johnson_Lab\dtf8829\ElecLocs\' curDir(jj).name '_Elec_Notes_AD.xlsx']);
 
             allData(si).type = masterSheet.type(masteri); 
             allData(si).age = masterSheet.age(masteri); 
             allData(si).sex = masterSheet.sex(masteri); 
-            allData(si).datNote = masterSheet.data(masteri); 
-            allData(si).expNote = masterSheet.experimenter(masteri); 
             
             si = si+1;
 
+      
         end
-
 
 
     end

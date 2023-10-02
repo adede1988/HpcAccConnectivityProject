@@ -5,7 +5,7 @@ function [trialTF, outTim, frexOut] = getChanMultiTF(trialDat, frex, srate, time
 
 
 %initialize indexing
-timewinms = 500; %time window in milliseconds
+timewinms = 300; %time window in milliseconds
 % timeStepms = 25; %steps in terms of milliseconds independent of sampling rate 
 timewin = round(timewinms / (1000/srate)); %timewin length in data point steps
 hz = linspace(0, srate, timewin);

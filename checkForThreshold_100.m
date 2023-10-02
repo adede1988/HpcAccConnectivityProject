@@ -5,12 +5,12 @@ function [check] = checkForThreshold_100(test, timeVals, timeLims)
     testidx = find(test([find(timeVals>=timeLims(1),1):find(timeVals>=timeLims(2),1)]));
     if ~isempty(testidx)
         breakPoints = [1 find(diff(testidx)>1)']; 
-        if length(breakPoints)==1 && length(testidx)>4
+        if length(breakPoints)==1 && length(testidx)>10
             check = 1; 
         else
             breakPoints = [breakPoints, length(testidx)]; 
             for bb = 1:length(breakPoints)-1
-                if breakPoints(bb+1) - breakPoints(bb) > 4
+                if breakPoints(bb+1) - breakPoints(bb) > 10
                     check = 1; 
                 end
             end
@@ -23,12 +23,12 @@ function [check] = checkForThreshold_100(test, timeVals, timeLims)
         testidx = find(test([find(timeVals>=timeLims(1),1):find(timeVals>=timeLims(2),1)]));
         if ~isempty(testidx)
             breakPoints = [1 find(diff(testidx)>1)']; 
-            if length(breakPoints)==1 && length(testidx)>4
+            if length(breakPoints)==1 && length(testidx)>10
                 check = -1; 
             else
                 breakPoints = [breakPoints, length(testidx)]; 
                 for bb = 1:length(breakPoints)-1
-                    if breakPoints(bb+1) - breakPoints(bb) > 4
+                    if breakPoints(bb+1) - breakPoints(bb) > 10
                         check = -1; 
                     end
                 end

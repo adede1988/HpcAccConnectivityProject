@@ -455,6 +455,8 @@ aovDat.RT = zeros(1000,1);
 aovDat.adjTime = zeros(1000,1); 
 aovi = 1; 
 
+
+
 for ii = 1:length(statFiles)
 
     HFBdat = load([statFiles(ii).folder '/' statFiles(ii).name]).HFBdat; 
@@ -488,12 +490,12 @@ for ii = 1:length(statFiles)
     figure('position', [100,100,500, 300])
     subplot 121
     hold off
-    histogram(HFBdat.hitTim_sub, [0:100:1500])
+    histogram(HFBdat.hitTim_sub, [0:100:2000])
     hold on
-    histogram(HFBdat.missTim_sub, [0:100:1500])
+    histogram(HFBdat.missTim_sub, [0:100:2000])
     
     curDat = [HFBdat.hitTim_sub, HFBdat.missTim_sub];
-
+    hmSort = [ones(length(HFBdat.hitTim_sub),1); zeros(length(HFBdat.hitTim_sub),1)];
     modDat = table(curDat', hmSort, [HFBdat.realID; HFBdat.realID], ...
                 'VariableNames', {'latency', 'hitMiss', 'sub'}); 
     lme = fitlme(modDat, 'latency ~  hitMiss +  (1|sub)'); 
@@ -508,9 +510,9 @@ for ii = 1:length(statFiles)
 
     subplot 122
     hold off
-    histogram(HFBdat.hitTim_ret, [0:100:1500])
+    histogram(HFBdat.hitTim_ret, [0:100:2000])
     hold on
-    histogram(HFBdat.missTim_ret, [0:100:1500])
+    histogram(HFBdat.missTim_ret, [0:100:2000])
 
     curDat = [HFBdat.hitTim_ret, HFBdat.missTim_ret];
 
@@ -573,6 +575,75 @@ end
 
 
 writetable(aovDat, join(['R:\MSS\Johnson_Lab\dtf8829\' 'latencyAOVdatNEW.csv'],''))
+
+%enc/ret X hit/miss X pair
+totalLatency = zeros(2, 2, 10); 
+ti = 1; 
+for ii = 1:length(statFiles)
+ii
+ HFBdat = load([statFiles(ii).folder '/' statFiles(ii).name]).HFBdat;
+ 
+ N = HFBdat.n_pair; 
+
+ totalLatency(1,1,ti:ti+N-1) = HFBdat.hitTim_sub./HFBdat.subhitRT'; 
+ totalLatency(1,2,ti:ti+N-1) = HFBdat.missTim_sub./HFBdat.submissRT'; 
+ totalLatency(2,1,ti:ti+N-1) = HFBdat.hitTim_ret./HFBdat.rethitRT'; 
+ totalLatency(2,2,ti:ti+N-1) = HFBdat.missTim_ret./HFBdat.retmissRT'; 
+
+ti = ti+N;
+end
+
+
+figure
+subplot 121
+histogram(totalLatency(1,1,:), [0:50:2000], 'normalization', 'probability')
+hold on 
+histogram(totalLatency(1,2,:), [0:50:2000], 'normalization', 'probability')
+title('encoding latency across all ROIs')
+subplot 122
+histogram(totalLatency(1,1,:) - totalLatency(1,2,:), [-1000:50:1000], 'normalization', 'probability')
+title('within electrode hit - miss difference')
+xline(0)
+
+
+figure
+subplot 121
+histogram(totalLatency(2,1,:), [0:50:2000], 'normalization', 'probability')
+hold on 
+histogram(totalLatency(2,2,:), [0:50:2000], 'normalization', 'probability')
+title('retrieval latency across all ROIs')
+subplot 122
+histogram(totalLatency(2,1,:) - totalLatency(2,2,:), [-1000:50:1000], 'normalization', 'probability')
+title('within electrode hit - miss difference')
+xline(0)
+
+
+%corrected! 
+
+figure
+subplot 121
+histogram(totalLatency(1,1,:), [0:.05:1], 'normalization', 'probability')
+hold on 
+histogram(totalLatency(1,2,:), [0:.05:1], 'normalization', 'probability')
+title('encoding latency across all ROIs')
+subplot 122
+histogram(totalLatency(1,1,:) - totalLatency(1,2,:), [-1:.05:1], 'normalization', 'probability')
+title('within electrode hit - miss difference')
+xline(0)
+
+
+figure
+subplot 121
+histogram(totalLatency(2,1,:), [0:.05:1], 'normalization', 'probability')
+hold on 
+histogram(totalLatency(2,2,:), [0:.05:1], 'normalization', 'probability')
+title('retrieval latency across all ROIs')
+subplot 122
+histogram(totalLatency(2,1,:) - totalLatency(2,2,:), [-1000:50:1000], 'normalization', 'probability')
+title('within electrode hit - miss difference')
+xline(0)
+
+
 
 
 

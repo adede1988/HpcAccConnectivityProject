@@ -466,7 +466,14 @@ end
 
 export_fig(join(['G:\My Drive\Johnson\MTL_PFC_networkFigs\LL_finalizedFigs\' 'LL_latency_allRetrieve' '.jpg'],''), '-r300')
 
-
+%% count pairwise electrodes
+pairwiseTrodes = zeros(11); 
+pairwiseSubs = zeros(11); 
+for ii = 1:length(statFiles)
+    LLdat = load([statFiles(ii).folder '/' statFiles(ii).name]).LLdat; 
+    pairwiseTrodes(LLdat.reg1, LLdat.reg2) = LLdat.n_pair; 
+    pairwiseSubs(LLdat.reg1, LLdat.reg2) = LLdat.n_sub; 
+end
 
 
 
@@ -484,10 +491,10 @@ ii
  
  N = LLdat.n_pair; 
 
- totalLatency(1,1,ti:ti+N-1) = LLdat.regResLat(1,:); 
- totalLatency(1,2,ti:ti+N-1) = LLdat.regResLat(2,:); 
- totalLatency(2,1,ti:ti+N-1) = LLdat.regRes2Lat(1,:); 
- totalLatency(2,2,ti:ti+N-1) = LLdat.regRes2Lat(2,:); 
+ totalLatency(1,1,ti:ti+N-1) = LLdat.regResLat(1,:) ./ LLdat.subhitRT'; 
+ totalLatency(1,2,ti:ti+N-1) = LLdat.regResLat(2,:)./ LLdat.submissRT'; 
+ totalLatency(2,1,ti:ti+N-1) = LLdat.regRes2Lat(1,:)./ LLdat.rethitRT'; 
+ totalLatency(2,2,ti:ti+N-1) = LLdat.regRes2Lat(2,:)./ LLdat.retmissRT';
 
 ti = ti+N;
 end
@@ -496,24 +503,24 @@ end
 
 figure
 subplot 121
-histogram(totalLatency(1,1,:), [0:50:2000], 'normalization', 'probability')
+histogram(totalLatency(1,1,:), [0:.03:1], 'normalization', 'probability')
 hold on 
-histogram(totalLatency(1,2,:), [0:50:2000], 'normalization', 'probability')
+histogram(totalLatency(1,2,:), [0:.03:1], 'normalization', 'probability')
 title('encoding latency across all ROI pairs')
 subplot 122
-histogram(totalLatency(1,1,:) - totalLatency(1,2,:), [-1000:50:1000], 'normalization', 'probability')
+histogram(totalLatency(1,1,:) - totalLatency(1,2,:), [-1:.03:1], 'normalization', 'probability')
 title('within electrode pair hit - miss difference')
 xline(0)
 
 
 figure
 subplot 121
-histogram(totalLatency(2,1,:), [0:50:2000], 'normalization', 'probability')
+histogram(totalLatency(2,1,:), [0:.03:1], 'normalization', 'probability')
 hold on 
-histogram(totalLatency(2,2,:), [0:50:2000], 'normalization', 'probability')
+histogram(totalLatency(2,2,:), [0:.03:1], 'normalization', 'probability')
 title('retrieval latency across all ROI pairs')
 subplot 122
-histogram(totalLatency(2,1,:) - totalLatency(2,2,:), [-1000:50:1000], 'normalization', 'probability')
+histogram(totalLatency(2,1,:) - totalLatency(2,2,:), [-1:.03:1], 'normalization', 'probability')
 title('within electrode pair hit - miss difference')
 xline(0)
 

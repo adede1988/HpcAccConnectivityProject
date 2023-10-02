@@ -1,4 +1,4 @@
-function [] = readAndSplitPipeline(subDat, prefix, regModels, saveFolder, chanFolder)
+function [labErrors] = readAndSplitPipeline(subDat, saveFolder, chanFolder)
 
 %get previous work
 % if ~isfile([saveFolder 'sumDat_' subDat.subID '.mat'])
@@ -15,18 +15,14 @@ function [] = readAndSplitPipeline(subDat, prefix, regModels, saveFolder, chanFo
 dat = load([subDat.dataDir '\' subDat.encDatFn]).data;
 dat2 = load([subDat.dataDir '\' subDat.retDatFn]).data;
 
-%make sure there's an elecpos field
+%make sure there's an chanpos field
 if ~isfield(dat.elec, 'elecpos')
     dat.elec.elecpos = dat.elec.chanpos; 
 end
+%chanpos is the MNI coordinates
 
 
 
-% check for corrected_coords.mat file
-%NOTE: THIS MAY NOT BE NEEDED ANYMORE
-% if isfile([subDat.dataDir '\corrected_coords.mat'])
-%     dat.elec = load([subDat.dataDir '\corrected_coords.mat']).data_new.elec;
-% end
 
 %get sampling rate
 subDat.fsample = dat.fsample;
@@ -68,23 +64,25 @@ subDat.retInfo(errorTrials, :) = [];
 
 % if ~isfield(subDat, 'labels')
     %get rid of nan electrode locations
-    subDat.elecpos = dat.elec.elecpos; 
+    subDat.elecpos = dat.elec.elecpos;
+    subDat.chanpos = dat.elec.chanpos; 
     subDat.badTrodes = isnan(subDat.elecpos(:,1)); %key for later during further analysis steps
     subDat.elecpos(subDat.badTrodes,:) = [];
+    subDat.chanpos(subDat.badTrodes,:) = []; 
 
     %standardize the labels from the anatomy notes
-    [subDat.labels, subDat.labErrors] = getLabs(dat.elec, subDat.elecNotes);
+    [subDat.labels, subDat.labErrors] = getLabs2(dat.elec, subDat.elecNotes);
 
     if isfield(subDat.labErrors, 'elec')
         disp(['unknown labels for: ' subDat.subID])
     end
-
+    labErrors = subDat.labErrors; 
     %convert the labels to ROI specific labels
-    roiLab = roiLabel(subDat.labels(:,3));
+%     roiLab = roiLabel(subDat.labels(:,3));
 
     %create lookup tables for ROI membership based on labels and MNI space
     %model coregistration 
-    [subDat.roimni, subDat.roiNote] = anatomyPlot(regModels, subDat.elecpos, [subDat.labels(:,3)], roiLab, rois, subDat.subID, -1, 0); 
+%     [subDat.roimni, subDat.roiNote] = anatomyPlot(regModels, subDat.elecpos, [subDat.labels(:,3)], roiLab, rois, subDat.subID, -1, 0); 
     
     %save out anatomy checking
 %     save([saveFolder 'sumDat_' subDat.subID '.mat'], 'subDat')
@@ -122,8 +120,8 @@ subDat.retInfo(errorTrials, :) = [];
     end
 
     %record that the chan split has been done
-    subDat.chanSplit = 1; 
-    save([saveFolder 'sumDat_' subDat.subID '.mat'], 'subDat')
+%     subDat.chanSplit = 1; 
+%     save([saveFolder 'sumDat_' subDat.subID '.mat'], 'subDat')
 % end
 
 
