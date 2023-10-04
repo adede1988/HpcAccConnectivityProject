@@ -117,37 +117,65 @@ end
 
 %% Lead lag analysis
 
+if isfield(chanDat, 'leadLag4')
 
+    start = find(~isnan(squeeze(chanDat.leadLag4.subMem(:,1,1,1))), 1, 'last')+1;
+    if start>= length(chanFiles)
+        start = length(chanFiles); 
+    end
 
-if ~isfield(chanDat, 'leadLag4')
-
-        leadLag = struct; 
-        reactive = reactiveTest_100(chanDat.HFB);
-        includedChans = []; 
-        start = 1; 
-
-
-          
-        leadLagEncTim = chanDat.enctim(501:25:end-500);
-        leadLagRetTim = chanDat.retOtim(501:25:end-500);
-
-        %correlation matrices
-        %partner chan, hit/miss, offset, time
-        outCluStats = nan(length(chanFiles), 2, 301, length(leadLagEncTim)); %subsequent memory
-        outCluStats2 = nan(length(chanFiles), 2, 301, length(leadLagRetTim)); %retrieval
-
-
-
-
-    if sum(reactive==1)>0
-
+    leadLag = chanDat.leadLag4; 
+    reactive = reactiveTest_100(chanDat.HFB);
+    includedChans = leadLag.inclChan; 
    
-    %trial index values
-    subMiss = find(chanDat.use & chanDat.misses); 
-    subHit = find(chanDat.use & chanDat.hits); 
-    miss_on = find(chanDat.retInfo(:,1)==2 & chanDat.retUse == 1);
-    hit_on = find(chanDat.retInfo(:,1)==1 & chanDat.retUse == 1); 
+
+
+      
+    leadLagEncTim = leadLag.encTim;
+    leadLagRetTim = leadLag.retTim;
+
+    %correlation matrices
+    %partner chan, hit/miss, offset, time
+    outCluStats = leadLag.subMem; %subsequent memory
+    outCluStats2 = leadLag.retMem; %retrieval
+
+
+
+
+else 
+    start = 1; 
+
+    
+
+    leadLag = struct; 
+    reactive = reactiveTest_100(chanDat.HFB);
+    includedChans = []; 
    
+
+
+      
+    leadLagEncTim = chanDat.enctim(501:25:end-500);
+    leadLagRetTim = chanDat.retOtim(501:25:end-500);
+
+    %correlation matrices
+    %partner chan, hit/miss, offset, time
+    outCluStats = nan(length(chanFiles), 2, 301, length(leadLagEncTim)); %subsequent memory
+    outCluStats2 = nan(length(chanFiles), 2, 301, length(leadLagRetTim)); %retrieval
+
+
+end
+
+% only do lead lag for reactive channels
+
+if sum(reactive==1)>0
+
+
+%trial index values
+subMiss = find(chanDat.use & chanDat.misses); 
+subHit = find(chanDat.use & chanDat.hits); 
+miss_on = find(chanDat.retInfo(:,1)==2);
+hit_on = find(chanDat.retInfo(:,1)==1); 
+
 
 
 
@@ -156,108 +184,106 @@ if ~isfield(chanDat, 'leadLag4')
 
 %     if start<length(chanFiles) %is there even any work left to be done? 
 
-    for chan = start:length(chanFiles)
-        disp(['leadLag analysis with channel: ' num2str(chan) ' of ' num2str(length(chanFiles))])
-        tic
+for chan = start:length(chanFiles)
+    disp(['leadLag analysis with channel: ' num2str(chan) ' of ' num2str(length(chanFiles))])
+    tic
 
-        chanDat2 = load([chanFiles(chan).folder '/CHANRAW/' chanFiles(chan).name]).chanDat; 
-        chanDat2.HFB = getHFB(chanDat2, highfrex);
-        reactive2 = reactiveTest(chanDat2.HFB);
-        if sum(reactive2==1)>0
-            includedChans = [includedChans chan]; 
-        %need to grab the HFB data at higher resolution, so calculate from
-        %scratch 
-    
-        %ENCODING DATA%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %CHAN 1
-        [pow, mulTim, mulFrex] = getChanMultiTF(chanDat.enc, highfrex, chanDat.fsample, chanDat.enctim, 1);  
-        pow = arrayfun(@(x) myChanZscore(pow(:,:,x), [find(mulTim>=-450,1), find(mulTim>=-50,1)] ), 1:size(pow,3), 'UniformOutput',false ); %z-score
-        pow = cell2mat(pow); %organize
-        highnumfrex = length(mulFrex); 
-        pow = reshape(pow, size(pow,1), size(pow,2)/highnumfrex, []); %organize
-        pow = squeeze(mean(pow, 3)); %take the mean over frequencies
-    
-        HFB1 = pow; 
-        clear pow
-    
-        %CHAN 2
-        [pow2, mulTim, mulFrex] = getChanMultiTF(chanDat2.enc, highfrex, chanDat.fsample, chanDat.enctim, 1);  
-        pow2 = arrayfun(@(x) myChanZscore(pow2(:,:,x), [find(mulTim>=-450,1), find(mulTim>=-50,1)] ), 1:size(pow2,3), 'UniformOutput',false ); %z-score
-        pow2 = cell2mat(pow2); %organize
-        highnumfrex = length(mulFrex); 
-        pow2 = reshape(pow2, size(pow2,1), size(pow2,2)/highnumfrex, []); %organize
-        pow2 = squeeze(mean(pow2, 3)); %take the mean over frequencies
-        
-        disp('encoding: ')
-        outCluStats(chan,:,:,:) = getLL(HFB1, pow2, subMiss, subHit, chanDat.enctim, leadLagEncTim);
+    chanDat2 = load([chanFiles(chan).folder '/CHANRAW/' chanFiles(chan).name]).chanDat; 
+    chanDat2.HFB = getHFB(chanDat2, highfrex);
+    reactive2 = reactiveTest(chanDat2.HFB);
+    if sum(reactive2==1)>0
+        includedChans = [includedChans chan]; 
+    %need to grab the HFB data at higher resolution, so calculate from
+    %scratch 
 
+    %ENCODING DATA%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %CHAN 1
+    [pow, mulTim, mulFrex] = getChanMultiTF(chanDat.enc, highfrex, chanDat.fsample, chanDat.enctim, 1);  
+    pow = arrayfun(@(x) myChanZscore(pow(:,:,x), [find(mulTim>=-450,1), find(mulTim>=-50,1)] ), 1:size(pow,3), 'UniformOutput',false ); %z-score
+    pow = cell2mat(pow); %organize
+    highnumfrex = length(mulFrex); 
+    pow = reshape(pow, size(pow,1), size(pow,2)/highnumfrex, []); %organize
+    pow = squeeze(mean(pow, 3)); %take the mean over frequencies
 
-      
+    HFB1 = pow; 
+    clear pow
+
+    %CHAN 2
+    [pow2, mulTim, mulFrex] = getChanMultiTF(chanDat2.enc, highfrex, chanDat.fsample, chanDat.enctim, 1);  
+    pow2 = arrayfun(@(x) myChanZscore(pow2(:,:,x), [find(mulTim>=-450,1), find(mulTim>=-50,1)] ), 1:size(pow2,3), 'UniformOutput',false ); %z-score
+    pow2 = cell2mat(pow2); %organize
+    highnumfrex = length(mulFrex); 
+    pow2 = reshape(pow2, size(pow2,1), size(pow2,2)/highnumfrex, []); %organize
+    pow2 = squeeze(mean(pow2, 3)); %take the mean over frequencies
+    
+    disp('encoding: ')
+    outCluStats(chan,:,:,:) = getLL(HFB1, pow2, subMiss, subHit, chanDat.enctim, leadLagEncTim);
 
 
-    
-        %RERTRIEVAL DATA%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %CHAN 1
-        [pow, mulTim, mulFrex] = getChanMultiTF(chanDat.retOn, highfrex, chanDat.fsample, chanDat.retOtim, 1);  
-        pow = arrayfun(@(x) myChanZscore(pow(:,:,x), [find(mulTim>=-450,1), find(mulTim>=-50,1)] ), 1:size(pow,3), 'UniformOutput',false ); %z-score
-        pow = cell2mat(pow); %organize
-        highnumfrex = length(mulFrex); 
-        pow = reshape(pow, size(pow,1), size(pow,2)/highnumfrex, []); %organize
-        pow = squeeze(mean(pow, 3)); %take the mean over frequencies
-    
-        HFB1 = pow; 
-        clear pow
-    
-        %CHAN 2
-        [pow2, mulTim, mulFrex] = getChanMultiTF(chanDat2.retOn, highfrex, chanDat.fsample, chanDat.retOtim, 1);  
-        pow2 = arrayfun(@(x) myChanZscore(pow2(:,:,x), [find(mulTim>=-450,1), find(mulTim>=-50,1)] ), 1:size(pow2,3), 'UniformOutput',false ); %z-score
-        pow2 = cell2mat(pow2); %organize
-        highnumfrex = length(mulFrex); 
-        pow2 = reshape(pow2, size(pow2,1), size(pow2,2)/highnumfrex, []); %organize
-        pow2 = squeeze(mean(pow2, 3)); %take the mean over frequencies
-        
+  
 
-        disp('retrieval: ')
-        outCluStats2(chan,:,:,:) = getLL(HFB1, pow2, miss_on, hit_on, chanDat.retOtim, leadLagRetTim);
-    
-        x = num2str(toc/60); 
-        disp(['.......................................................' x])
-        leadLag.inclChan = includedChans; 
-        leadLag.encTim = leadLagEncTim; 
-        leadLag.retTim = leadLagRetTim; 
-        leadLag.subMem = outCluStats; 
-        leadLag.retMem = outCluStats2; 
-        chanDat.leadLag4 = leadLag; 
-        disp('interim save')
-        save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat');
-        end
-    end
 
+
+    %RERTRIEVAL DATA%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %CHAN 1
+    [pow, mulTim, mulFrex] = getChanMultiTF(chanDat.retOn, highfrex, chanDat.fsample, chanDat.retOtim, 1);  
+    pow = arrayfun(@(x) myChanZscore(pow(:,:,x), [find(mulTim>=-450,1), find(mulTim>=-50,1)] ), 1:size(pow,3), 'UniformOutput',false ); %z-score
+    pow = cell2mat(pow); %organize
+    highnumfrex = length(mulFrex); 
+    pow = reshape(pow, size(pow,1), size(pow,2)/highnumfrex, []); %organize
+    pow = squeeze(mean(pow, 3)); %take the mean over frequencies
+
+    HFB1 = pow; 
+    clear pow
+
+    %CHAN 2
+    [pow2, mulTim, mulFrex] = getChanMultiTF(chanDat2.retOn, highfrex, chanDat.fsample, chanDat.retOtim, 1);  
+    pow2 = arrayfun(@(x) myChanZscore(pow2(:,:,x), [find(mulTim>=-450,1), find(mulTim>=-50,1)] ), 1:size(pow2,3), 'UniformOutput',false ); %z-score
+    pow2 = cell2mat(pow2); %organize
+    highnumfrex = length(mulFrex); 
+    pow2 = reshape(pow2, size(pow2,1), size(pow2,2)/highnumfrex, []); %organize
+    pow2 = squeeze(mean(pow2, 3)); %take the mean over frequencies
+    
+
+    disp('retrieval: ')
+    outCluStats2(chan,:,:,:) = getLL(HFB1, pow2, miss_on, hit_on, chanDat.retOtim, leadLagRetTim);
+
+    x = num2str(toc/60); 
+    disp(['.......................................................' x])
     leadLag.inclChan = includedChans; 
     leadLag.encTim = leadLagEncTim; 
     leadLag.retTim = leadLagRetTim; 
     leadLag.subMem = outCluStats; 
     leadLag.retMem = outCluStats2; 
     chanDat.leadLag4 = leadLag; 
-    
-    clear HFB1 HFB2 pow2 leadLag subMiss subHit miss_on hit_on 
-    disp('attempting saving')
-    save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat'); 
-    disp(['save success: ' chanFiles(idx).folder '/' chanFiles(idx).name])
-    
+    disp('interim save')
+    save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat');
+    end
+end
+
+leadLag.inclChan = includedChans; 
+leadLag.encTim = leadLagEncTim; 
+leadLag.retTim = leadLagRetTim; 
+leadLag.subMem = outCluStats; 
+leadLag.retMem = outCluStats2; 
+chanDat.leadLag4 = leadLag; 
+
+clear HFB1 HFB2 pow2 leadLag subMiss subHit miss_on hit_on 
+disp('attempting saving')
+save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat'); 
+disp(['save success: ' chanFiles(idx).folder '/' chanFiles(idx).name])
+
 %     else %there was no work to be done
 %         disp('channel leadLag already complete!')
 %     end
-    else
-        chanDat.leadLag4 = 1; 
-        disp('non-reactive channel save')
-        save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat'); 
-        disp(['save success: ' chanFiles(idx).folder '/' chanFiles(idx).name])
-    end
 else
-    disp('already done with leadLag')
-
+    chanDat.leadLag4 = 1; 
+    disp('non-reactive channel save')
+    save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat'); 
+    disp(['save success: ' chanFiles(idx).folder '/' chanFiles(idx).name])
 end
+
+
 
 
 %% Lead lag analysis
@@ -491,13 +517,13 @@ if ~isfield(chanDat, 'TF')
     pow = cell2mat(pow); %organize
     pow = reshape(pow, size(pow,1), size(pow,2)/100, []); %organize
     %get mean hit: 
-    TFout.hit_on = squeeze(mean(pow(:,chanDat.retInfo(:,1)==1 & chanDat.retUse == 1, :), 2)); 
+    TFout.hit_on = squeeze(mean(pow(:,chanDat.retInfo(:,1)==1, :), 2)); 
     %get mean CRs: 
-    TFout.cr_on = squeeze(mean(pow(:,chanDat.retInfo(:,1)==3 & chanDat.retUse == 1, :), 2));
+    TFout.cr_on = squeeze(mean(pow(:,chanDat.retInfo(:,1)==3, :), 2));
     %get mean miss: 
-    TFout.miss_on = squeeze(mean(pow(:,chanDat.retInfo(:,1)==2 & chanDat.retUse == 1, :), 2));
+    TFout.miss_on = squeeze(mean(pow(:,chanDat.retInfo(:,1)==2 , :), 2));
     %get mean FA: 
-    TFout.fa_on = squeeze(mean(pow(:,chanDat.retInfo(:,1)==4 & chanDat.retUse == 1, :), 2));
+    TFout.fa_on = squeeze(mean(pow(:,chanDat.retInfo(:,1)==4 , :), 2));
     %clean up
     clear pow
     disp('retrieval 1 done')
@@ -508,13 +534,13 @@ if ~isfield(chanDat, 'TF')
     pow = cell2mat(pow); %organize
     pow = reshape(pow, size(pow,1), size(pow,2)/100, []); %organize
     %get mean hit: 
-    TFout.hit_rt = squeeze(mean(pow(:,chanDat.retInfo(:,1)==1 & chanDat.retUse == 1, :), 2)); 
+    TFout.hit_rt = squeeze(mean(pow(:,chanDat.retInfo(:,1)==1 , :), 2)); 
     %get mean CRs: 
-    TFout.cr_rt = squeeze(mean(pow(:,chanDat.retInfo(:,1)==3 & chanDat.retUse == 1, :), 2));
+    TFout.cr_rt = squeeze(mean(pow(:,chanDat.retInfo(:,1)==3 , :), 2));
     %get mean miss: 
-    TFout.miss_rt = squeeze(mean(pow(:,chanDat.retInfo(:,1)==2 & chanDat.retUse == 1, :), 2));
+    TFout.miss_rt = squeeze(mean(pow(:,chanDat.retInfo(:,1)==2 , :), 2));
     %get mean FA: 
-    TFout.fa_rt = squeeze(mean(pow(:,chanDat.retInfo(:,1)==4 & chanDat.retUse == 1, :), 2));
+    TFout.fa_rt = squeeze(mean(pow(:,chanDat.retInfo(:,1)==4 , :), 2));
     %clean up
     clear pow
     disp('retrieval 2 done')
