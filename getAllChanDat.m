@@ -37,27 +37,67 @@ clear subIDs
 
     if acc>0 && chanDat.age > 13 %memory and age filters
 
-    if isfile(['R:\MSS\Johnson_Lab\dtf8829\SUMDAT\' chanDat.site '_' chanDat.subID '_all' '.mat'])
-        metaDat = load(['R:\MSS\Johnson_Lab\dtf8829\SUMDAT\' chanDat.site '_' chanDat.subID '_all' '.mat']).metaDat;
-%         metaDat.leadLag = rmfield(metaDat.leadLag, {'subMem', 'retMem'});
-    else
+%     if isfile(['R:\MSS\Johnson_Lab\dtf8829\SUMDAT\' chanDat.site '_' chanDat.subID '_all' '.mat'])
+%         metaDat = load(['R:\MSS\Johnson_Lab\dtf8829\SUMDAT\' chanDat.site '_' chanDat.subID '_all' '.mat']).metaDat;
+% %         metaDat.leadLag = rmfield(metaDat.leadLag, {'subMem', 'retMem'});
+%     else
 %     curIdx = []; 
     flag = true;
     for chan = 1:length(curSub)
         chanDat = load([curSub(chan).folder '/' curSub(chan).name]).chanDat; 
+
         chanDat.reactive = 1; 
         chanDat.goodSub = 1; 
         chanDat.allBrod = 1; 
         if isfield(chanDat, 'HFB') && isfield(chanDat, 'leadLag4') && isfield(chanDat, 'ISPC')%check for complete processing
             %only reactive channels have leadlag calculations 
-            %KNOWN ISSUE CORRECTED IN NEXT RUN: HFB for RT locked encoding
-            %data had the wrong baseline. This caused spurious reactive
-            %detections. inclChan in the leadLag3 struct was not
-            %contaminated by this because HFB was recalculated on chan2
-            %data (see singleChanPipeline in the lead Lag analysis block
-            %Mostly channels that should not have been included had leadLag
-            %calculations run. However, it did happen occasionally that a
-            %channel which should have had calcualtions run was missed.
+       
+            if size(chanDat.HFB.subMiss,1)>200
+            %% downsample for size
+            HFB = chanDat.HFB;
+            HFB_names = fieldnames(HFB); 
+            
+            datidx = {[1,2], [5,6], [9,10,11,12], [15,16,17,18]}; 
+            timidx = [3,7,13,19]; 
+
+            for dati = 1:4
+                curtim = HFB.(HFB_names{timidx(dati)});
+                HFB.(HFB_names{timidx(dati)}) = curtim(1:5:end);
+                curDi = datidx{dati}; 
+                for fi = 1:length(curDi)
+                    cur = HFB.(HFB_names{curDi(fi)});
+
+                    HFB.(HFB_names{curDi(fi)}) = cur(1:5:end,:);
+                end
+            end
+            chanDat.HFB = HFB; 
+
+            TF = chanDat.TF; 
+            TF_names = fieldnames(TF); 
+            for fi = 1:length(TF_names)
+                cur = TF.(TF_names{fi}); 
+                TF.(TF_names{fi}) = cur(1:5:end, :); 
+            end
+            chanDat.TF = TF; 
+            
+            ISPC = chanDat.ISPC; 
+            ISPC_names = fieldnames(ISPC); 
+            for fi = 5:length(ISPC_names)
+                cur = ISPC.(ISPC_names{fi}); 
+                ISPC.(ISPC_names{fi}) = cur(:,1:5:end,:,:); 
+            end
+            chanDat.ISPC = ISPC; 
+            
+            clear ISPC TF HFB
+
+            save([curSub(chan).folder '/' curSub(chan).name], 'chanDat', '-v7.3')
+            end
+            %%
+
+       
+       
+
+
              if isstruct(chanDat.leadLag4)
                 reactive = chanDat.leadLag4.inclChan; 
                 if ismember(chan, reactive)
@@ -229,19 +269,19 @@ for fi = 5:16
 end
 
 
-zachLabs = readtable('R:\MSS\Johnson_Lab\dtf8829\GitHub\HpcAccConnectivityProject/brodmann_by_subj.csv');
-zachLabs = zachLabs(cell2mat(cellfun(@(x) strcmp(x, allDat(1).subID), {zachLabs.subj}, 'uniformoutput', false )), :);
-zachLabs(isnan(zachLabs.x), :) = []; 
-zachLabs(curSubReact==0, :) = []; 
-brod_new = table2array(zachLabs(:,5)); 
-brod_old = {allDat.brodmann}; 
-
-if ~strcmp(brod_old{1}, 'ERROR')
-    disp(['match to old brod:' num2str(strcmp(brod_new{1}, brod_old{1})) ])
-else
-    disp(brod_new{1})
-end
-   
+% zachLabs = readtable('R:\MSS\Johnson_Lab\dtf8829\GitHub\HpcAccConnectivityProject/brodmann_by_subj.csv');
+% zachLabs = zachLabs(cell2mat(cellfun(@(x) strcmp(x, allDat(1).subID), {zachLabs.subj}, 'uniformoutput', false )), :);
+% zachLabs(isnan(zachLabs.x), :) = []; 
+% zachLabs(curSubReact==0, :) = []; 
+% brod_new = table2array(zachLabs(:,5)); 
+% brod_old = {allDat.brodmann}; 
+% 
+% if ~strcmp(brod_old{1}, 'ERROR')
+%     disp(['match to old brod:' num2str(strcmp(brod_new{1}, brod_old{1})) ])
+% else
+%     disp(brod_new{1})
+% end
+%    
        
         metaDat = allDat(1);
         metanames = fieldnames(metaDat); 
@@ -290,7 +330,7 @@ end
             allDat(subIDX(chan)).goodSub = 0; 
         end
     end
-    end
+%     end
     end %memory and age filter end
     catch
         disp(['sub ' num2str(sub) ' ' curSub(chan).name 'fail'])

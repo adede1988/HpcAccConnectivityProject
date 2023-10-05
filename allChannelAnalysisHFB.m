@@ -9,7 +9,7 @@
 %local paths: 
 
 codePre = 'R:\MSS\Johnson_Lab\dtf8829\GitHub\';
-datPre = 'R:\MSS\Johnson_Lab\dtf8829\';
+datPre = 'R:\MSS\Johnson_Lab\dtf8829\QuestConnect\';
 
 %% set paths
 
@@ -28,9 +28,9 @@ chanFiles = chanFiles(test);
 %% loop over channels and split saved files by output variables
 
 
-errorChans = cell(64,1); 
-allDat = cell(64,1); 
-parfor sub = 1:64
+errorChans = cell(37,1); 
+allDat = cell(37,1); 
+parfor sub = 1:8
     sub
     if isempty(allDat{sub})
         [errorChans{sub}, allDat{sub}] = getAllChanDat(chanFiles, sub); %includes age and memory filter
