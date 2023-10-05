@@ -31,12 +31,18 @@ addpath([codePre 'HpcAccConnectivityProject'])
 addpath([codePre 'myFrequentUse'])
 % addpath(genpath([codePre 'fieldtrip-20230118']))
 
-%% initialize 
+%% initialize chanFiles, dif versions for local v. quest running
 
-datFolder = [datPre 'CHANDAT']; 
-chanFiles = dir(datFolder);
-test = cellfun(@(x) length(x)>0, strfind({chanFiles.name}, '.mat'));
-chanFiles = chanFiles(test); 
+
+% chanFiles = load([codePre 'HpcAccConnectivityProject' '/localChanFiles.mat']).chanFiles;
+chanFiles = load([codePre 'HpcAccConnectivityProject' '/questChanFiles.mat']).chanFiles;
+
+
+% 
+% datFolder = [datPre 'CHANDAT']; 
+% chanFiles = dir(datFolder);
+% test = cellfun(@(x) length(x)>0, strfind({chanFiles.name}, '.mat'));
+% chanFiles = chanFiles(test); 
 
 
 %% run the pipeline

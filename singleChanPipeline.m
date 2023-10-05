@@ -136,7 +136,13 @@ end
 
 %% Lead lag analysis
 
+%KNOWN ISSUE: leadLag4 is not always a struct if the channel is not
+%reactive, so need to fix that if partial results are to be used. HOWEVER,
+%channels that are not reactive will fly through analysis and so are
+%unlikely to need to use partial results
+
 if isfield(chanDat, 'leadLag4')
+    
 
     start = find(~isnan(squeeze(chanDat.leadLag4.subMem(:,1,1,1))), 1, 'last')+1;
     if start>= length(chanFiles)
