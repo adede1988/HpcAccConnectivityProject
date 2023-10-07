@@ -1,4 +1,4 @@
-function [] = singleChanPipeline(chanFiles, idx, codePre)
+function [] = singleChanPipeline(chanFiles, idx, subFiles, codePre)
 
 %% set frequency parameters
 frex = logspace(log10(2),log10(80),100);
@@ -100,7 +100,7 @@ chanDat.retRtim = [-2000:500];
 %                          retOn   : -450 : -50   ms
 %                          retRT   : -2000: -1600 ms
 
-if ~isfield(chanDat, 'HFB')
+if ~isfield(chanDat, 'reactiveRes')
     HFB = getHFB(chanDat, highfrex); 
 
     chanDat.HFB = HFB; 
@@ -136,17 +136,24 @@ end
 
 %% Lead lag analysis
 
-%KNOWN ISSUE: leadLag4 is not always a struct if the channel is not
-%reactive, so need to fix that if partial results are to be used. HOWEVER,
-%channels that are not reactive will fly through analysis and so are
-%unlikely to need to use partial results
 
+if isfield(chanDat, 'leadLag4') && ~isstruct(chanDat.leadLag4)
+    if ~isstruct(chanDat.leadLag4)
+        chanDat.leadLag4 = 1; 
+    disp('non-reactive channel save')
+    save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat'); 
+    disp(['save success: ' chanFiles(idx).folder '/' chanFiles(idx).name])
+    end
+
+else
+    
 if isfield(chanDat, 'leadLag4')
     
+%     if ~isstruct(chanDat, 'leadLag4')
 
     start = find(~isnan(squeeze(chanDat.leadLag4.subMem(:,1,1,1))), 1, 'last')+1;
-    if start>= length(chanFiles)
-        start = length(chanFiles); 
+    if start>= length(subFiles)
+        start = length(subFiles); 
     end
 
     leadLag = chanDat.leadLag4; 
@@ -184,8 +191,8 @@ else
 
     %correlation matrices
     %partner chan, hit/miss, offset, time
-    outCluStats = nan(length(chanFiles), 2, 301, length(leadLagEncTim)); %subsequent memory
-    outCluStats2 = nan(length(chanFiles), 2, 301, length(leadLagRetTim)); %retrieval
+    outCluStats = nan(length(subFiles), 2, 301, length(leadLagEncTim)); %subsequent memory
+    outCluStats2 = nan(length(subFiles), 2, 301, length(leadLagRetTim)); %retrieval
 
 
 end
@@ -209,11 +216,11 @@ hit_on = find(chanDat.retInfo(:,1)==1);
 
 %     if start<length(chanFiles) %is there even any work left to be done? 
 
-for chan = start:length(chanFiles)
-    disp(['leadLag analysis with channel: ' num2str(chan) ' of ' num2str(length(chanFiles))])
+for chan = start:length(subFiles)
+    disp(['leadLag analysis with channel: ' num2str(chan) ' of ' num2str(length(subFiles))])
     tic
 
-    chanDat2 = load([chanFiles(chan).folder '/CHANRAW/' chanFiles(chan).name]).chanDat; 
+    chanDat2 = load([subFiles(chan).folder '/' subFiles(chan).name]).chanDat; 
     HFB = getHFB(chanDat2, highfrex);
     reactive2 = reactiveTest_100(HFB);
     clear HFB
@@ -309,6 +316,7 @@ else
     disp(['save success: ' chanFiles(idx).folder '/' chanFiles(idx).name])
 end
 
+end %ugly wrapper to check for non struct leadLag4 indicating non reactive channel
 
 
 
@@ -633,31 +641,31 @@ if ~isfield(chanDat, 'ISPC')
     %channels X time X frequencies X ISPC/PPC
     frex = logspace(log10(2), log10(25), 20); 
     numfrex = length(frex); 
-    ISPCout.subMiss = zeros(length(chanFiles), length(ISPCout.encdi), length(frex), 4); 
-    ISPCout.subHit = zeros(length(chanFiles), length(ISPCout.encdi), length(frex), 4); 
+    ISPCout.subMiss = zeros(length(subFiles), length(ISPCout.encdi), length(frex), 4); 
+    ISPCout.subHit = zeros(length(subFiles), length(ISPCout.encdi), length(frex), 4); 
 
-    ISPCout.subMissR = zeros(length(chanFiles), length(ISPCout.encRdi), length(frex), 4); 
-    ISPCout.subHitR = zeros(length(chanFiles), length(ISPCout.encRdi), length(frex), 4); 
+    ISPCout.subMissR = zeros(length(subFiles), length(ISPCout.encRdi), length(frex), 4); 
+    ISPCout.subHitR = zeros(length(subFiles), length(ISPCout.encRdi), length(frex), 4); 
     
-    ISPCout.hit_on = zeros(length(chanFiles), length(ISPCout.ondi), length(frex), 4);
-    ISPCout.cr_on = zeros(length(chanFiles), length(ISPCout.ondi), length(frex), 4);
-    ISPCout.miss_on = zeros(length(chanFiles), length(ISPCout.ondi), length(frex), 4);
-    ISPCout.fa_on = zeros(length(chanFiles), length(ISPCout.ondi), length(frex), 4);
+    ISPCout.hit_on = zeros(length(subFiles), length(ISPCout.ondi), length(frex), 4);
+    ISPCout.cr_on = zeros(length(subFiles), length(ISPCout.ondi), length(frex), 4);
+    ISPCout.miss_on = zeros(length(subFiles), length(ISPCout.ondi), length(frex), 4);
+    ISPCout.fa_on = zeros(length(subFiles), length(ISPCout.ondi), length(frex), 4);
 
 
-    ISPCout.hit_rt = zeros(length(chanFiles), length(ISPCout.rtdi), length(frex), 4);
-    ISPCout.cr_rt = zeros(length(chanFiles), length(ISPCout.rtdi), length(frex), 4);
-    ISPCout.miss_rt = zeros(length(chanFiles), length(ISPCout.rtdi), length(frex), 4);
-    ISPCout.fa_rt = zeros(length(chanFiles), length(ISPCout.rtdi), length(frex), 4);
+    ISPCout.hit_rt = zeros(length(subFiles), length(ISPCout.rtdi), length(frex), 4);
+    ISPCout.cr_rt = zeros(length(subFiles), length(ISPCout.rtdi), length(frex), 4);
+    ISPCout.miss_rt = zeros(length(subFiles), length(ISPCout.rtdi), length(frex), 4);
+    ISPCout.fa_rt = zeros(length(subFiles), length(ISPCout.rtdi), length(frex), 4);
 
 
     %will need to loop channels
     %NOTE: all trial types must have at least two trials! 
-    for chan = 1:length(chanFiles)
+    for chan = 1:length(subFiles)
         tic
 %         chan
         if chan > idx %don't do repeat work! 
-        chanDat2 = load([chanFiles(chan).folder '/CHANRAW/' chanFiles(chan).name]).chanDat; 
+        chanDat2 = load([subFiles(chan).folder '/' subFiles(chan).name]).chanDat; 
 
         %ENCODING DATA: ***********************************************************
         if sum(chanDat.use & chanDat.misses)>1

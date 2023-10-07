@@ -50,15 +50,17 @@ chanFiles = load([codePre 'HpcAccConnectivityProject' '/questChanFiles.mat']).ch
 curChan = chanFiles(start).name; 
 subID = split(curChan, '_'); 
 subID = subID{2}; 
-test = cellfun(@(x) length(x)>0, strfind({chanFiles.name}, subID)); 
-idx = 1:length(chanFiles); 
-chanFiles = chanFiles(test);
-idx = idx(test); 
-curChani = find(idx == start);
 
-disp(['going for ' subID ' ' num2str(curChani)] )
+subFiles = dir([datPre 'CHANDAT/CHANRAW']);
+test = cellfun(@(x) length(x)>0, strfind({subFiles.name}, subID)); 
+
+subFiles = subFiles(test);
+
+
+
+disp(['going for ' subID ' ' chanFiles(start).name] )
 tic
-singleChanPipeline(chanFiles, curChani, codePre); 
+singleChanPipeline(chanFiles, start, subFiles, codePre); 
 toc
 
 %% put encoding behavioral data onto it
