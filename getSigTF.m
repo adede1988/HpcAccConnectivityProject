@@ -1,4 +1,4 @@
-function [sigTFSub, sigTFRet] = getSigTF(aggTargs, allDat, timMask, timMask2)
+function [sigTFSub, sigTFRet] = getSigTF(aggTargs, allDat, timMask, timMask2, encTim, retTim)
 frex = logspace(log10(2),log10(80),100);
 %reg  X tVals / HFB diff / p values  X time X frequency
 sigTFSub = zeros([length(aggTargs),  3,  sum(timMask==1), 100] );
@@ -43,9 +43,9 @@ for reg1 = 1:length(aggTargs)
             sh = allDat{sub}.TF.subHit(:,timMask==1,:); 
             rm = allDat{sub}.TF.hit_on(:,timMask2==1,:); 
             rh = allDat{sub}.TF.miss_on(:,timMask2==1,:);
-            b = allDat{sub}.brodmann; 
-            reg1i = find(cellfun(@(x) sum(strcmp(aggTargs(reg1).lab, x)), b));
+             b = allDat{sub}.meetLabs(:,3); 
             ID = allDat{sub}.subID;
+            reg1i = find(cellfun(@(x) sum(strcmp(aggTargs(reg1).lab, x)), b));
             if ~isempty(reg1i)
                 for i1 = 1:length(reg1i)
                 
@@ -102,8 +102,8 @@ for reg1 = 1:length(aggTargs)
     TFdat.realID = realID; 
     TFdat.n_sub = length(unique(regSubs));
     TFdat.n_pair = length(regSubs); 
-    TFdat.encTim = allDat{3}.leadLag.encTim;  
-    TFdat.retTim = allDat{3}.leadLag.retTim;  
+    TFdat.encTim = encTim;  
+    TFdat.retTim = retTim;  
     TFdat.submissRT = submissRT; 
     TFdat.subhitRT = subhitRT; 
     TFdat.retmissRT = retmissRT; 
@@ -136,7 +136,7 @@ for reg1 = 1:length(aggTargs)
     yticks([10:20:100])
     yticklabels(round(frex([10:20:100])))
     set(gca, 'YDir','normal')
-    title([aggTargs(reg1).ROI ': subsequent hit z-score power'])
+    title([aggTargs(reg1).lab ': subsequent hit z-score power'])
     colorbar
 
 
@@ -145,7 +145,7 @@ for reg1 = 1:length(aggTargs)
     yticks([10:20:100])
     yticklabels(round(frex([10:20:100])))
     set(gca, 'YDir','normal')
-    title([aggTargs(reg1).ROI ': subsequent miss z-score power'])
+    title([aggTargs(reg1).lab ': subsequent miss z-score power'])
     colorbar
 
     subplot 313
@@ -156,11 +156,11 @@ for reg1 = 1:length(aggTargs)
     set(gca, 'YDir','normal')
     xticks([1:20:141])
     xticklabels(TFdat.encTim([1:20:141]))
-    title([aggTargs(reg1).ROI ': sub hit v. miss t-values'])
+    title([aggTargs(reg1).lab ': sub hit v. miss t-values'])
     colorbar
     
 
-    export_fig(['G:\My Drive\Johnson\MTL_PFC_networkFigs\TF_regional\' 'sub_' aggTargs(reg1).ROI '.jpg'])
+    export_fig(['G:\My Drive\Johnson\MTL_PFC_networkFigs\TF_regional\' 'sub_' aggTargs(reg1).lab '.jpg'])
 
 
 
@@ -190,7 +190,7 @@ for reg1 = 1:length(aggTargs)
     yticks([10:20:100])
     yticklabels(round(frex([10:20:100])))
     set(gca, 'YDir','normal')
-    title([aggTargs(reg1).ROI ': retrieval hit z-score power'])
+    title([aggTargs(reg1).lab ': retrieval hit z-score power'])
     colorbar
 
 
@@ -199,7 +199,7 @@ for reg1 = 1:length(aggTargs)
     yticks([10:20:100])
     yticklabels(round(frex([10:20:100])))
     set(gca, 'YDir','normal')
-    title([aggTargs(reg1).ROI ': retrieval miss z-score power'])
+    title([aggTargs(reg1).lab ': retrieval miss z-score power'])
     colorbar
 
     subplot 313
@@ -210,13 +210,13 @@ for reg1 = 1:length(aggTargs)
     set(gca, 'YDir','normal')
     xticks([1:20:141])
     xticklabels(TFdat.encTim([1:20:141]))
-    title([aggTargs(reg1).ROI ': ret hit v. miss t-values'])
+    title([aggTargs(reg1).lab ': ret hit v. miss t-values'])
     colorbar
     
 
-    export_fig(['G:\My Drive\Johnson\MTL_PFC_networkFigs\TF_regional\' 'ret_' aggTargs(reg1).ROI '.jpg'])
+    export_fig(['G:\My Drive\Johnson\MTL_PFC_networkFigs\TF_regional\' 'ret_' aggTargs(reg1).lab '.jpg'])
 
-    save(['R:\MSS\Johnson_Lab\dtf8829\QuestConnect\TF_KEY_STATS\' aggTargs(reg1).ROI  '.mat'], 'TFdat', '-v7.3')
+    save(['R:\MSS\Johnson_Lab\dtf8829\QuestConnect\TF_KEY_STATS\' aggTargs(reg1).lab  '.mat'], 'TFdat', '-v7.3')
 
     
 % 
@@ -231,62 +231,3 @@ end
 end
 
  
-%         for sub = 1:length(allDat)
-%            
-%             if ~isempty(allDat{sub})
-%                 c = allDat{sub}.leadLag; 
-%                 b = allDat{sub}.brodmann; 
-%                 
-%                 reg1i = find(cellfun(@(x) sum(strcmp(aggTargs(reg1).lab, x)), b));
-%                 reg2i = find(cellfun(@(x) sum(strcmp(aggTargs(reg2).lab, x)), b));
-% 
-%                 if ~isempty(reg1i) && ~isempty(reg2i) 
-%                     for i1 = 1:length(reg1i)
-%                         for i2 = 1:length(reg2i)
-%                             if reg1i(i1) ~= reg2i(i2)
-%                             regRes(:, :, :, ri) = c.subMem(reg1i(i1), reg2i(i2), :, :, :); 
-%                             ri = ri + 1; 
-%                             end
-%                         end
-%                     end
-% 
-% 
-%                 end
-% 
-%                
-% 
-% 
-%             end
-%         end
-%        
-% 
-%         hitVals = permute(squeeze(regRes(1,:,:,:)), [3,1,2]);
-%         missVals = permute(squeeze(regRes(2,:,:,:)), [3,1,2]);
-%         tVals = myArrayT(hitVals, missVals,1);
-%         perms = 100; 
-% 
-%         nullTs = zeros([size(tVals), perms]); 
-%         parfor ii = 1:perms
-% 
-%             nullTs(:,:,ii) = myArrayT(hitVals, missVals, 2);
-%         end
-% 
-%         [h, p, clusterinfo] = cluster_test(tVals, nullTs); 
-%             
-%        
-%     end
-% end
-% 
-% 
-% 
-
-
-
-
-
-
-
-
-
-
-% end

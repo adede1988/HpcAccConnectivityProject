@@ -7,9 +7,9 @@ disp(cndFiles(idx).name)
 
 %% ENCODING! 
 
-%using raw PPC data HITS ONLY
-lowDat = connectionDat.lowBand(:, :,2); %raw ppc
-highDat = connectionDat.highBand(:, :,2); %raw ppc
+%using raw PPC data 
+lowDat = connectionDat.lowBand(:, :); %raw ppc
+highDat = connectionDat.highBand(:, :); %raw ppc
 
 
 

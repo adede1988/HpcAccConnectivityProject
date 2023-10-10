@@ -97,8 +97,8 @@ disp(cndFiles(idx).name)
 %% RETRIEVAL! 
 
 %using raw PPC data HITS ONLY
-lowDat = connectionDat.lowBand2(:, :,2); %raw ppc
-highDat = connectionDat.highBand2(:, :,2); %raw ppc
+lowDat = connectionDat.lowBand2(:, :); %raw ppc
+highDat = connectionDat.highBand2(:, :); %raw ppc
 
 
 

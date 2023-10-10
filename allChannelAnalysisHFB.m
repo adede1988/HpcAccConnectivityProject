@@ -33,7 +33,7 @@ allDat = cell(37,1);
 parfor sub = 1:37
     sub
     if isempty(allDat{sub})
-        [errorChans{sub}, allDat{sub}] = getAllChanDat(chanFiles, sub, 'TF'); %includes age and memory filter
+        [errorChans{sub}, allDat{sub}] = getAllChanDat(chanFiles, sub, 'ISPC'); %includes age and memory filter
     end
 end
 
@@ -329,7 +329,7 @@ timMask2(timHFB<99999) = 1;
 
 % aggTargs = getSigISPC2(aggTargs, allDat, timMask); 
 
-[conN, conID] = getSigISPC(aggTargs, allDat, timMask, timMask2);
+[conN, conID] = getSigISPC(allBrod, allDat, timMask, timMask2, encTim, retTim);
 
 %% get all region - region PPC to demonstrate choice of bands
 

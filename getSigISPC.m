@@ -1,4 +1,4 @@
-function [conN, conID] = getSigISPC(aggTargs, allDat, timMask, timMask2)
+function [conN, conID] = getSigISPC(aggTargs, allDat, timMask, timMask2, encTim, retTim)
 frex = logspace(log10(2), log10(25), 20); 
 
 %ISPC stats are ISPC, PPC, ISPC z-scored, PPC z-scored
@@ -12,9 +12,9 @@ for reg1 = 1:length(aggTargs)
         tic
         disp(['working on: ' num2str(reg1) ' X ' num2str(reg2)])
   
-        %hit/miss X frequency X time X variable X pair
-        regRes = nan([2,  sum(timMask==1), length(frex), 4, 100]);
-        regRes2= nan([2, sum(timMask2==1), length(frex), 4, 100]); 
+        %hit/miss X frequency X time  X pair (get PCC only)
+        regRes = nan([2,  sum(timMask==1), length(frex),  100]);
+        regRes2= nan([2, sum(timMask2==1), length(frex),  100]); 
         regSubs = nan([100,1]);
         regSubIDs = cell(100,1); 
         chani = cell(100,1); 
@@ -47,13 +47,19 @@ for reg1 = 1:length(aggTargs)
                
 
                 c = allDat{sub}.ISPC; 
+                c = rmfield(c, {'subMissR', 'subHitR', 'cr_on', 'fa_on', 'hit_rt', 'miss_rt', 'cr_rt', 'fa_rt'});
+                c.subMiss = squeeze(c.subMiss(:,:,:,:,2)); 
+                c.subHit = squeeze(c.subHit(:,:,:,:,2)); 
+                c.hit_on = squeeze(c.hit_on(:,:,:,:,2)); 
+                c.miss_on = squeeze(c.miss_on(:,:,:,:,2)); 
+
+
                 smRT = mean(allDat{sub}.encInfo(allDat{sub}.misses & allDat{sub}.use, 4));
                 shRT = mean(allDat{sub}.encInfo(allDat{sub}.hits & allDat{sub}.use, 4));
                 rmRT = mean(allDat{sub}.retInfo(allDat{sub}.retInfo(:,1)==2, 3));
                 rhRT = mean(allDat{sub}.retInfo(allDat{sub}.retInfo(:,1)==1, 3));
+                b = allDat{sub}.meetLabs(:,3); 
                 ID = allDat{sub}.subID;
-                b = allDat{sub}.brodmann; 
-                
                 reg1i = find(cellfun(@(x) sum(strcmp(aggTargs(reg1).lab, x)), b));
                 reg2i = find(cellfun(@(x) sum(strcmp(aggTargs(reg2).lab, x)), b));
 
@@ -61,14 +67,16 @@ for reg1 = 1:length(aggTargs)
                     for i1 = 1:length(reg1i)
                         for i2 = 1:length(reg2i)
                             if reg1i(i1) ~= reg2i(i2)
-                                sh = c.subHit(reg1i(i1), reg2i(i2), timMask==1, :, :);
-                                sm = c.subMiss(reg1i(i1), reg2i(i2), timMask==1, :, :);
-                                rh = c.hit_on(reg1i(i1), reg2i(i2), timMask2==1, :, :);
-                                rm = c.miss_on(reg1i(i1), reg2i(i2), timMask2==1, :, :);
-                                regRes(1, :, :, :, ri) = sh; 
-                                regRes(2, :, :, :, ri) = sm; 
-                                regRes2(1, :, :, :, ri) = rh; 
-                                regRes2(2, :, :, :, ri) = rm; 
+                                sh = c.subHit(reg1i(i1), reg2i(i2), timMask==1, :);
+                                sm = c.subMiss(reg1i(i1), reg2i(i2), timMask==1, :);
+                                rh = c.hit_on(reg1i(i1), reg2i(i2), timMask2==1, :);
+                                rm = c.miss_on(reg1i(i1), reg2i(i2), timMask2==1, :);
+                                
+                                regRes(1, :, :,  ri) = sh; 
+                                regRes(2, :, :,  ri) = sm; 
+                                regRes2(1, :, :,  ri) = rh; 
+                                regRes2(2, :, :,  ri) = rm; 
+                                clear sh sm rh rm
                                 regd(ri) = d; 
                                 conN(reg1, reg2) = conN(reg1, reg2) + 1; 
                                 regSubs(ri) = sub; 
@@ -89,7 +97,7 @@ for reg1 = 1:length(aggTargs)
                             end
                         end
                     end
-
+                clear c
 
                 end
 
@@ -100,8 +108,8 @@ for reg1 = 1:length(aggTargs)
         end
         try
         if ri <= 100
-            regRes(:,:,:,:,ri:end) = []; 
-            regRes2(:,:,:,:,ri:end) = [];
+            regRes(:,:,:,ri:end) = []; 
+            regRes2(:,:,:,ri:end) = [];
             regSubs(ri:end) = []; 
             regSubIDs(ri:end) = []; 
             regd(ri:end) = []; 
@@ -117,15 +125,15 @@ for reg1 = 1:length(aggTargs)
         if length(subIDs) >= 5  %subject threshold!!! 
 
             %encoding
-            hitVals = permute(squeeze(regRes(1,:,:,:,:)), [4,1,2,3]);
-            missVals = permute(squeeze(regRes(2,:,:,:,:)), [4,1,2,3]);
+            hitVals = permute(squeeze(regRes(1,:,:,:)), [3,1,2]);
+            missVals = permute(squeeze(regRes(2,:,:,:)), [3,1,2]);
             combo = [hitVals; missVals]; 
 
             %rewriting to go after the specific bands! 
             %low band, frex indices 1-3
             %high band, frex indices 11-12
-            lowBand = squeeze(mean(combo(:,:,1:3,:), 3)); 
-            highBand = squeeze(mean(combo(:,:,11:12,:), 3)); 
+            lowBand = squeeze(mean(combo(:,:,1:3), 3)); 
+            highBand = squeeze(mean(combo(:,:,11:12), 3)); 
 
             sub_d = regd(cellfun(@(y) find(cellfun(@(x) strcmp(y,x), regSubIDs) ,1) , subIDs));
     
@@ -134,8 +142,8 @@ for reg1 = 1:length(aggTargs)
 
               
             connectionDat = struct; 
-            connectionDat.reg1 = aggTargs(reg1).ROI;
-            connectionDat.reg2 = aggTargs(reg2).ROI;
+            connectionDat.reg1 = aggTargs(reg1).lab;
+            connectionDat.reg2 = aggTargs(reg2).lab;
             connectionDat.reg1i = reg1; 
             connectionDat.reg2i = reg2; 
             connectionDat.N = length(regSubIDs);
@@ -146,7 +154,7 @@ for reg1 = 1:length(aggTargs)
             connectionDat.allSubs = regSubIDs; 
             connectionDat.lowBand = lowBand; 
             connectionDat.highBand = highBand; 
-            connectionDat.tim = allDat{4}.leadLag.encTim; 
+            connectionDat.tim = encTim; 
             connectionDat.hmSort = hmSort; 
             connectionDat.regacc= regacc; 
             connectionDat.chani = chani;
@@ -157,20 +165,20 @@ for reg1 = 1:length(aggTargs)
 
 
             %retrieval
-            hitVals = permute(squeeze(regRes2(1,:,:,:,:)), [4,1,2,3]);
-            missVals = permute(squeeze(regRes2(2,:,:,:,:)), [4,1,2,3]);
+            hitVals = permute(squeeze(regRes2(1,:,:,:)), [3,1,2]);
+            missVals = permute(squeeze(regRes2(2,:,:,:)), [3,1,2]);
             combo = [hitVals; missVals]; 
 
             %rewriting to go after the specific bands! 
             %low band, frex indices 1-3
             %high band, frex indices 11-12
-            lowBand = squeeze(mean(combo(:,:,1:3,:), 3)); 
-            highBand = squeeze(mean(combo(:,:,11:12,:), 3)); 
+            lowBand = squeeze(mean(combo(:,:,1:3), 3)); 
+            highBand = squeeze(mean(combo(:,:,11:12), 3)); 
 
               
             connectionDat.lowBand2 = lowBand; 
             connectionDat.highBand2 = highBand; 
-            connectionDat.tim2 = allDat{4}.leadLag.retTim; 
+            connectionDat.tim2 = retTim; 
 
             save(['R:\MSS\Johnson_Lab\dtf8829\QuestConnect\PCC_KEY_STATS\' connectionDat.reg1 '_' connectionDat.reg2 '.mat'], 'connectionDat')
 
