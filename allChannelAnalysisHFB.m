@@ -19,7 +19,7 @@ addpath([codePre 'myFrequentUse/export_fig_repo'])
 addpath(genpath([codePre 'mni2atlas']))
 addpath('R:\MSS\Johnson_Lab\dtf8829\GitHub\fieldtrip-20230118')
 ft_defaults
-datFolder = [datPre 'CHANDAT']; 
+datFolder = [datPre 'CHANDAT/finished']; 
 chanFiles = dir(datFolder);
 test = cellfun(@(x) length(x)>0, strfind({chanFiles.name}, '.mat'));
 chanFiles = chanFiles(test); 
@@ -30,90 +30,90 @@ chanFiles = chanFiles(test);
 
 errorChans = cell(37,1); 
 allDat = cell(37,1); 
-parfor sub = 1:8
+parfor sub = 1:37
     sub
     if isempty(allDat{sub})
-        [errorChans{sub}, allDat{sub}] = getAllChanDat(chanFiles, sub); %includes age and memory filter
+        [errorChans{sub}, allDat{sub}] = getAllChanDat(chanFiles, sub, 'TF'); %includes age and memory filter
     end
 end
 
 %% PPC vs PLV testing 
-
-%chans X  3 (trialNum, PPC, PLV)
-allPPCPLV = zeros(5000, 3); 
-allPPCPLV2 = zeros(5000, 3); 
-pi = 1; 
-for sub = 1:64
-    sub
-    if ~isempty(allDat{sub})
-        nChan = size(allDat{sub}.ISPC.subMiss,1); 
-        nsubMiss = sum(allDat{sub}.misses & allDat{sub}.use); 
-        nsubHit = sum(allDat{sub}.hits & allDat{sub}.use); 
-        ti = 60; %choose one time point
-        fi = 3; %choose one frequency
-        for ii = 1:nChan
-            for jj = 1:nChan
-                if ii>jj
-                allPPCPLV(pi, 1) = nsubMiss;
-                allPPCPLV(pi, 2) = allDat{sub}.ISPC.subMiss(ii,jj, ti, fi, 2); %get PPC
-                allPPCPLV(pi, 3) = allDat{sub}.ISPC.subMiss(ii,jj, ti, fi, 1); %get PLV
-                allPPCPLV2(pi, 1) = nsubHit;
-                allPPCPLV2(pi, 2) = allDat{sub}.ISPC.subHit(ii, jj, ti, fi, 2); %get PPC
-                allPPCPLV2(pi, 3) = allDat{sub}.ISPC.subHit(ii, jj, ti, fi, 1); %get PLV
-                pi = pi + 1; 
-                end
-            end
-        end
-
-    end
-end
-
-
-tCounts = unique(allPPCPLV(:,1));
-tCounts2 = unique(allPPCPLV2(:,1)); 
-sumPPCPLV = zeros(length(tCounts), 3); 
-sumPPCPLV2 = zeros(length(tCounts2), 3); 
-for ii = 1:length(tCounts)
-    tmp = allPPCPLV(allPPCPLV(:,1)==tCounts(ii), :); 
-    sumPPCPLV(ii,1) = tCounts(ii); 
-    sumPPCPLV(ii,2) = mean(tmp(:,2)); 
-    sumPPCPLV(ii,3) = mean(tmp(:,3)); 
-
-end
-
-for ii = 1:length(tCounts2)
-    tmp = allPPCPLV2(allPPCPLV2(:,1)==tCounts2(ii), :); 
-    sumPPCPLV2(ii,1) = tCounts2(ii); 
-    sumPPCPLV2(ii,2) = mean(tmp(:,2)); 
-    sumPPCPLV2(ii,3) = mean(tmp(:,3)); 
-
-end
-
-figure
-hold off
-scatter(sumPPCPLV(:,1), sumPPCPLV(:,2), 'filled')
-hold on 
-scatter(sumPPCPLV(:,1), sumPPCPLV(:,3), 'filled')
-ylabel("connectivity")
-xlabel("number of trials")
-title('PLV vs. PPC as a function of trial count misses')
-
-figure
-hold off
-scatter(sumPPCPLV2(:,1), sumPPCPLV2(:,2), 'filled')
-hold on 
-scatter(sumPPCPLV2(:,1), sumPPCPLV2(:,3), 'filled')
-ylabel("connectivity")
-xlabel("number of trials")
-title('PLV vs. PPC as a function of trial count hits')
-
-
-figure 
-hold off
-scatter(allPPCPLV2(allPPCPLV2(:,1)>40, 2), allPPCPLV2(allPPCPLV2(:,1)>40, 3).^2, 'filled')
-hold on 
-
-scatter(allPPCPLV2(allPPCPLV2(:,1)<30, 2), allPPCPLV2(allPPCPLV2(:,1)<30, 3).^2, 'filled')
+% 
+% %chans X  3 (trialNum, PPC, PLV)
+% allPPCPLV = zeros(5000, 3); 
+% allPPCPLV2 = zeros(5000, 3); 
+% pi = 1; 
+% for sub = 1:64
+%     sub
+%     if ~isempty(allDat{sub})
+%         nChan = size(allDat{sub}.ISPC.subMiss,1); 
+%         nsubMiss = sum(allDat{sub}.misses & allDat{sub}.use); 
+%         nsubHit = sum(allDat{sub}.hits & allDat{sub}.use); 
+%         ti = 60; %choose one time point
+%         fi = 3; %choose one frequency
+%         for ii = 1:nChan
+%             for jj = 1:nChan
+%                 if ii>jj
+%                 allPPCPLV(pi, 1) = nsubMiss;
+%                 allPPCPLV(pi, 2) = allDat{sub}.ISPC.subMiss(ii,jj, ti, fi, 2); %get PPC
+%                 allPPCPLV(pi, 3) = allDat{sub}.ISPC.subMiss(ii,jj, ti, fi, 1); %get PLV
+%                 allPPCPLV2(pi, 1) = nsubHit;
+%                 allPPCPLV2(pi, 2) = allDat{sub}.ISPC.subHit(ii, jj, ti, fi, 2); %get PPC
+%                 allPPCPLV2(pi, 3) = allDat{sub}.ISPC.subHit(ii, jj, ti, fi, 1); %get PLV
+%                 pi = pi + 1; 
+%                 end
+%             end
+%         end
+% 
+%     end
+% end
+% 
+% 
+% tCounts = unique(allPPCPLV(:,1));
+% tCounts2 = unique(allPPCPLV2(:,1)); 
+% sumPPCPLV = zeros(length(tCounts), 3); 
+% sumPPCPLV2 = zeros(length(tCounts2), 3); 
+% for ii = 1:length(tCounts)
+%     tmp = allPPCPLV(allPPCPLV(:,1)==tCounts(ii), :); 
+%     sumPPCPLV(ii,1) = tCounts(ii); 
+%     sumPPCPLV(ii,2) = mean(tmp(:,2)); 
+%     sumPPCPLV(ii,3) = mean(tmp(:,3)); 
+% 
+% end
+% 
+% for ii = 1:length(tCounts2)
+%     tmp = allPPCPLV2(allPPCPLV2(:,1)==tCounts2(ii), :); 
+%     sumPPCPLV2(ii,1) = tCounts2(ii); 
+%     sumPPCPLV2(ii,2) = mean(tmp(:,2)); 
+%     sumPPCPLV2(ii,3) = mean(tmp(:,3)); 
+% 
+% end
+% 
+% figure
+% hold off
+% scatter(sumPPCPLV(:,1), sumPPCPLV(:,2), 'filled')
+% hold on 
+% scatter(sumPPCPLV(:,1), sumPPCPLV(:,3), 'filled')
+% ylabel("connectivity")
+% xlabel("number of trials")
+% title('PLV vs. PPC as a function of trial count misses')
+% 
+% figure
+% hold off
+% scatter(sumPPCPLV2(:,1), sumPPCPLV2(:,2), 'filled')
+% hold on 
+% scatter(sumPPCPLV2(:,1), sumPPCPLV2(:,3), 'filled')
+% ylabel("connectivity")
+% xlabel("number of trials")
+% title('PLV vs. PPC as a function of trial count hits')
+% 
+% 
+% figure 
+% hold off
+% scatter(allPPCPLV2(allPPCPLV2(:,1)>40, 2), allPPCPLV2(allPPCPLV2(:,1)>40, 3).^2, 'filled')
+% hold on 
+% 
+% scatter(allPPCPLV2(allPPCPLV2(:,1)<30, 2), allPPCPLV2(allPPCPLV2(:,1)<30, 3).^2, 'filled')
 
 
 %% get age, sex, memory performance, subject list
@@ -184,109 +184,109 @@ title('memory as a function of age')
 %% define regions of interest
 
 
-allBrod = getAllBrodLabs(allDat);
-
-targBrod = allBrod; %([allBrod.subN]>5); 
-targBrod(cellfun(@(x) strcmp('ERROR', x), {targBrod.lab})) = []; 
-
-aggTargs = struct; 
-aggTargs(1).lab = {'BA8', 'BA9'};
-aggTargs(1).ROI = 'dlPFC';
-aggTargs(2).lab = {'BA44','BA45', 'BA46'}; 
-aggTargs(2).ROI = 'mlPFC'; 
-aggTargs(3).lab = {'BA47','BA10', 'BA11'}; 
-aggTargs(3).ROI = 'piPFC'; 
-aggTargs(4).lab = {'BA24', 'BA32', 'BA33', 'BA25'}; 
-aggTargs(4).ROI = 'ACC'; 
-aggTargs(5).lab = {'BA21', 'BA22', 'Fusiform (37)'}; 
-aggTargs(5).ROI = 'lTemp'; 
-aggTargs(6).lab = {'BA7', 'BA40', 'BA39'}; 
-aggTargs(6).ROI = 'Par'; 
-aggTargs(7).lab = {'BA19', 'VisualAssoc (18)', 'PrimVisual (17)'};
-aggTargs(7).ROI = 'Vis'; 
-aggTargs(8).lab = {'BA20'}; 
-aggTargs(8).ROI = 'iTemp'; 
-aggTargs(9).lab = {'BA6', 'PrimMotor (4)'}; 
-aggTargs(9).ROI = 'motor'; 
-aggTargs(10).lab = {'Parahip (36)', 'Hippocampus (54)'};
-aggTargs(10).ROI = 'MTL'; 
-aggTargs(11).lab = {'BA23', 'BA31'};
-aggTargs(11).ROI = 'PCC'; 
-
-for reg = 1:11
-    aggTargs(reg).count = 0; 
-    aggTargs(reg).subIDs = cell(1,1); 
-    aggTargs(reg).countR = 0; 
-    aggTargs(reg).subIDsR = cell(1,1); 
-
-end
-reactCount = zeros(length(chanFiles), 11); 
-counter = zeros(length(chanFiles), 11); 
-subIDs = cell(length(chanFiles),11); 
-subIDsreact = subIDs; 
-parfor ii = 1:length(chanFiles)
-    ii
-    chanDat = load([chanFiles(ii).folder '/' chanFiles(ii).name]).chanDat; 
-    if isfield(chanDat, 'HFB') && isfield(chanDat, 'leadLag4') && isfield(chanDat, 'ISPC')%check for complete processing
-    T = sum(chanDat.retInfo(:,1)==1 | chanDat.retInfo(:,1)==2); 
-    Hr = sum(chanDat.retInfo(:,1)==1) / T; 
-    T = sum(chanDat.retInfo(:,1)==3 | chanDat.retInfo(:,1)==4); 
-    F = sum(chanDat.retInfo(:,1)==4);
-    if F == 0
-        acc =  Hr - F/T; 
-        F = 1; 
-    else
-        acc =  Hr - F/T; 
-    end
-    Fr = F / T; 
-   
-    d = norminv(Hr) - norminv(Fr); 
-
-    if acc>0 && chanDat.age > 13 %memory
-    if ~strcmp(chanDat.subID, "SLCH010") && ~strcmp(chanDat.subID, "OH30") %subjects not ready for full integration yet
-        %find which ROI (if any) it's in
-        for reg = 1:11
-            for b = 1:length(aggTargs(reg).lab)
-                
-                if strcmp(chanDat.brodmann, "ERROR")
-                    zachLabs = readtable('R:\MSS\Johnson_Lab\dtf8829\GitHub\HpcAccConnectivityProject/brodmann_by_subj.csv');
-                    zachLabs = zachLabs(cell2mat(cellfun(@(x) strcmp(x, chanDat.subID), {zachLabs.subj}, 'uniformoutput', false )), :);
-                    chanDat.brodmann = zachLabs.brodmann{chanDat.chi};
-                    parsave([chanFiles(ii).folder '/' chanFiles(ii).name], chanDat)
-                end
-           
-                reactive = reactiveTest_100(chanDat.HFB);
-                if strcmp(aggTargs(reg).lab{b}, chanDat.brodmann)
-                    counter(ii, reg) = 1; 
-                    subIDs{ii, reg} = chanDat.subID; 
-                    if sum(reactive==1)>0
-                        reactCount(ii,reg) = 1; 
-                        subIDsreact{ii, reg} = chanDat.subID; 
-                    end
-                end
-            end
-
-        end
-
-
-    end
-    end
-    end
-    
-end
-
-for reg = 1:11
-    aggTargs(reg).count = sum(counter(:,reg));
-    aggTargs(reg).countR = sum(reactCount(:,reg)); 
-    curSubs = subIDs(:,reg);
-    curSubsR = subIDsreact(:,reg); 
-    curSubs(cellfun(@(x) isempty(x), curSubs)) = [];
-    curSubsR(cellfun(@(x) isempty(x), curSubsR)) = []; 
-    aggTargs(reg).subIDs = length(unique(curSubs)); 
-    aggTargs(reg).subIDsR = length(unique(curSubsR)); 
-
-end
-
+allBrod = getAllLabs(allDat);
+% 
+% targBrod = allBrod; %([allBrod.subN]>5); 
+% targBrod(cellfun(@(x) strcmp('ERROR', x), {targBrod.lab})) = []; 
+% 
+% aggTargs = struct; 
+% aggTargs(1).lab = {'BA8', 'BA9'};
+% aggTargs(1).ROI = 'dlPFC';
+% aggTargs(2).lab = {'BA44','BA45', 'BA46'}; 
+% aggTargs(2).ROI = 'mlPFC'; 
+% aggTargs(3).lab = {'BA47','BA10', 'BA11'}; 
+% aggTargs(3).ROI = 'piPFC'; 
+% aggTargs(4).lab = {'BA24', 'BA32', 'BA33', 'BA25'}; 
+% aggTargs(4).ROI = 'ACC'; 
+% aggTargs(5).lab = {'BA21', 'BA22', 'Fusiform (37)'}; 
+% aggTargs(5).ROI = 'lTemp'; 
+% aggTargs(6).lab = {'BA7', 'BA40', 'BA39'}; 
+% aggTargs(6).ROI = 'Par'; 
+% aggTargs(7).lab = {'BA19', 'VisualAssoc (18)', 'PrimVisual (17)'};
+% aggTargs(7).ROI = 'Vis'; 
+% aggTargs(8).lab = {'BA20'}; 
+% aggTargs(8).ROI = 'iTemp'; 
+% aggTargs(9).lab = {'BA6', 'PrimMotor (4)'}; 
+% aggTargs(9).ROI = 'motor'; 
+% aggTargs(10).lab = {'Parahip (36)', 'Hippocampus (54)'};
+% aggTargs(10).ROI = 'MTL'; 
+% aggTargs(11).lab = {'BA23', 'BA31'};
+% aggTargs(11).ROI = 'PCC'; 
+% 
+% for reg = 1:11
+%     aggTargs(reg).count = 0; 
+%     aggTargs(reg).subIDs = cell(1,1); 
+%     aggTargs(reg).countR = 0; 
+%     aggTargs(reg).subIDsR = cell(1,1); 
+% 
+% end
+% reactCount = zeros(length(chanFiles), 11); 
+% counter = zeros(length(chanFiles), 11); 
+% subIDs = cell(length(chanFiles),11); 
+% subIDsreact = subIDs; 
+% parfor ii = 1:length(chanFiles)
+%     ii
+%     chanDat = load([chanFiles(ii).folder '/' chanFiles(ii).name]).chanDat; 
+%     if isfield(chanDat, 'HFB') && isfield(chanDat, 'leadLag4') && isfield(chanDat, 'ISPC')%check for complete processing
+%     T = sum(chanDat.retInfo(:,1)==1 | chanDat.retInfo(:,1)==2); 
+%     Hr = sum(chanDat.retInfo(:,1)==1) / T; 
+%     T = sum(chanDat.retInfo(:,1)==3 | chanDat.retInfo(:,1)==4); 
+%     F = sum(chanDat.retInfo(:,1)==4);
+%     if F == 0
+%         acc =  Hr - F/T; 
+%         F = 1; 
+%     else
+%         acc =  Hr - F/T; 
+%     end
+%     Fr = F / T; 
+%    
+%     d = norminv(Hr) - norminv(Fr); 
+% 
+%     if acc>0 && chanDat.age > 13 %memory
+%     if ~strcmp(chanDat.subID, "SLCH010") && ~strcmp(chanDat.subID, "OH30") %subjects not ready for full integration yet
+%         %find which ROI (if any) it's in
+%         for reg = 1:11
+%             for b = 1:length(aggTargs(reg).lab)
+%                 
+%                 if strcmp(chanDat.brodmann, "ERROR")
+%                     zachLabs = readtable('R:\MSS\Johnson_Lab\dtf8829\GitHub\HpcAccConnectivityProject/brodmann_by_subj.csv');
+%                     zachLabs = zachLabs(cell2mat(cellfun(@(x) strcmp(x, chanDat.subID), {zachLabs.subj}, 'uniformoutput', false )), :);
+%                     chanDat.brodmann = zachLabs.brodmann{chanDat.chi};
+%                     parsave([chanFiles(ii).folder '/' chanFiles(ii).name], chanDat)
+%                 end
+%            
+%                 reactive = reactiveTest_100(chanDat.HFB);
+%                 if strcmp(aggTargs(reg).lab{b}, chanDat.brodmann)
+%                     counter(ii, reg) = 1; 
+%                     subIDs{ii, reg} = chanDat.subID; 
+%                     if sum(reactive==1)>0
+%                         reactCount(ii,reg) = 1; 
+%                         subIDsreact{ii, reg} = chanDat.subID; 
+%                     end
+%                 end
+%             end
+% 
+%         end
+% 
+% 
+%     end
+%     end
+%     end
+%     
+% end
+% 
+% for reg = 1:11
+%     aggTargs(reg).count = sum(counter(:,reg));
+%     aggTargs(reg).countR = sum(reactCount(:,reg)); 
+%     curSubs = subIDs(:,reg);
+%     curSubsR = subIDsreact(:,reg); 
+%     curSubs(cellfun(@(x) isempty(x), curSubs)) = [];
+%     curSubsR(cellfun(@(x) isempty(x), curSubsR)) = []; 
+%     aggTargs(reg).subIDs = length(unique(curSubs)); 
+%     aggTargs(reg).subIDsR = length(unique(curSubsR)); 
+% 
+% end
+% 
 
 
 %% extract stats on leadLag HFB analysis for sending to cluster
@@ -296,8 +296,11 @@ end
 
 %% make time mask to match other conditions to the time of the leadlag HFB data
 
-tim = allDat{3}.leadLag.encTim;
-timHFB = allDat{3}.HFB.encMulTim; 
+LL = load('R:\MSS\Johnson_Lab\dtf8829\SUMDAT\UCD_DA8_leadLag.mat').metaDat; 
+HFB = load('R:\MSS\Johnson_Lab\dtf8829\SUMDAT\UCD_DA8_HFB.mat').metaDat; 
+tim = LL.leadLag.encTim;
+encTim = tim; 
+timHFB = HFB.HFB.encMulTim; 
 
 for ii = 1:length(timHFB)
     if ~ismember(timHFB(ii), tim)
@@ -307,8 +310,9 @@ end
 timMask = zeros(size(timHFB)); 
 timMask(timHFB<99999) = 1; 
 
-tim = allDat{3}.leadLag.retTim;
-timHFB = allDat{3}.HFB.onMulTim; 
+tim = LL.leadLag.retTim;
+retTim = tim; 
+timHFB = HFB.HFB.onMulTim; 
 
 for ii = 1:length(timHFB)
     if ~ismember(timHFB(ii), tim)
@@ -320,8 +324,8 @@ timMask2(timHFB<99999) = 1;
 
 %% 
 
-[sigHFBSub, sigHFBRet] = getSigHFB(aggTargs, allDat, timMask, timMask2); 
-[sigTFSub, sigTFRet] = getSigTF(aggTargs, allDat, timMask, timMask2);
+[sigHFBSub, sigHFBRet] = getSigHFB(allBrod, allDat, timMask, timMask2, encTim, retTim); 
+[sigTFSub, sigTFRet] = getSigTF(allBrod, allDat, timMask, timMask2, encTim, retTim);
 
 % aggTargs = getSigISPC2(aggTargs, allDat, timMask); 
 

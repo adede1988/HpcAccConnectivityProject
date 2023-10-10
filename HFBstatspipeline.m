@@ -34,7 +34,7 @@ function [] = HFBstatspipeline(statFiles, idx, figPath)
             tVals(ti) = lme.Coefficients(2,4); 
     
         end 
-    
+        disp('calculated encoding t-vals ')
        
         perms = 1000; 
         tic
@@ -56,6 +56,7 @@ function [] = HFBstatspipeline(statFiles, idx, figPath)
         toc
         
         [h, p, clusterinfo] = cluster_test(tVals, nullTs); 
+        disp('calculated encoding permutation ')
 
 
        HFBdat.tVals_sub = tVals; 
@@ -86,6 +87,7 @@ function [] = HFBstatspipeline(statFiles, idx, figPath)
         end 
     
        
+        disp('calculated retrieval t-vals ')
         perms = 1000; 
         tic
         nullTs = squeeze(zeros([size(tVals), perms])); 
@@ -107,6 +109,7 @@ function [] = HFBstatspipeline(statFiles, idx, figPath)
         
         [h, p, clusterinfo] = cluster_test(tVals, nullTs); 
 
+        disp('calculated retrieval permutation')
 
        HFBdat.tVals_ret = tVals; 
        HFBdat.hitVals_ret = mean(hitVals); 

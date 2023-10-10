@@ -1,7 +1,7 @@
-function [errorChans, metaDat] = getAllChanDat(chanFiles, sub)
+function [errorChans, outDat] = getAllChanDat(chanFiles, sub, targVariable)
 
 metaDat = []; 
-
+outDat = []; 
 Ei = 1; 
 
 errorChans = []; 
@@ -10,6 +10,7 @@ subIDs = cellfun(@(x) split(x, '_'), {chanFiles.name}, 'UniformOutput',false);
 subIDs_all = cellfun(@(x) x{2}, subIDs, 'UniformOutput',false); 
 subIDs_uni = unique(subIDs_all); 
 clear subIDs
+
 
 % for sub = 1:length(subIDs_uni)
 %     sub
@@ -37,10 +38,10 @@ clear subIDs
 
     if acc>0 && chanDat.age > 13 %memory and age filters
 
-%     if isfile(['R:\MSS\Johnson_Lab\dtf8829\SUMDAT\' chanDat.site '_' chanDat.subID '_all' '.mat'])
-%         metaDat = load(['R:\MSS\Johnson_Lab\dtf8829\SUMDAT\' chanDat.site '_' chanDat.subID '_all' '.mat']).metaDat;
-% %         metaDat.leadLag = rmfield(metaDat.leadLag, {'subMem', 'retMem'});
-%     else
+    if isfile(['R:\MSS\Johnson_Lab\dtf8829\SUMDAT\' chanDat.site '_' chanDat.subID '_' targVariable '.mat'])
+        outDat = load(['R:\MSS\Johnson_Lab\dtf8829\SUMDAT\' chanDat.site '_' chanDat.subID '_' targVariable '.mat']).metaDat;
+%         metaDat.leadLag = rmfield(metaDat.leadLag, {'subMem', 'retMem'});
+    else
 %     curIdx = []; 
     flag = true;
     for chan = 1:length(curSub)
@@ -289,18 +290,42 @@ end
         metaDat.reactiveChans = curSubReact; 
         metaDat.elecpos = allDat(1).elecpos(curSubReact==1,:); 
         metaDat.meetLabs = allDat(1).labels(curSubReact==1,:);
-        metaDat.brodmann = brod_new; 
+%         metaDat.brodmann = brod_new; 
         metaDat.chi = [allDat.chi];
         clear allDat
 
         metaDat.HFB = HFB; 
+        save(['R:\MSS\Johnson_Lab\dtf8829\SUMDAT\' metaDat.site '_' metaDat.subID '_HFB' '.mat'], 'metaDat', '-v7.3')
+        if strcmp(targVariable, 'HFB')
+            outDat = metaDat; 
+        end
+        metaDat = rmfield(metaDat, 'HFB');
+
         metaDat.TF = TF; 
+        save(['R:\MSS\Johnson_Lab\dtf8829\SUMDAT\' metaDat.site '_' metaDat.subID '_TF' '.mat'], 'metaDat', '-v7.3')
+        if strcmp(targVariable, 'TF')
+            outDat = metaDat; 
+        end
+        metaDat = rmfield(metaDat, 'TF');
+
         metaDat.leadLag = leadLag; 
+        save(['R:\MSS\Johnson_Lab\dtf8829\SUMDAT\' metaDat.site '_' metaDat.subID '_leadLag' '.mat'], 'metaDat', '-v7.3')
+        if strcmp(targVariable, 'leadLag')
+            outDat = metaDat; 
+        end
+        metaDat = rmfield(metaDat, 'leadLag');
+        
         metaDat.ISPC = ISPC; 
+        save(['R:\MSS\Johnson_Lab\dtf8829\SUMDAT\' metaDat.site '_' metaDat.subID '_ISPC' '.mat'], 'metaDat', '-v7.3')
+        if strcmp(targVariable, 'ISPC')
+            outDat = metaDat; 
+        end
+        metaDat = rmfield(metaDat, 'ISPC');
+        
 
         %save the outputs one at a time: 
    
-        save(['R:\MSS\Johnson_Lab\dtf8829\SUMDAT\' metaDat.site '_' metaDat.subID '_all' '.mat'], 'metaDat', '-v7.3')
+        
 %         clear HFBout
 % 
 %         TFout = metaDat; 
@@ -330,11 +355,11 @@ end
             allDat(subIDX(chan)).goodSub = 0; 
         end
     end
-%     end
+    end
     end %memory and age filter end
     catch
         disp(['sub ' num2str(sub) ' ' curSub(chan).name 'fail'])
-        metaDat = []; 
+        outDat = []; 
         Ei = EiSave; 
 
     end

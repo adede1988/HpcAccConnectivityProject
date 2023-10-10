@@ -1,4 +1,4 @@
-function [sigHFBSub, sigHFBRet] = getSigHFB(aggTargs, allDat, timMask, timMask2)
+function [sigHFBSub, sigHFBRet] = getSigHFB(aggTargs, allDat, timMask, timMask2, encTim, retTim)
 
 %reg  X tVals / HFB diff / p values  X time
 sigHFBSub = zeros([length(aggTargs),  3,  sum(timMask==1)] );
@@ -45,7 +45,7 @@ for reg1 = 1:length(aggTargs)
             sh = allDat{sub}.HFB.subHit(:,timMask==1,:); 
             rm = allDat{sub}.HFB.hit_on(:,timMask2==1,:); 
             rh = allDat{sub}.HFB.miss_on(:,timMask2==1,:); 
-            b = allDat{sub}.brodmann; 
+            b = allDat{sub}.meetLabs(:,3); 
             ID = allDat{sub}.subID;
             reg1i = find(cellfun(@(x) sum(strcmp(aggTargs(reg1).lab, x)), b));
             if ~isempty(reg1i)
@@ -104,8 +104,8 @@ for reg1 = 1:length(aggTargs)
     HFBdat.realID = realID; 
     HFBdat.n_sub = length(unique(regSubs));
     HFBdat.n_pair = length(regSubs); 
-    HFBdat.encTim = allDat{3}.leadLag.encTim;  
-    HFBdat.retTim = allDat{3}.leadLag.retTim;  
+    HFBdat.encTim = encTim;  
+    HFBdat.retTim = retTim;  
     HFBdat.submissRT = submissRT; 
     HFBdat.subhitRT = subhitRT; 
     HFBdat.retmissRT = retmissRT; 
@@ -113,7 +113,7 @@ for reg1 = 1:length(aggTargs)
 
 
 
-    save(['R:\MSS\Johnson_Lab\dtf8829\QuestConnect\HFB_KEY_STATS\' aggTargs(reg1).ROI  '.mat'], 'HFBdat', '-v7.3')
+    save(['R:\MSS\Johnson_Lab\dtf8829\QuestConnect\HFB_KEY_STATS\' aggTargs(reg1).lab  '.mat'], 'HFBdat', '-v7.3')
 
 
 
