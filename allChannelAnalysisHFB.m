@@ -27,13 +27,14 @@ chanFiles = chanFiles(test);
 
 %% loop over channels and split saved files by output variables
 
-
+targVariable = 'TF';
+noneFlag = true; 
 errorChans = cell(37,1); 
 allDat = cell(37,1); 
 parfor sub = 1:37
     sub
     if isempty(allDat{sub})
-        [errorChans{sub}, allDat{sub}] = getAllChanDat(chanFiles, sub, 'ISPC'); %includes age and memory filter
+        [errorChans{sub}, allDat{sub}] = getAllChanDat(chanFiles, sub, targVariable, noneFlag); %includes age and memory filter
     end
 end
 
@@ -291,7 +292,12 @@ allBrod = getAllLabs(allDat);
 
 %% extract stats on leadLag HFB analysis for sending to cluster
 
- getSigConnection(aggTargs, allDat);
+%data files are too big, so I can't work with them all loaded in at the
+%same time anymore
+
+
+%  getSigConnection(allBrod, allDat); %encoding data
+%  getSigConnection2(allBrod, allDat): %retrieval data
 
 
 %% make time mask to match other conditions to the time of the leadlag HFB data

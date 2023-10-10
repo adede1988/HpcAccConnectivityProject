@@ -1,4 +1,4 @@
-function [errorChans, outDat] = getAllChanDat(chanFiles, sub, targVariable)
+function [errorChans, outDat] = getAllChanDat(chanFiles, sub, targVariable, noneFlag)
 
 metaDat = []; 
 outDat = []; 
@@ -40,7 +40,15 @@ clear subIDs
 
     if isfile(['R:\MSS\Johnson_Lab\dtf8829\SUMDAT\' chanDat.site '_' chanDat.subID '_' targVariable '.mat'])
         outDat = load(['R:\MSS\Johnson_Lab\dtf8829\SUMDAT\' chanDat.site '_' chanDat.subID '_' targVariable '.mat']).metaDat;
-%         metaDat.leadLag = rmfield(metaDat.leadLag, {'subMem', 'retMem'});
+
+        if noneFlag
+            posVars = {'TF', 'leadLag', 'HFB', 'ISPC'};
+            for vari = 1:4
+                if isfield(outDat, posVars{vari})
+                    outDat = rmfield(outDat, posVars{vari}); 
+                end
+            end
+        end
     else
 %     curIdx = []; 
     flag = true;
@@ -322,6 +330,11 @@ end
         end
         metaDat = rmfield(metaDat, 'ISPC');
         
+
+        if noneFlag
+            outDat = metaDat;
+        end
+
 
         %save the outputs one at a time: 
    
