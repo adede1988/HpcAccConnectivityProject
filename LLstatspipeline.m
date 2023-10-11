@@ -35,7 +35,7 @@ function [] = LLstatspipeline(statFiles, idx, figPath)
         LLdat.p_sub = p; 
 
         tim = LLdat.encTim; 
-        roiLabs = {aggTargs(reg2).ROI, aggTargs(reg1).ROI};
+        roiLabs = {aggTargs{reg2}, aggTargs{reg1}};
         
         makeLLplot(tim, hitVals, missVals, tVals,...
             clusterinfo, regSubs, figPath , roiLabs, 'sub')

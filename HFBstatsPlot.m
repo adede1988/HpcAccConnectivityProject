@@ -34,7 +34,7 @@ for ii = 1:length(statFiles)
     allSigEnc(HFBdat.p_sub<.05 & HFBdat.tVals_sub<0, ii) = -1;
     allSigRet(HFBdat.p_ret<.05 & HFBdat.tVals_ret<0, ii) = -1; 
     allSigRet(HFBdat.p_ret<.05 & HFBdat.tVals_ret>0, ii) = 1; 
-    regNames{ii} = HFBdat.aggTargs(HFBdat.reg1).ROI;
+    regNames{ii} = HFBdat.aggTargs(HFBdat.reg1).lab;
     
     %get all mean early late
     wins = [0,1000,2000]; 
@@ -77,7 +77,7 @@ for ii = 1:length(statFiles)
 
     plot(HFBdat.encTim, HFBdat.p_sub<.05, 'color', 'k', 'linewidth', 2)
     ylabel("HFB amplitude (z-score)")
-    title(['HFB ' HFBdat.aggTargs(HFBdat.reg1).ROI ' encoding'])
+    title(['HFB ' HFBdat.aggTargs(HFBdat.reg1).lab ' encoding'])
 
 
     subplot(3, 4, [3:4])
@@ -109,7 +109,7 @@ for ii = 1:length(statFiles)
 
     plot(HFBdat.retTim, HFBdat.p_ret<.05, 'color', 'k', 'linewidth', 2)
 
-    title(['HFB ' HFBdat.aggTargs(HFBdat.reg1).ROI ' retrieval'])
+    title(['HFB ' HFBdat.aggTargs(HFBdat.reg1).lab ' retrieval'])
 
 
     subplot(3, 4, [5:6])
@@ -403,7 +403,7 @@ for ii = 1:length(statFiles)
 
 
 
-    export_fig(join(['G:\My Drive\Johnson\MTL_PFC_networkFigs\FinalizedHFB\' 'HFB_' HFBdat.aggTargs(HFBdat.reg1).ROI '.jpg'],''), '-r300')
+    export_fig(join(['G:\My Drive\Johnson\MTL_PFC_networkFigs\FinalizedHFB\' 'HFB_' HFBdat.aggTargs(HFBdat.reg1).lab '.jpg'],''), '-r300')
 
 
 
@@ -505,7 +505,7 @@ for ii = 1:length(statFiles)
     text(0, HFBdat.n_pair*.1, ['t-val: ' num2str(round(tval(1),1)) ])
     text(0, HFBdat.n_pair*.15, [' p-val: '  num2str(round(tval(2),2))])
     ylabel('time (ms)')
-    title(['encoding latency ' HFBdat.aggTargs(HFBdat.reg1).ROI ])
+    title(['encoding latency ' HFBdat.aggTargs(HFBdat.reg1).lab ])
 
 
     subplot 122
@@ -525,10 +525,10 @@ for ii = 1:length(statFiles)
     tval(2) = lme.Coefficients(2,6); 
     text(0, HFBdat.n_pair*.1, ['t-val: ' num2str(round(tval(1),1)) ])
     text(0, HFBdat.n_pair*.15, [' p-val: '  num2str(round(tval(2),2))])
-    title(['retrieval latency ' HFBdat.aggTargs(HFBdat.reg1).ROI ])
+    title(['retrieval latency ' HFBdat.aggTargs(HFBdat.reg1).lab ])
 
     
-    export_fig(join(['G:\My Drive\Johnson\MTL_PFC_networkFigs\FinalizedHFB\' 'HFB_latency_' HFBdat.aggTargs(HFBdat.reg1).ROI '.jpg'],''), '-r300')
+    export_fig(join(['G:\My Drive\Johnson\MTL_PFC_networkFigs\FinalizedHFB\' 'HFB_latency_' HFBdat.aggTargs(HFBdat.reg1).lab '.jpg'],''), '-r300')
 
 
     cond = { 'subHit', 'subMiss', 'hit_on', 'miss_on'}; 

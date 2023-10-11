@@ -44,17 +44,18 @@ ci = 1;
  
 
 for ii = 1:length(statFiles)
+    try
     ii
     PPC = load([statFiles(ii).folder '/' statFiles(ii).name]).connectionDat; 
     
     roiLabs = {PPC.reg1, PPC.reg2};
     roi_idx = [PPC.reg1i, PPC.reg2i]; 
   
-    f = figure('visible', false);
+    f = figure('visible', true);
     f.Position = [0 0 600 1000];
 
-    hitVals = squeeze(PPC.lowBand(PPC.hmSort,:,2) );
-    missVals = squeeze(PPC.lowBand(~PPC.hmSort,:,2) );
+    hitVals = squeeze(PPC.lowBand(PPC.hmSort,:) );
+    missVals = squeeze(PPC.lowBand(~PPC.hmSort,:) );
     tim = PPC.tim; 
 
     nChan = size(hitVals,1); 
@@ -123,8 +124,8 @@ for ii = 1:length(statFiles)
 
 
 
-    hitVals = squeeze(PPC.highBand(PPC.hmSort,:,2) );
-    missVals = squeeze(PPC.highBand(~PPC.hmSort,:,2) );
+    hitVals = squeeze(PPC.highBand(PPC.hmSort,:) );
+    missVals = squeeze(PPC.highBand(~PPC.hmSort,:) );
     tim = PPC.tim; 
 
     if roi_idx(1) >= roi_idx(2)
@@ -177,8 +178,8 @@ for ii = 1:length(statFiles)
 
     %% retrieval 
     PPC = load([statFiles2(ii).folder '/' statFiles2(ii).name]).connectionDat; 
-    hitVals = squeeze(PPC.lowBand2(PPC.hmSort,:,2) );
-    missVals = squeeze(PPC.lowBand2(~PPC.hmSort,:,2) );
+    hitVals = squeeze(PPC.lowBand2(PPC.hmSort,:) );
+    missVals = squeeze(PPC.lowBand2(~PPC.hmSort,:) );
     tim = PPC.tim2; 
 
     if roi_idx(1) >= roi_idx(2)
@@ -232,8 +233,8 @@ for ii = 1:length(statFiles)
 
 
 
-    hitVals = squeeze(PPC.highBand2(PPC.hmSort,:,2) );
-    missVals = squeeze(PPC.highBand2(~PPC.hmSort,:,2) );
+    hitVals = squeeze(PPC.highBand2(PPC.hmSort,:) );
+    missVals = squeeze(PPC.highBand2(~PPC.hmSort,:) );
 %   
     if roi_idx(1) >= roi_idx(2)
     rawAllConnections2(2,1,ci:ci+nChan-1, :) = hitVals; 
@@ -282,17 +283,19 @@ for ii = 1:length(statFiles)
 
 
     export_fig(['G:\My Drive\Johnson\MTL_PFC_networkFigs\PPC_finalizedFigs\' roiLabs{1} '_' roiLabs{2} '.jpg'], '-r300')
+    catch
+        disp(['missing data for ' num2str(ii)])
 
+    end
 end
 
 
 
 
-
 load("R:\MSS\Johnson_Lab\dtf8829\QuestConnect\HFB_KEY_STATS\ACC.mat")
-ROInames = {HFBdat.aggTargs.ROI};
+ROInames = {HFBdat.aggTargs.lab};
 
-clVals = [.005, .02];
+clVals = [.01, .05];
 
 figure('position', [0,0,1000,1000])
 subplot 341
