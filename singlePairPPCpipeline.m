@@ -43,6 +43,7 @@ clear chanDat2 HFB2 RT tim
 
 chanDat = load([chanFiles.folder '/' chanFiles.name]).chanDat; 
 
+
 %% get time info set
 chanDat.enctim = [-1000:3500];
 chanDat.enctimRT = [-2000:500];
@@ -86,6 +87,8 @@ pairDat.hits = chanDat.hits;
 
 disp(['data loaded: ' chanDat.subID ' ' num2str(chanDat.chi) ' ' num2str(pairDat.chi2)])
 
+fn = [chanDat.subID '_' num2str(pairDat.chi1) '_' num2str(pairDat.chi2) '_' pairDat.chan1Reg '_' pairDat.chan2Reg '.mat'];
+
 
  
 
@@ -104,11 +107,13 @@ if sum(chanDat.use & chanDat.misses)>1
 pairDat.subMissPPC = getChanPPC_time(chanDat.enc, enc2, ...
     frex, numfrex, stds, chanDat.fsample, pairDat.encdi, chanDat.use & chanDat.misses);
 end
+save([savFolder '/' fn], 'pairDat'); 
 
 if sum(chanDat.use & chanDat.hits)>1
 pairDat.subHitPPC= getChanPPC_time(chanDat.enc, enc2, ...
     frex, numfrex, stds, chanDat.fsample, pairDat.encdi, chanDat.use & chanDat.hits);
 end
+save([savFolder '/' fn], 'pairDat'); 
 
 % TF
 pow = log10(abs(getChanTrialTF(chanDat.enc, frex, numfrex, stds, chanDat.fsample)).^2); %get power time series for all trials/frequencies
@@ -136,11 +141,13 @@ if sum(chanDat.retInfo(:,1)==1) > 1
 pairDat.hit_onPPC = getChanPPC_time(chanDat.retOn, ret2, ...
     frex, numfrex, stds, chanDat.fsample, pairDat.ondi, chanDat.retInfo(:,1)==1);
 end
+save([savFolder '/' fn], 'pairDat'); 
 
 if sum(chanDat.retInfo(:,1)==2) > 1
 pairDat.miss_onPPC = getChanPPC_time(chanDat.retOn, ret2, ...
     frex, numfrex, stds, chanDat.fsample, pairDat.ondi, chanDat.retInfo(:,1)==2);
 end
+save([savFolder '/' fn], 'pairDat'); 
 
 % TF
 pow = log10(abs(getChanTrialTF(chanDat.retOn, frex, numfrex, stds, chanDat.fsample)).^2); %get power time series for all trials/frequencies
@@ -167,7 +174,6 @@ pairDat.miss_onTF2 = pow(pairDat.ondi,chanDat.retInfo(:,1)==2 , :);
 
 
 
-fn = [chanDat.subID '_' num2str(pairDat.chi1) '_' num2str(pairDat.chi2) '_' pairDat.chan1Reg '_' pairDat.chan2Reg '.mat'];
 
 %     chanDat = rmfield(chanDat, 'sizeReduce'); 
 disp('attempting saving')
