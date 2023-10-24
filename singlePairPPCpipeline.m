@@ -1,6 +1,8 @@
 
 function [] = singlePairPPCpipeline(chanFiles, savFolder)
 
+tic
+
 %% set frequency parameters
 frex = linspace(2,10,10);
 numfrex = length(frex); 
@@ -101,18 +103,21 @@ disp('working on PPC_time')
 %NOTE: all trial types must have at least two trials! 
 
 
-
+pairDat.toc1 = toc; 
 %ENCODING DATA: ***********************************************************
 if sum(chanDat.use & chanDat.misses)>1 
 pairDat.subMissPPC = getChanPPC_time(chanDat.enc, enc2, ...
     frex, numfrex, stds, chanDat.fsample, pairDat.encdi, chanDat.use & chanDat.misses);
 end
+pairDat.toc2 = toc; 
+
 save([savFolder '/' fn], 'pairDat'); 
 
 if sum(chanDat.use & chanDat.hits)>1
 pairDat.subHitPPC= getChanPPC_time(chanDat.enc, enc2, ...
     frex, numfrex, stds, chanDat.fsample, pairDat.encdi, chanDat.use & chanDat.hits);
 end
+pairDat.toc2 = toc; 
 save([savFolder '/' fn], 'pairDat'); 
 
 % TF
@@ -134,6 +139,7 @@ pairDat.subMissTF2 = pow(pairDat.encdi,chanDat.use & chanDat.misses, :);
 %get mean hits: 
 pairDat.subHitTF2 = pow(pairDat.encdi,chanDat.use & chanDat.hits, :);
 
+pairDat.toc3 = toc; 
 
 
 %RETRIEVAL STIM ONSET: ****************************************************
@@ -141,12 +147,14 @@ if sum(chanDat.retInfo(:,1)==1) > 1
 pairDat.hit_onPPC = getChanPPC_time(chanDat.retOn, ret2, ...
     frex, numfrex, stds, chanDat.fsample, pairDat.ondi, chanDat.retInfo(:,1)==1);
 end
+pairDat.toc4 = toc; 
 save([savFolder '/' fn], 'pairDat'); 
 
 if sum(chanDat.retInfo(:,1)==2) > 1
 pairDat.miss_onPPC = getChanPPC_time(chanDat.retOn, ret2, ...
     frex, numfrex, stds, chanDat.fsample, pairDat.ondi, chanDat.retInfo(:,1)==2);
 end
+pairDat.toc5 = toc; 
 save([savFolder '/' fn], 'pairDat'); 
 
 % TF
@@ -171,6 +179,7 @@ pairDat.hit_onTF2 = pow(pairDat.ondi,chanDat.retInfo(:,1)==1, :);
 %get mean miss: 
 pairDat.miss_onTF2 = pow(pairDat.ondi,chanDat.retInfo(:,1)==2 , :);
 
+pairDat.toc6 = toc; 
 
 
 
