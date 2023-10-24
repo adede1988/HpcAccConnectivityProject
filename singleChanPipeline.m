@@ -12,9 +12,9 @@ highstds = linspace(5, 7, highnumfrex);
 %% load the data
 
 try %try loading the processed file
-    chanDat = load([chanFiles(idx).folder '/' chanFiles(idx).name]).chanDat; 
+    chanDat = load([chanFiles(idx).folder '/finished/' chanFiles(idx).name]).chanDat; 
 catch
-    chanDat = load([chanFiles(idx).folder '/CHANRAW/' chanFiles(idx).name]).chanDat; % go raw if it's not working!
+    chanDat = load([chanFiles(idx).folder '/' chanFiles(idx).name]).chanDat; % go raw if it's not working!
 end
 
 disp(['data loaded: ' chanDat.subID ' ' num2str(chanDat.chi)])
@@ -132,6 +132,39 @@ if ~isfield(chanDat, 'reactiveRes')
 else
     disp('HFB already done')
 end
+
+%% get the HFB latencies and save them in order to reference other variables to them
+
+if ~isfield(chanDat, 'HFB_lat')
+    HFB_lat = struct; 
+   
+
+    %encoding
+    HFB_lat.subHit = gausLat(chanDat.HFB.subHit, ...
+        chanDat.HFB.encMulTim, ...
+        chanDat.encInfo(chanDat.use & chanDat.hits, 4));
+
+    HFB_lat.subMiss = gausLat(chanDat.HFB.subMiss, ...
+        chanDat.HFB.encMulTim, ...
+        chanDat.encInfo(chanDat.use & chanDat.misses, 4));
+
+    %retrieval
+    idx = chanDat.retInfo(:,1)==1;
+    HFB_lat.retHit = gausLat(chanDat.HFB.hit_on, ...
+        chanDat.HFB.onMulTim, ...
+        chanDat.retInfo(idx, 3));
+
+    idx = chanDat.retInfo(:,1)==2;
+    HFB_lat.retMiss = gausLat(chanDat.HFB.miss_on, ...
+        chanDat.HFB.onMulTim, ...
+        chanDat.retInfo(idx, 3));
+
+    chanDat.HFB_lat = HFB_lat; 
+
+
+
+end
+
 
 
 %% Lead lag analysis
@@ -515,7 +548,113 @@ end %ugly wrapper to check for non struct leadLag4 indicating non reactive chann
 % hit / miss / CR / FA (retrieval locked to onset data)
 % hit / miss / CR / FA (retrieval locked to response data)
 
-if ~isfield(chanDat, 'TF')
+% if ~isfield(chanDat, 'TF')
+%     disp('working on TF')
+%     %to keep size down, don't put large variables into the chanDat struct!
+%     TFout = struct;
+%     %ENCODING DATA: ***********************************************************
+%     pow = log10(abs(getChanTrialTF(chanDat.enc, frex, numfrex, stds, chanDat.fsample)).^2); %get power time series for all trials/frequencies
+%     pow = arrayfun(@(x) myChanZscore(pow(:,:,x), [find(chanDat.enctim>=-450,1), find(chanDat.enctim>=-50,1)] ), 1:size(pow,3), 'UniformOutput',false ); %z-score
+%     pow = cell2mat(pow); %organize
+%     pow = reshape(pow, size(pow,1), size(pow,2)/100, []); %organize
+%     %get mean misses: 
+%     TFout.subMiss = squeeze(mean(pow(:,chanDat.use & chanDat.misses, :), 2)); 
+%     %get mean hits: 
+%     TFout.subHit = squeeze(mean(pow(:,chanDat.use & chanDat.hits, :), 2));
+%     %clean up
+%     clear pow
+%     disp('encoding done')
+% 
+%     %ENCODING DATA RESPONSE: ***********************************************************
+%     pow = log10(abs(getChanTrialTF(chanDat.encRT, frex, numfrex, stds, chanDat.fsample)).^2); %get power time series for all trials/frequencies
+%     pow = arrayfun(@(x) myChanZscore(pow(:,:,x), [find(chanDat.enctimRT>=-2000,1), find(chanDat.enctimRT>=-1600,1)] ), 1:size(pow,3), 'UniformOutput',false ); %z-score
+%     pow = cell2mat(pow); %organize
+%     pow = reshape(pow, size(pow,1), size(pow,2)/100, []); %organize
+%     %get mean misses: 
+%     TFout.subMissRT = squeeze(mean(pow(:,chanDat.use & chanDat.misses, :), 2)); 
+%     %get mean hits: 
+%     TFout.subHitRT = squeeze(mean(pow(:,chanDat.use & chanDat.hits, :), 2));
+%     %clean up
+%     clear pow
+%     disp('encoding RT done')
+% 
+%     %RETRIEVAL STIM ONSET: ****************************************************
+%     pow = log10(abs(getChanTrialTF(chanDat.retOn, frex, numfrex, stds, chanDat.fsample)).^2); %get power time series for all trials/frequencies
+%     pow = arrayfun(@(x) myChanZscore(pow(:,:,x), [find(chanDat.retOtim>=-450,1), find(chanDat.retOtim>=-50,1)]), 1:size(pow,3), 'UniformOutput',false ); %z-score
+%     pow = cell2mat(pow); %organize
+%     pow = reshape(pow, size(pow,1), size(pow,2)/100, []); %organize
+%     %get mean hit: 
+%     TFout.hit_on = squeeze(mean(pow(:,chanDat.retInfo(:,1)==1, :), 2)); 
+%     %get mean CRs: 
+%     TFout.cr_on = squeeze(mean(pow(:,chanDat.retInfo(:,1)==3, :), 2));
+%     %get mean miss: 
+%     TFout.miss_on = squeeze(mean(pow(:,chanDat.retInfo(:,1)==2 , :), 2));
+%     %get mean FA: 
+%     TFout.fa_on = squeeze(mean(pow(:,chanDat.retInfo(:,1)==4 , :), 2));
+%     %clean up
+%     clear pow
+%     disp('retrieval 1 done')
+%     
+%     %RETRIEVAL RESPONSE LOCKED: ***********************************************
+%     pow = log10(abs(getChanTrialTF(chanDat.retRT, frex, numfrex, stds, chanDat.fsample)).^2); %get power time series for all trials/frequencies
+%     pow = arrayfun(@(x) myChanZscore(pow(:,:,x), [find(chanDat.retRtim>=-2000,1), find(chanDat.retRtim>=-1600,1)] ), 1:size(pow,3), 'UniformOutput',false ); %z-score
+%     pow = cell2mat(pow); %organize
+%     pow = reshape(pow, size(pow,1), size(pow,2)/100, []); %organize
+%     %get mean hit: 
+%     TFout.hit_rt = squeeze(mean(pow(:,chanDat.retInfo(:,1)==1 , :), 2)); 
+%     %get mean CRs: 
+%     TFout.cr_rt = squeeze(mean(pow(:,chanDat.retInfo(:,1)==3 , :), 2));
+%     %get mean miss: 
+%     TFout.miss_rt = squeeze(mean(pow(:,chanDat.retInfo(:,1)==2 , :), 2));
+%     %get mean FA: 
+%     TFout.fa_rt = squeeze(mean(pow(:,chanDat.retInfo(:,1)==4 , :), 2));
+%     %clean up
+%     clear pow
+%     disp('retrieval 2 done')
+%     
+% 
+%     %reduce the size! 
+%     multim = chanDat.HFB.encMulTim; 
+%     encIDX = arrayfun(@(x) find(x<=chanDat.enctim,1), multim);
+%     TFout.subMiss = TFout.subMiss(encIDX, :); 
+%     TFout.subHit = TFout.subHit(encIDX, :);
+% 
+%     multim = chanDat.HFB.encRT_tim; 
+%     encIDX = arrayfun(@(x) find(x<=chanDat.enctimRT,1), multim);
+%     TFout.subMissRT = TFout.subMissRT(encIDX, :); 
+%     TFout.subHitRT = TFout.subHitRT(encIDX, :);
+% 
+%     multim = chanDat.HFB.onMulTim; 
+%     encIDX = arrayfun(@(x) find(x<=chanDat.retOtim,1), multim);
+%     TFout.hit_on = TFout.hit_on(encIDX, :); 
+%     TFout.miss_on = TFout.miss_on(encIDX, :);
+%     TFout.fa_on = TFout.fa_on(encIDX, :); 
+%     TFout.cr_on = TFout.cr_on(encIDX, :);
+% 
+%     multim = chanDat.HFB.rtMulTim; 
+%     encIDX = arrayfun(@(x) find(x<=chanDat.retRtim,1), multim);
+%     TFout.hit_rt = TFout.hit_rt(encIDX, :); 
+%     TFout.miss_rt = TFout.miss_rt(encIDX, :);
+%     TFout.fa_rt = TFout.fa_rt(encIDX, :); 
+%     TFout.cr_rt = TFout.cr_rt(encIDX, :);
+% 
+% 
+% 
+% 
+% 
+%     chanDat.TF = TFout; 
+%     
+%     clear TFout 
+%     disp('attempting saving')
+%     save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat'); 
+%     disp(['save success: ' chanFiles(idx).folder '/' chanFiles(idx).name])
+% else
+%     disp('TF already done, skipping')
+% end
+
+%% single trial time frequency
+
+if ~isfield(chanDat, 'TF2')
     disp('working on TF')
     %to keep size down, don't put large variables into the chanDat struct!
     TFout = struct;
@@ -525,9 +664,9 @@ if ~isfield(chanDat, 'TF')
     pow = cell2mat(pow); %organize
     pow = reshape(pow, size(pow,1), size(pow,2)/100, []); %organize
     %get mean misses: 
-    TFout.subMiss = squeeze(mean(pow(:,chanDat.use & chanDat.misses, :), 2)); 
+    TFout.subMiss = squeeze(pow(:,chanDat.use & chanDat.misses, :)); 
     %get mean hits: 
-    TFout.subHit = squeeze(mean(pow(:,chanDat.use & chanDat.hits, :), 2));
+    TFout.subHit = squeeze(pow(:,chanDat.use & chanDat.hits, :));
     %clean up
     clear pow
     disp('encoding done')
@@ -538,9 +677,9 @@ if ~isfield(chanDat, 'TF')
     pow = cell2mat(pow); %organize
     pow = reshape(pow, size(pow,1), size(pow,2)/100, []); %organize
     %get mean misses: 
-    TFout.subMissRT = squeeze(mean(pow(:,chanDat.use & chanDat.misses, :), 2)); 
+    TFout.subMissRT = squeeze(pow(:,chanDat.use & chanDat.misses, :)); 
     %get mean hits: 
-    TFout.subHitRT = squeeze(mean(pow(:,chanDat.use & chanDat.hits, :), 2));
+    TFout.subHitRT = squeeze(pow(:,chanDat.use & chanDat.hits, :));
     %clean up
     clear pow
     disp('encoding RT done')
@@ -551,13 +690,13 @@ if ~isfield(chanDat, 'TF')
     pow = cell2mat(pow); %organize
     pow = reshape(pow, size(pow,1), size(pow,2)/100, []); %organize
     %get mean hit: 
-    TFout.hit_on = squeeze(mean(pow(:,chanDat.retInfo(:,1)==1, :), 2)); 
+    TFout.hit_on = squeeze(pow(:,chanDat.retInfo(:,1)==1, :)); 
     %get mean CRs: 
-    TFout.cr_on = squeeze(mean(pow(:,chanDat.retInfo(:,1)==3, :), 2));
+    TFout.cr_on = squeeze(pow(:,chanDat.retInfo(:,1)==3, :));
     %get mean miss: 
-    TFout.miss_on = squeeze(mean(pow(:,chanDat.retInfo(:,1)==2 , :), 2));
+    TFout.miss_on = squeeze(pow(:,chanDat.retInfo(:,1)==2 , :));
     %get mean FA: 
-    TFout.fa_on = squeeze(mean(pow(:,chanDat.retInfo(:,1)==4 , :), 2));
+    TFout.fa_on = squeeze(pow(:,chanDat.retInfo(:,1)==4 , :));
     %clean up
     clear pow
     disp('retrieval 1 done')
@@ -568,13 +707,13 @@ if ~isfield(chanDat, 'TF')
     pow = cell2mat(pow); %organize
     pow = reshape(pow, size(pow,1), size(pow,2)/100, []); %organize
     %get mean hit: 
-    TFout.hit_rt = squeeze(mean(pow(:,chanDat.retInfo(:,1)==1 , :), 2)); 
+    TFout.hit_rt = squeeze(pow(:,chanDat.retInfo(:,1)==1 , :)); 
     %get mean CRs: 
-    TFout.cr_rt = squeeze(mean(pow(:,chanDat.retInfo(:,1)==3 , :), 2));
+    TFout.cr_rt = squeeze(pow(:,chanDat.retInfo(:,1)==3 , :));
     %get mean miss: 
-    TFout.miss_rt = squeeze(mean(pow(:,chanDat.retInfo(:,1)==2 , :), 2));
+    TFout.miss_rt = squeeze(pow(:,chanDat.retInfo(:,1)==2 , :));
     %get mean FA: 
-    TFout.fa_rt = squeeze(mean(pow(:,chanDat.retInfo(:,1)==4 , :), 2));
+    TFout.fa_rt = squeeze(pow(:,chanDat.retInfo(:,1)==4 , :));
     %clean up
     clear pow
     disp('retrieval 2 done')
@@ -583,33 +722,31 @@ if ~isfield(chanDat, 'TF')
     %reduce the size! 
     multim = chanDat.HFB.encMulTim; 
     encIDX = arrayfun(@(x) find(x<=chanDat.enctim,1), multim);
-    TFout.subMiss = TFout.subMiss(encIDX, :); 
-    TFout.subHit = TFout.subHit(encIDX, :);
+    TFout.subMiss = TFout.subMiss(encIDX, :, :); 
+    TFout.subHit = TFout.subHit(encIDX, :, :);
 
     multim = chanDat.HFB.encRT_tim; 
     encIDX = arrayfun(@(x) find(x<=chanDat.enctimRT,1), multim);
-    TFout.subMissRT = TFout.subMissRT(encIDX, :); 
-    TFout.subHitRT = TFout.subHitRT(encIDX, :);
+    TFout.subMissRT = TFout.subMissRT(encIDX, :, :); 
+    TFout.subHitRT = TFout.subHitRT(encIDX, :, : );
 
     multim = chanDat.HFB.onMulTim; 
     encIDX = arrayfun(@(x) find(x<=chanDat.retOtim,1), multim);
-    TFout.hit_on = TFout.hit_on(encIDX, :); 
-    TFout.miss_on = TFout.miss_on(encIDX, :);
-    TFout.fa_on = TFout.fa_on(encIDX, :); 
-    TFout.cr_on = TFout.cr_on(encIDX, :);
+    TFout.hit_on = TFout.hit_on(encIDX, :,:); 
+    TFout.miss_on = TFout.miss_on(encIDX, :,:);
+    TFout.fa_on = TFout.fa_on(encIDX, :,:); 
+    TFout.cr_on = TFout.cr_on(encIDX, :,:);
 
     multim = chanDat.HFB.rtMulTim; 
     encIDX = arrayfun(@(x) find(x<=chanDat.retRtim,1), multim);
-    TFout.hit_rt = TFout.hit_rt(encIDX, :); 
-    TFout.miss_rt = TFout.miss_rt(encIDX, :);
-    TFout.fa_rt = TFout.fa_rt(encIDX, :); 
-    TFout.cr_rt = TFout.cr_rt(encIDX, :);
+    TFout.hit_rt = TFout.hit_rt(encIDX, :,:); 
+    TFout.miss_rt = TFout.miss_rt(encIDX, :,:);
+    TFout.fa_rt = TFout.fa_rt(encIDX, :,:); 
+    TFout.cr_rt = TFout.cr_rt(encIDX, :,:);
 
 
 
-
-
-    chanDat.TF = TFout; 
+    chanDat.TF2 = TFout; 
     
     clear TFout 
     disp('attempting saving')
@@ -618,6 +755,8 @@ if ~isfield(chanDat, 'TF')
 else
     disp('TF already done, skipping')
 end
+
+
 
 %% get ISPC and PPC values 
 
@@ -741,8 +880,11 @@ end
 
 
 
+
+%% final save out
+
 save([chanFiles(idx).folder '/finished/' chanFiles(idx).name], 'chanDat'); 
-delete([chanFiles(idx).folder '/' chanFiles(idx).name]) 
+% delete([chanFiles(idx).folder '/' chanFiles(idx).name]) 
 
 
 

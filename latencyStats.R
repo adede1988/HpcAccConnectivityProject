@@ -23,7 +23,7 @@ data$adjTime = data$centerOfMass / data$RT
 data.rt = lm(centerOfMass ~ RT, data = data)
 data$rt_res = data.rt$residuals
 
-data.lmer <- lmer(rt_res ~ reg*hitMiss*encRet + (1 | chi/subID), REML = TRUE, 
+data.lmer <- lmer(rt_res ~ reg*hitMiss*encRet + (1 | realID), REML = TRUE, 
                   control = lmerControl(optimizer = "bobyqa", calc.derivs = TRUE), data = data)
 
 Anova(data.lmer)

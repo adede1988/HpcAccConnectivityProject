@@ -19,13 +19,13 @@ data <- data %>% filter(RT<3000)
 # data <- data %>% filter(reg == 'hip' | reg == 'phg')
 
 #regress out RT first
-
+data <- data %>% filter(reg == "ACC" | reg == "MTL" | reg == "dlPFC" | reg == "lTemp") # | reg =="Vis")
 
 
 data.rt = lm(centerOfMass ~ RT, data = data)
 data$rt_res = data.rt$residuals
 
-data.lmer <- lmer(rt_res ~ reg*hitMiss*encRet + (1 | chi/subID), REML = TRUE, 
+data.lmer <- lmer(rt_res ~ reg*hitMiss*encRet + (1 | realID), REML = TRUE, 
                   control = lmerControl(optimizer = "bobyqa", calc.derivs = TRUE), data = data)
 
 Anova(data.lmer)
@@ -39,6 +39,9 @@ data %>%
   ggplot(aes(x=RT, y=centerOfMass, color = reg)) + 
   geom_point()
   
+
+
+
 
 
 
@@ -65,13 +68,13 @@ model_cond %>%
 
 
 model_cond %>%
-  ggplot(aes(x = encRet, y = rt_res, group = reg)) + 
-  geom_line(aes(group = reg), alpha = 1 , colour = "gray48", linewidth = .5, position = position_dodge(1)) +
-  geom_point(aes(fill = reg, group = reg, color = reg), size = 1, shape = 19, alpha = 0.2, position = position_dodge(1)) +
-  geom_errorbar(aes(colour = reg, ymin = conf.low, ymax = conf.high), 
+  ggplot(aes(x = encRet, y = rt_res, group = encRet)) + 
+  geom_line(aes(group = encRet), alpha = 1 , colour = "gray48", linewidth = .5, position = position_dodge(1)) +
+  geom_point(aes(fill = encRet, group = encRet, color = encRet), size = 1, shape = 19, alpha = 0.2, position = position_dodge(1)) +
+  geom_errorbar(aes(colour = encRet, ymin = conf.low, ymax = conf.high), 
                 width = 0.4, alpha = 0.95, size = 1.3, position = position_dodge(1)) + 
   facet_wrap(~hitMiss) + 
-  geom_point(aes(fill = reg, color = reg, group = reg, x = encRet, y = rt_res), 
+  geom_point(aes(fill = encRet, color = encRet, group = encRet, x = encRet, y = rt_res), 
              size = 1.5, shape = 19, alpha = 1, position = position_jitterdodge(.1), data = data) + 
   ylim(c(-400, 400))
 
@@ -190,21 +193,21 @@ model_cond %>%
   
     #plot of hitMiss effect alone
     model_cond <- ggemmeans(data.lmer,
-                            terms = c("hitMiss"),
+                            terms = c("encRet"),
                             ci.lvl = 0.83) %>% 
-      rename(hitMiss = x, adjTime = predicted)
+      rename(encRet = x, adjTime = predicted)
     data$temp = paste(data$realID, data$encRet)
     model_cond %>%
-      ggplot(aes(x = hitMiss, y = adjTime)) + 
+      ggplot(aes(x = encRet, y = adjTime)) + 
       # geom_line(aes(group = reg), alpha = 1 , colour = "gray48", linewidth = .5, position = position_dodge(1)) +
-      geom_point(aes(fill = hitMiss, group = hitMiss, color = hitMiss), size = 1, shape = 19, alpha = 0.2, position = position_dodge(.2)) +
-      geom_errorbar(aes(colour = hitMiss, ymin = conf.low, ymax = conf.high), 
+      geom_point(aes(fill = encRet, group = encRet, color = encRet), size = 1, shape = 19, alpha = 0.2, position = position_dodge(.2)) +
+      geom_errorbar(aes(colour = encRet, ymin = conf.low, ymax = conf.high), 
                     width = 0.4, alpha = 0.95, size = 1.3, position = position_dodge(.2)) + 
-      geom_point(aes(fill = hitMiss, color = hitMiss, group = hitMiss, x = hitMiss, y = adjTime), 
-                 size = 1.5, shape = 19, alpha = .2, position = position_dodge(.2), data = data) + 
-      geom_boxplot(aes(x = hitMiss, y = adjTime, fill = hitMiss), 
+      geom_point(aes(fill = encRet, color = encRet, group = encRet, x = encRet, y = adjTime), 
+                 size = 1.5, shape = 19, alpha = .2, position = position_jitterdodge(.2), data = data) + 
+      geom_boxplot(aes(x = encRet, y = adjTime, fill = encRet), 
                    outlier.shape = NA, alpha = .5, width = .1, colour = "black", data = data) +
-      geom_line(aes(group = temp, x = hitMiss, y = adjTime), alpha = .05, linewidth = 2, data = data) +
+      geom_line(aes(group = temp, x = encRet, y = adjTime), alpha = .05, linewidth = 2, data = data) +
       ylim(c(.25, .75))
     
     
@@ -234,17 +237,17 @@ model_cond %>%
   
     #plot of interaction between reg X encRet
     model_cond <- ggemmeans(data.lmer,
-                            terms = c("reg", "encRet"),
+                            terms = c("hitMiss", "encRet"),
                             ci.lvl = 0.83) %>% 
-      rename(reg = x, adjTime = predicted, encRet = group)
+      rename(hitMiss = x, adjTime = predicted, encRet = group)
     
     model_cond %>%
-      ggplot(aes(x = encRet, y = adjTime, group = reg)) + 
-      geom_line(aes(group = reg), alpha = 1 , colour = "gray48", linewidth = .5, position = position_dodge(1)) +
-      geom_point(aes(fill = reg, group = reg, color = reg), size = 1, shape = 19, alpha = 0.2, position = position_dodge(1)) +
-      geom_errorbar(aes(colour = reg, ymin = conf.low, ymax = conf.high), 
+      ggplot(aes(x = encRet, y = adjTime, group = hitMiss)) + 
+      geom_line(aes(group = hitMiss), alpha = 1 , colour = "gray48", linewidth = .5, position = position_dodge(1)) +
+      geom_point(aes(fill = hitMiss, group = hitMiss, color = hitMiss), size = 1, shape = 19, alpha = 0.2, position = position_dodge(1)) +
+      geom_errorbar(aes(colour = hitMiss, ymin = conf.low, ymax = conf.high), 
                     width = 0.4, alpha = 0.95, size = 1.3, position = position_dodge(1)) + 
-      geom_point(aes(fill = reg, color = reg, group = reg, x = encRet, y = adjTime), 
+      geom_point(aes(fill = hitMiss, color = hitMiss, group = hitMiss, x = encRet, y = adjTime), 
                  size = 1.5, shape = 19, alpha = 1, position = position_jitterdodge(.1), data = data) + 
       ylim(c(.25, .75))
   
