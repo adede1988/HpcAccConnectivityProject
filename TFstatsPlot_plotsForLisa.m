@@ -33,7 +33,7 @@ for ii = 1:length(statFiles)
     allmax = max([max(mean(hitVals,1), [], 'all'), max(mean(missVals,1), [], 'all')]);
     allmin = min([min(mean(hitVals,1), [], 'all'), min(mean(missVals,1), [], 'all')]);
     allmax = max([allmax, abs(allmin)]);
-    subplot 321
+    subplot 221
     hold off
     imagesc(tim, [], squeeze(mean(hitVals,1))')
     yticks([10:20:100])
@@ -44,7 +44,7 @@ for ii = 1:length(statFiles)
     caxis([-allmax, allmax])
 
 
-    subplot 323
+    subplot 223
     hold off
     imagesc(tim, [], squeeze(mean(missVals,1))')
     yticks([10:20:100])
@@ -54,28 +54,28 @@ for ii = 1:length(statFiles)
     colorbar
     caxis([-allmax, allmax])
 
-    subplot 325
-    hold off
-    imagesc(TFdat.tVals_sub')
-    test = addRedOutline(TFdat.p_sub, .2, 'green');
-    test = addRedOutline(TFdat.p_sub, .05, 'red');
-    yticks([10:20:100])
-    yticklabels(round(frex([10:20:100])))
-    set(gca, 'YDir','normal')
-    xticks([1:20:141])
-    xticklabels(tim([1:20:141]))
-    title([roiLabs ': sub hit v. miss t-values'])
-    colorbar
+%     subplot 325
+%     hold off
+%     imagesc(TFdat.tVals_sub')
+%     test = addRedOutline(TFdat.p_sub, .2, 'green');
+%     test = addRedOutline(TFdat.p_sub, .05, 'red');
+%     yticks([10:20:100])
+%     yticklabels(round(frex([10:20:100])))
+%     set(gca, 'YDir','normal')
+%     xticks([1:20:141])
+%     xticklabels(tim([1:20:141]))
+%     title([roiLabs ': sub hit v. miss t-values'])
+%     colorbar
   
 
     hitVals = permute(squeeze(TFdat.regRes2(1,:,:,:)), [3,1,2]);
     missVals = permute(squeeze(TFdat.regRes2(2,:,:,:)), [3,1,2]);
     tim = TFdat.retTim; 
 
-    allmax = max([max(mean(hitVals,1), [], 'all'), max(mean(missVals,1), [], 'all')]);
-    allmin = min([min(mean(hitVals,1), [], 'all'), min(mean(missVals,1), [], 'all')]);
-    allmax = max([allmax, abs(allmin)]);
-    subplot 322
+    allmax2 = max([max(mean(hitVals,1), [], 'all'), max(mean(missVals,1), [], 'all')]);
+    allmin2 = min([min(mean(hitVals,1), [], 'all'), min(mean(missVals,1), [], 'all')]);
+    allmax2 = max([allmax2, abs(allmin2)]);
+    subplot 222
     hold off
     imagesc(tim, [], squeeze(mean(hitVals,1))')
     yticks([10:20:100])
@@ -83,10 +83,10 @@ for ii = 1:length(statFiles)
     set(gca, 'YDir','normal')
     title([roiLabs ': retrieval hit z-score power'])
     colorbar
-    caxis([-allmax, allmax])
+    caxis([-allmax2, allmax2])
 
 
-    subplot 324
+    subplot 224
     hold off
     imagesc(tim, [], squeeze(mean(missVals,1))')
     yticks([10:20:100])
@@ -94,25 +94,28 @@ for ii = 1:length(statFiles)
     set(gca, 'YDir','normal')
     title([roiLabs ': retrieval miss z-score power'])
     colorbar
-    caxis([-allmax, allmax])
+    caxis([-allmax2, allmax2])
 
-    subplot 326
-    hold off
-    imagesc(TFdat.tVals_ret')
-    test = addRedOutline(TFdat.p_ret, .2, 'green');
-    test = addRedOutline(TFdat.p_ret, .05, 'red');
-    yticks([10:20:100])
-    yticklabels(round(frex([10:20:100])))
-    set(gca, 'YDir','normal')
-    xticks([1:20:121])
-    xticklabels(tim([1:20:121]))
-    title([roiLabs ': ret hit v. miss t-values'])
-    colorbar
-
-
+%     subplot 326
+%     hold off
+%     imagesc(TFdat.tVals_ret')
+%     test = addRedOutline(TFdat.p_ret, .2, 'green');
+%     test = addRedOutline(TFdat.p_ret, .05, 'red');
+%     yticks([10:20:100])
+%     yticklabels(round(frex([10:20:100])))
+%     set(gca, 'YDir','normal')
+%     xticks([1:20:121])
+%     xticklabels(tim([1:20:121]))
+%     title([roiLabs ': ret hit v. miss t-values'])
+%     colorbar
 
 
-    export_fig(['G:\My Drive\Johnson\MTL_PFC_networkFigs\TF_regional\' roiLabs '.jpg'], '-r300')
+    for sp = 1:4
+        subplot(2,2,sp)
+        caxis([-max([allmax, allmax2]), max([allmax, allmax2])])
+    end
+    set(gcf, 'color', 'w')
+    export_fig(['G:\My Drive\Johnson\MTL_PFC_networkFigs\TF_regional\' roiLabs '_new.jpg'], '-r300')
 
 end
 

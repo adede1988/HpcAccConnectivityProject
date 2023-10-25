@@ -114,6 +114,87 @@ allResRET(:,10) = cellfun(@(x,y) gausLat(x, tim, y), allResRET(:,2), allResRET(:
     'uniformoutput', false );
 
 
+%chan X stats
+%col 1: subID
+%col 2: chi
+%col 3: peak latency
+%col 4: encode v. retrieve
+%col 5: hit v. miss
+%col 6: region
+%col 7: RT
+%col 8: peak latency / RT
+aovDat = table;
+aovDat.subID = repmat("askj", 75000,1); 
+aovDat.chi = zeros(75000,1); 
+aovDat.peakLat = zeros(75000,1); 
+aovDat.encRet = repmat("askj", 75000,1); 
+aovDat.hitMiss = repmat("askj", 75000,1); 
+aovDat.reg = repmat("askj", 75000,1); 
+aovDat.RT = zeros(75000,1); 
+aovDat.adjTime = zeros(75000,1); 
+
+aovi = 1; 
+
+for ii = 1:length(allResENC)
+    ii
+    %hits
+    L = length(allResENC{ii,9});
+    aovDat.subID(aovi:aovi+L-1) = allResENC{ii,7};
+    aovDat.chi(aovi:aovi+L-1) = allResENC{ii,8};
+    aovDat.peakLat(aovi:aovi+L-1) = allResENC{ii,9};
+    aovDat.encRet(aovi:aovi+L-1) = 'Enc';
+    aovDat.hitMiss(aovi:aovi+L-1) = 'Hit';
+    aovDat.reg(aovi:aovi+L-1) = allResENC{ii,5};
+    aovDat.RT(aovi:aovi+L-1) = allResENC{ii,3};
+    aovDat.adjTime(aovi:aovi+L-1) = aovDat.peakLat(aovi:aovi+L-1) ./ aovDat.RT(aovi:aovi+L-1);
+    %misses
+    aovi = aovi + L; 
+    L = length(allResENC{ii,10});
+    aovDat.subID(aovi:aovi+L-1) = allResENC{ii,7};
+    aovDat.chi(aovi:aovi+L-1) = allResENC{ii,8};
+    aovDat.peakLat(aovi:aovi+L-1) = allResENC{ii,10};
+    aovDat.encRet(aovi:aovi+L-1) = 'Enc';
+    aovDat.hitMiss(aovi:aovi+L-1) = 'Miss';
+    aovDat.reg(aovi:aovi+L-1) = allResENC{ii,5};
+    aovDat.RT(aovi:aovi+L-1) = allResENC{ii,4};
+    aovDat.adjTime(aovi:aovi+L-1) = aovDat.peakLat(aovi:aovi+L-1) ./ aovDat.RT(aovi:aovi+L-1);
+
+    aovi = aovi + L; 
+
+end
+
+
+for ii = 1:length(allResRET)
+    ii
+    %hits retrieval
+    L = length(allResRET{ii,9});
+    aovDat.subID(aovi:aovi+L-1) = allResRET{ii,7};
+    aovDat.chi(aovi:aovi+L-1) = allResRET{ii,8};
+    aovDat.peakLat(aovi:aovi+L-1) = allResRET{ii,9};
+    aovDat.encRet(aovi:aovi+L-1) = 'Ret';
+    aovDat.hitMiss(aovi:aovi+L-1) = 'Hit';
+    aovDat.reg(aovi:aovi+L-1) = allResRET{ii,5};
+    aovDat.RT(aovi:aovi+L-1) = allResRET{ii,3};
+    aovDat.adjTime(aovi:aovi+L-1) = aovDat.peakLat(aovi:aovi+L-1) ./ aovDat.RT(aovi:aovi+L-1);
+    %misses retrieval
+    aovi = aovi + L; 
+    L = length(allResRET{ii,10});
+    aovDat.subID(aovi:aovi+L-1) = allResRET{ii,7};
+    aovDat.chi(aovi:aovi+L-1) = allResRET{ii,8};
+    aovDat.peakLat(aovi:aovi+L-1) = allResRET{ii,10};
+    aovDat.encRet(aovi:aovi+L-1) = 'Ret';
+    aovDat.hitMiss(aovi:aovi+L-1) = 'Miss';
+    aovDat.reg(aovi:aovi+L-1) = allResRET{ii,5};
+    aovDat.RT(aovi:aovi+L-1) = allResRET{ii,4};
+    aovDat.adjTime(aovi:aovi+L-1) = aovDat.peakLat(aovi:aovi+L-1) ./ aovDat.RT(aovi:aovi+L-1);
+
+     aovi = aovi + L; 
+
+end
+
+writetable(aovDat, 'R:\MSS\Johnson_Lab\dtf8829\GitHub\HpcAccConnectivityProject\trialLatDat.csv')
+
+
 %cross correlograms? I think the cross correlograms don't really work
 %these are not spikes, and areas have different time courses with HFB, so
 %the plots just aren't very compelling. 
@@ -182,7 +263,7 @@ regionalLatencies = cell(9,2); %regions X hit/miss
 for reg = 1:9
 
     regionalLatencies(reg,:) = visualizeHFBsingleTrialDat(allResENC, reg, regions, 'sub');
-
+    visualizeHFBsingleTrialDat_RTsort(allResENC, reg, regions, 'sub');
 end
 
 % make a cool figure with the cumulative distributions of the peak
@@ -221,7 +302,7 @@ regionalLatencies2 = cell(9,2); %regions X hit/miss
 for reg = 1:9
 
     regionalLatencies2(reg,:) = visualizeHFBsingleTrialDat(allResRET, reg, regions, 'ret');
-
+    visualizeHFBsingleTrialDat_RTsort(allResRET, reg, regions, 'ret');
 end
 
 % make a cool figure with the cumulative distributions of the peak
@@ -263,254 +344,6 @@ title('retrieval misses')
 
 
 
-
-
-
-
-
-for reg = 1:10
-
-
-end
-
-
-
-
-
-for reg = 1:10
-   
-end
-
-
-meanLats = cellfun(@(x) mean(x), regionalLatencies); 
-
-figure
-subplot 511
-histogram(regionalLatencies{1,1}, [0:.05:1], 'normalization', 'probability')
-ylim([0,.1])
-title(regions{1})
-subplot 512
-histogram(regionalLatencies{10,1}, [0:.05:1], 'normalization', 'probability')
-ylim([0,.1])
-title(regions{10})
-subplot 513
-histogram(regionalLatencies{3,1}, [0:.05:1], 'normalization', 'probability')
-ylim([0,.1])
-title(regions{3})
-subplot 514
-histogram(regionalLatencies{8,1}, [0:.05:1], 'normalization', 'probability')
-ylim([0,.1])
-title(regions{8})
-subplot 515
-histogram(regionalLatencies{6,1}, [0:.05:1], 'normalization', 'probability')
-ylim([0,.1])
-title(regions{6})
- export_fig(['G:\My Drive\Johnson\MTL_PFC_networkFigs\FinalizedHFB\' 'regionalLats_enc_hit' '.jpg'], '-r300')
-
-figure
-subplot 511
-histogram(regionalLatencies{1,2}, [0:.05:1], 'normalization', 'probability');
-ylim([0,.1])
-title(regions{1})
-subplot 512
-histogram(regionalLatencies{10,2}, [0:.05:1], 'normalization', 'probability')
-ylim([0,.1])
-title(regions{10})
-subplot 513
-histogram(regionalLatencies{3,2}, [0:.05:1], 'normalization', 'probability')
-ylim([0,.1])
-title(regions{3})
-subplot 514
-histogram(regionalLatencies{8,2}, [0:.05:1], 'normalization', 'probability')
-ylim([0,.1])
-title(regions{8})
-subplot 515
-histogram(regionalLatencies{6,2}, [0:.05:1], 'normalization', 'probability')
-ylim([0,.1])
-title(regions{6})
- export_fig(['G:\My Drive\Johnson\MTL_PFC_networkFigs\FinalizedHFB\' 'regionalLats_enc_miss' '.jpg'], '-r300')
-
-
-
-
-%retrieval visualizations %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% subset by region
-
-regionalLatencies = cell(10,2); %regions X hit/miss
-
-for reg = 1:10
-    test = cellfun(@(x) strcmp(x, regions{reg}), {allResRET{:,5}});
-    curReg = allResRET(test,:);
-    encHit = [];
-    encMiss = []; 
-    encHitRT = [];
-    encMissRT = []; 
-    for ii = 1:size(curReg,1)
-        encHit = [encHit, curReg{ii,1}];
-        encHitRT = [encHitRT; curReg{ii, 3}]; 
-        encMiss = [encMiss, curReg{ii,2}];
-        encMissRT = [encMissRT; curReg{ii, 4}]; 
-    end
-    tim = curReg{1,6}; 
-
-    eliminate = []; 
-    latency = []; 
-    
-    %scale within the 0 to RT time period to make 0 to 1
-    for tt = 1:size(encHit,2)
-        if encHitRT(tt)<100 || encHitRT(tt)>3000
-            eliminate = [eliminate, tt]; 
-        
-        else
-            trial = encHit(:,tt); 
-            test = trial(  find(tim==0):find(tim>encHitRT(tt),1));
-            testTim = tim(find(tim==0):find(tim>encHitRT(tt),1));
-            test = (test - min(test)); 
-            test = test./ max(test);
-            test(test<.6) = 0; 
-            testMean = wmean([1:length(testTim)], test'); 
-%             test = movmean(test,15); 
-%             [~, idx] = max(test);
-%             latency = [latency, testTim(idx)];
-            latency = [latency, testTim(round(testMean))];
-
-
-
-        end
-    end
-
-
-    eliminate2 = []; 
-    latency2 = []; 
-    for tt = 1:length(encMissRT)
-        if encMissRT(tt)<100 || encMissRT(tt)>3000
-            eliminate2 = [eliminate2, tt]; 
-        else
-            trial = encMiss(:,tt); 
-            test = trial(  find(tim==0):find(tim>encMissRT(tt),1));
-            testTim = tim(find(tim==0):find(tim>encMissRT(tt),1));
-            test = (test - min(test)); 
-            test = test./ max(test);
-            test(test<.6) = 0; 
-            testMean = wmean([1:length(testTim)], test'); 
-%             test = movmean(test,15); 
-%             [~, idx] = max(test);
-%             latency2 = [latency2, testTim(idx)];
-            latency2 = [latency2, testTim(round(testMean))];
-
-
-
-        end
-    end
-
-    
-    encHit(:,eliminate) = [];
-    encHitRT(eliminate) = []; 
-    encMiss(:,eliminate2) = []; 
-    encMissRT(eliminate2) = []; 
-
-
-
-    %plotting retrieval all trials
-    figure('visible', false, 'position', [0,0,600,1000])
-
-    subplot(4,2,7)
-    plot(tim(10:end-10), mean(encHit(10:end-10,:),2), 'color', 'blue')
-    hold on 
-    plot(tim(10:end-10), mean(encMiss(10:end-10,:),2), 'color', 'red')
- 
-    difVals = mean(encHit(10:end-10,:),2) - mean(encMiss(10:end-10,:),2);
-    [~, sortIDX] = max(movmean(abs(difVals), 5));
-    
-    subplot(4, 2, [1,3,5])
-
-%     [~, order] = sort(mean(encHit((10+sortIDX)-3:(10+sortIDX)+3,:)), 'descend'); 
-
-    [~, order] = sort(latency2);
-%      [~, order] = sort(encHitRT); 
-    imagesc(tim(10:end-10), [], encHit(10:end-10,order)')
-    caxis([-15,15])
-    hold on 
-%     plot(encHitRT(order), [1:length(encHitRT)], 'color', 'red', 'linewidth', 3)
-    xline(0, 'color', 'green', 'linewidth', 3)
-
-%     plot(latency(order), [1:length(encHitRT)], 'color', 'green')
-    title([regions{reg} ' ret Hit'])
-
-    
-
-    subplot(4, 2, [2,4,6])
-%     [~, order] = sort(mean(encMiss((10+sortIDX)-3:(10+sortIDX)+3,:)), 'descend'); 
-
-    [~, order] = sort(latency2);
-%      [~, order] = sort(encMissRT); 
-    imagesc(tim(10:end-10), [], encMiss(10:end-10,order)')
-    caxis([-15,15])
-    hold on 
-%     plot(encMissRT(order), [1:length(encMissRT)], 'color', 'red', 'linewidth', 3)
-    xline(0, 'color', 'green', 'linewidth', 3)
-%     plot(latency2(order), [1:length(encMissRT)], 'color', 'green')
-    title([regions{reg} ' ret Miss'])
-
-     subplot(4,2,8)
-     histogram(latency'./encHitRT, [0:.05:1], 'normalization', 'probability')
-     hold on 
-     histogram(latency2'./encMissRT, [0:.05:1], 'normalization', 'probability')
-     export_fig(['G:\My Drive\Johnson\MTL_PFC_networkFigs\FinalizedHFB\' 'singleTrial_ret_' regions{reg} '.jpg'], '-r300')
-
-
-    regionalLatencies{reg,1} = latency' ./ encHitRT; 
-    regionalLatencies{reg,2} = latency2' ./ encMissRT; 
-end
-
-
-meanLats = cellfun(@(x) mean(x), regionalLatencies); 
-
-figure
-subplot 511
-histogram(regionalLatencies{1,1}, [0:.05:1], 'normalization', 'probability')
-ylim([0,.1])
-title(regions{1})
-subplot 512
-histogram(regionalLatencies{10,1}, [0:.05:1], 'normalization', 'probability')
-ylim([0,.1])
-title(regions{10})
-subplot 513
-histogram(regionalLatencies{3,1}, [0:.05:1], 'normalization', 'probability')
-ylim([0,.1])
-title(regions{3})
-subplot 514
-histogram(regionalLatencies{8,1}, [0:.05:1], 'normalization', 'probability')
-ylim([0,.1])
-title(regions{8})
-subplot 515
-histogram(regionalLatencies{6,1}, [0:.05:1], 'normalization', 'probability')
-ylim([0,.1])
-title(regions{6})
- export_fig(['G:\My Drive\Johnson\MTL_PFC_networkFigs\FinalizedHFB\' 'regionalLats_ret_hit' '.jpg'], '-r300')
-
-figure
-subplot 511
-histogram(regionalLatencies{1,2}, [0:.05:1], 'normalization', 'probability');
-ylim([0,.1])
-title(regions{1})
-subplot 512
-histogram(regionalLatencies{10,2}, [0:.05:1], 'normalization', 'probability')
-ylim([0,.1])
-title(regions{10})
-subplot 513
-histogram(regionalLatencies{3,2}, [0:.05:1], 'normalization', 'probability')
-ylim([0,.1])
-title(regions{3})
-subplot 514
-histogram(regionalLatencies{8,2}, [0:.05:1], 'normalization', 'probability')
-ylim([0,.1])
-title(regions{8})
-subplot 515
-histogram(regionalLatencies{6,2}, [0:.05:1], 'normalization', 'probability')
-ylim([0,.1])
-title(regions{6})
- export_fig(['G:\My Drive\Johnson\MTL_PFC_networkFigs\FinalizedHFB\' 'regionalLats_ret_miss' '.jpg'], '-r300')
 
 
 

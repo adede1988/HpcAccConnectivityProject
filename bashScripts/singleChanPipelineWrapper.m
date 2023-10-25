@@ -45,72 +45,72 @@ test = cellfun(@(x) length(x)>0, strfind({chanFiles.name}, '.mat'));
 chanFiles = chanFiles(test); 
 
 
-%I need a way of assigning the partner channel 
-partnerChans = struct; 
-pi = 1; 
-tic
-for chan = 1:length(chanFiles)
-   
-    curChan = chanFiles(chan).name; 
-    subID = split(curChan, '_');
-
-    subID = subID{2}; 
-    
-    subFiles = dir([datPre 'CHANDAT/CHANRAW']);
-    test = cellfun(@(x) length(x)>0, strfind({subFiles.name}, subID)); 
-    subFiles = subFiles(test);
-    
-    curi = find(cellfun(@(x) strcmp(x, chanFiles(chan).name), {subFiles.name}));
-    if curi <length(subFiles)
-    for chan2 = curi+1:length(subFiles)
-        partnerChans(pi).name = chanFiles(chan).name; 
-        partnerChans(pi).folder = [chanFiles(chan).folder '/CHANRAW']; 
-        partnerChans(pi).name2 = subFiles(chan2).name; 
-        partnerChans(pi).folder2 = subFiles(chan2).folder; 
-        pi = pi+1; 
-        if mod(pi,1000)==0
-            disp(pi)
-            toc
-            tic
-        end
-    end
-    end
-
-end
-
-save([codePre 'HpcAccConnectivityProject' '/localChanFiles.mat'], 'partnerChans')
-
-partnerChans = struct; 
-pi = 1; 
-tic
-for chan = 1:length(chanFiles)
-   
-    curChan = chanFiles(chan).name; 
-    subID = split(curChan, '_');
-
-    subID = subID{2}; 
-    
-    subFiles = dir([datPre 'CHANDAT/CHANRAW']);
-    test = cellfun(@(x) length(x)>0, strfind({subFiles.name}, subID)); 
-    subFiles = subFiles(test);
-    
-    curi = find(cellfun(@(x) strcmp(x, chanFiles(chan).name), {subFiles.name}));
-    if curi <length(subFiles)
-    for chan2 = curi+1:length(subFiles)
-        partnerChans(pi).name = chanFiles(chan).name; 
-        partnerChans(pi).folder = [chanFiles(chan).folder '/CHANRAW']; 
-        partnerChans(pi).name2 = subFiles(chan2).name; 
-        partnerChans(pi).folder2 = subFiles(chan2).folder; 
-        pi = pi+1; 
-        if mod(pi,1000)==0
-            disp(pi)
-            toc
-            tic
-        end
-    end
-    end
-
-end
+% %I need a way of assigning the partner channel 
+% partnerChans = struct; 
+% pi = 1; 
+% tic
+% for chan = 1:length(chanFiles)
+%    
+%     curChan = chanFiles(chan).name; 
+%     subID = split(curChan, '_');
+% 
+%     subID = subID{2}; 
+%     
+%     subFiles = dir([datPre 'CHANDAT/CHANRAW']);
+%     test = cellfun(@(x) length(x)>0, strfind({subFiles.name}, subID)); 
+%     subFiles = subFiles(test);
+%     
+%     curi = find(cellfun(@(x) strcmp(x, chanFiles(chan).name), {subFiles.name}));
+%     if curi <length(subFiles)
+%     for chan2 = curi+1:length(subFiles)
+%         partnerChans(pi).name = chanFiles(chan).name; 
+%         partnerChans(pi).folder = [chanFiles(chan).folder '/CHANRAW']; 
+%         partnerChans(pi).name2 = subFiles(chan2).name; 
+%         partnerChans(pi).folder2 = subFiles(chan2).folder; 
+%         pi = pi+1; 
+%         if mod(pi,1000)==0
+%             disp(pi)
+%             toc
+%             tic
+%         end
+%     end
+%     end
+% 
+% end
+% 
+% save([codePre 'HpcAccConnectivityProject' '/localChanFiles.mat'], 'partnerChans')
+% 
+% partnerChans = struct; 
+% pi = 1; 
+% tic
+% for chan = 1:length(chanFiles)
+%    
+%     curChan = chanFiles(chan).name; 
+%     subID = split(curChan, '_');
+% 
+%     subID = subID{2}; 
+%     
+%     subFiles = dir([datPre 'CHANDAT/CHANRAW']);
+%     test = cellfun(@(x) length(x)>0, strfind({subFiles.name}, subID)); 
+%     subFiles = subFiles(test);
+%     
+%     curi = find(cellfun(@(x) strcmp(x, chanFiles(chan).name), {subFiles.name}));
+%     if curi <length(subFiles)
+%     for chan2 = curi+1:length(subFiles)
+%         partnerChans(pi).name = chanFiles(chan).name; 
+%         partnerChans(pi).folder = [chanFiles(chan).folder '/CHANRAW']; 
+%         partnerChans(pi).name2 = subFiles(chan2).name; 
+%         partnerChans(pi).folder2 = subFiles(chan2).folder; 
+%         pi = pi+1; 
+%         if mod(pi,1000)==0
+%             disp(pi)
+%             toc
+%             tic
+%         end
+%     end
+%     end
+% 
+% end
 
 
 

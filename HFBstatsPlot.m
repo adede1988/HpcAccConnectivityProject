@@ -36,34 +36,21 @@ for ii = 1:length(statFiles)
     allSigRet(HFBdat.p_ret<.05 & HFBdat.tVals_ret>0, ii) = 1; 
     regNames{ii} = HFBdat.aggTargs(HFBdat.reg1).lab;
     
-    %get all mean early late
-    wins = [0,1000,2000]; 
-
-    for hm = 1:2 %hit/miss loop
-        for w = 1:2 %window
-            allMeanEarlyLate(hm,ii,w, 1) = median(HFBdat.regRes(hm,HFBdat.encTim>=wins(w) & HFBdat.encTim<=wins(w+1),:), 'all');
-            allMeanEarlyLate(hm,ii,w, 2) = median(HFBdat.regRes2(hm,HFBdat.retTim>=wins(w) & HFBdat.retTim<=wins(w+1),:), 'all');
-        end
-    end
+%     %get all mean early late
+%     wins = [0,1000,2000]; 
+% 
+%     for hm = 1:2 %hit/miss loop
+%         for w = 1:2 %window
+%             allMeanEarlyLate(hm,ii,w, 1) = median(HFBdat.regRes(hm,HFBdat.encTim>=wins(w) & HFBdat.encTim<=wins(w+1),:), 'all');
+%             allMeanEarlyLate(hm,ii,w, 2) = median(HFBdat.regRes2(hm,HFBdat.retTim>=wins(w) & HFBdat.retTim<=wins(w+1),:), 'all');
+%         end
+%     end
 
     figure('visible', true, 'Position', [0,0,1000,500])
     
     subplot(3, 4, [1:2])
     hold off
-    plot(HFBdat.encTim, HFBdat.hitVals_sub, 'linewidth', 3, 'color', 'blue')
-    hold on 
-    plot(HFBdat.encTim, HFBdat.missVals_sub, 'linewidth', 3, 'color', 'red')
-    xlim([HFBdat.encTim(1), HFBdat.encTim(end)])
-
-    sdHit = std(squeeze(HFBdat.regRes(1,:,:)), [], 2) ./ sqrt(HFBdat.n_pair);
-    sdMiss = std(squeeze(HFBdat.regRes(2,:,:)), [], 2) ./ sqrt(HFBdat.n_pair); 
     
-    x = [HFBdat.encTim, flip(HFBdat.encTim)];
-    y = [HFBdat.hitVals_sub' - sdHit; flip(HFBdat.hitVals_sub' + sdHit)]; 
-    fill(flip(x), flip(y'), 'blue', 'FaceAlpha', .2)
-    x = [HFBdat.encTim, flip(HFBdat.encTim)];
-    y = [HFBdat.missVals_sub' - sdMiss; flip(HFBdat.missVals_sub' + sdMiss)]; 
-    fill(flip(x), flip(y'), 'red', 'FaceAlpha', .2)
 
 %     maxidx = [1:length(HFBdat.encTim)]; 
 %     maxidx(HFBdat.p_sub>.05) = []; 
@@ -75,42 +62,93 @@ for ii = 1:length(statFiles)
 % %     maxLoc = 41;
 %     xline(HFBdat.encTim(maxLoc), 'linewidth', 2, 'linestyle', '--', 'color', 'red')
 
-    plot(HFBdat.encTim, HFBdat.p_sub<.05, 'color', 'k', 'linewidth', 2)
+    sigIdx = find(HFBdat.p_sub<.05);
+    breaks = find(diff(sigIdx)>1); 
+    breaks = [1; breaks; length(sigIdx)];
+    wins = cell(4,1); 
+    for breaki = 1:length(breaks)-1
+        winIdx = sigIdx(breaks([breaki, breaki+1])' + [1,0] ); 
+        wins{breaki} = winIdx; 
+        x = HFBdat.encTim(winIdx);
+        fill([x, flip(x)], [-10, -10, 10, 10], 'k', 'facealpha', .2, 'edgealpha', 0)
+        hold on 
+    end
+
+
+
+    plot(HFBdat.encTim, HFBdat.hitVals_sub, 'linewidth', 3, 'color', 'blue')
+    hold on 
+    plot(HFBdat.encTim, HFBdat.missVals_sub, 'linewidth', 3, 'color', 'red')
+    xlim([HFBdat.encTim(1), HFBdat.encTim(end)])
+
+    sdHit = std(squeeze(HFBdat.regRes(1,:,:)), [], 2) ./ sqrt(HFBdat.n_pair);
+    sdMiss = std(squeeze(HFBdat.regRes(2,:,:)), [], 2) ./ sqrt(HFBdat.n_pair); 
+    
+    x = [HFBdat.encTim, flip(HFBdat.encTim)];
+    y = [HFBdat.hitVals_sub' - sdHit; flip(HFBdat.hitVals_sub' + sdHit)]; 
+    allMax = max(y); 
+    allMin = min(y); 
+    fill(flip(x), flip(y'), 'blue', 'FaceAlpha', .2)
+    x = [HFBdat.encTim, flip(HFBdat.encTim)];
+    y = [HFBdat.missVals_sub' - sdMiss; flip(HFBdat.missVals_sub' + sdMiss)]; 
+    fill(flip(x), flip(y'), 'red', 'FaceAlpha', .2)
+
+    allMax = max([max(y), allMax]); 
+    allMin = min([min(y), allMin]); 
+    ylim([allMin, allMax])
+
     ylabel("HFB amplitude (z-score)")
     title(['HFB ' HFBdat.aggTargs(HFBdat.reg1).lab ' encoding'])
 
 
     subplot(3, 4, [3:4])
     hold off
-    plot(HFBdat.retTim, HFBdat.hitVals_ret, 'linewidth', 3, 'color', 'blue')
-    hold on 
-    plot(HFBdat.retTim, HFBdat.missVals_ret, 'linewidth', 3, 'color', 'red')
+    sigIdx = find(HFBdat.p_ret<.05);
+    breaks = find(diff(sigIdx)>1); 
+    breaks = [1; breaks; length(sigIdx)];
+    wins2 = cell(4,1); 
+    for breaki = 1:length(breaks)-1
+        winIdx = sigIdx(breaks([breaki, breaki+1])' + [1,0] ); 
+        wins2{breaki} = winIdx; 
+        x = HFBdat.encTim(winIdx);
+        fill([x, flip(x)], [-10, -10, 10, 10], 'k', 'facealpha', .2, 'edgealpha', 0)
+        hold on 
+    end
+
+
+
+    plot(HFBdat.retTim, HFBdat.missVals_ret, 'linewidth', 3, 'color', 'blue')
+
+    plot(HFBdat.retTim, HFBdat.hitVals_ret, 'linewidth', 3, 'color', 'red')
+ 
+    
     xlim([HFBdat.retTim(1), HFBdat.retTim(end)])
 
     sdHit = std(squeeze(HFBdat.regRes2(1,:,:)), [], 2) ./ sqrt(HFBdat.n_pair);
     sdMiss = std(squeeze(HFBdat.regRes2(2,:,:)), [], 2) ./ sqrt(HFBdat.n_pair); 
     
     x = [HFBdat.retTim, flip(HFBdat.retTim)];
-    y = [HFBdat.hitVals_ret' - sdHit; flip(HFBdat.hitVals_ret' + sdHit)]; 
+    y = [HFBdat.missVals_ret' - sdMiss; flip(HFBdat.missVals_ret' + sdMiss)]; 
+     allMax = max([max(y), allMax]); 
+    allMin = min([min(y), allMin]); 
     fill(flip(x), flip(y'), 'blue', 'FaceAlpha', .2)
     x = [HFBdat.retTim, flip(HFBdat.retTim)];
-    y = [HFBdat.missVals_ret' - sdMiss; flip(HFBdat.missVals_ret' + sdMiss)]; 
+    y = [HFBdat.hitVals_ret' - sdHit; flip(HFBdat.hitVals_ret' + sdHit)]; 
+     allMax = max([max(y), allMax]); 
+    allMin = min([min(y), allMin]); 
     fill(flip(x), flip(y'), 'red', 'FaceAlpha', .2)
-%     maxidx = [1:length(HFBdat.retTim)]; 
-%     maxidx(HFBdat.p_ret>.05) = []; 
-%     if isempty(maxidx)
-%         maxidx = [1:length(HFBdat.retTim)];
-%     end
-%     [~, maxLoc2] = max(abs(HFBdat.tVals_ret(maxidx)));
-%     maxLoc2 = maxidx(maxLoc2); 
-% %     maxLoc2 = 51; 
-%     xline(HFBdat.retTim(maxLoc2), 'linewidth', 2, 'linestyle', '--', 'color', 'red')
+
+
+    ylim([allMin, allMax])
+
+
     ylabel("HFB amplitude (z-score)")
 
-    plot(HFBdat.retTim, HFBdat.p_ret<.05, 'color', 'k', 'linewidth', 2)
 
     title(['HFB ' HFBdat.aggTargs(HFBdat.reg1).lab ' retrieval'])
 
+    subplot(3, 4, [1:2])
+    ylim([allMin, allMax])
 
     subplot(3, 4, [5:6])
 
@@ -126,7 +164,7 @@ for ii = 1:length(statFiles)
 
     subplot(3, 4, [7:8])
 
-    combo = [squeeze(HFBdat.regRes2(1,:,:)), squeeze(HFBdat.regRes2(2,:,:))];
+    combo = [squeeze(HFBdat.regRes2(2,:,:)), squeeze(HFBdat.regRes2(1,:,:))];
     imagesc(HFBdat.retTim, [], combo')
     yline(HFBdat.n_pair+.5, 'linewidth', 2, 'color', 'red')
 %     xline(HFBdat.retTim(maxLoc2), 'linewidth', 2, 'linestyle', '--', 'color', 'red')
@@ -143,11 +181,11 @@ for ii = 1:length(statFiles)
     chanMeans = zeros(HFBdat.n_pair*2,1); %hits, misses
     hmSort = chanMeans; 
     ti = 1; 
-    for pi = 1:HFBdat.n_pair
-        chanMeans(ti) = mean(HFBdat.regRes(1,HFBdat.encTim>=0 & HFBdat.encTim<=1000,pi), 'all'); 
+    for ppi = 1:HFBdat.n_pair
+        chanMeans(ti) = mean(HFBdat.regRes(1,wins{1}(1): wins{1}(2),ppi), 'all'); 
         hmSort(ti) = 1; 
         ti = ti+1; 
-        chanMeans(ti) = mean(HFBdat.regRes(2,HFBdat.encTim>=0 & HFBdat.encTim<=1000,pi), 'all'); 
+        chanMeans(ti) = mean(HFBdat.regRes(2,wins{1}(1): wins{1}(2),ppi), 'all'); 
         hmSort(ti) = 0; 
         ti = ti+1; 
        
@@ -162,7 +200,8 @@ for ii = 1:length(statFiles)
 %             meanX = round(mean(Xidx(tmp), 'all')); 
 %             meanY = round(mean(Yidx(tmp), 'all')); 
 %             LLvals = -150:150; 
-    title(['time:  0-1000 ms' ])
+    title(['time: ' num2str(HFBdat.encTim(wins{1}(1))) ' to '...
+        num2str(HFBdat.encTim(wins{1}(2))) ' ms' ])
     PLH = chanMeans(hmSort==1); 
     PLM = chanMeans(hmSort==0); 
     randVals = (rand(length(PLH),1)-.5)*.5;
@@ -170,8 +209,8 @@ for ii = 1:length(statFiles)
     scatter(randVals, PLM, 10,  'blue')
     scatter(randVals+1, PLH, 10, 'blue')
     
-    for pi = 1:length(PLH)
-        plot([0+randVals(pi),1+randVals(pi)], [PLM(pi),PLH(pi)], 'color', [.2,.1,.5,.2], 'linewidth', .5 )
+    for ppi = 1:length(PLH)
+        plot([0+randVals(ppi),1+randVals(ppi)], [PLM(ppi),PLH(ppi)], 'color', [.2,.1,.5,.2], 'linewidth', .5 )
         
 
     end
@@ -209,11 +248,11 @@ for ii = 1:length(statFiles)
     chanMeans = zeros(HFBdat.n_pair*2,1); %hits, misses
     hmSort = chanMeans; 
     ti = 1; 
-    for pi = 1:HFBdat.n_pair
-        chanMeans(ti) = mean(HFBdat.regRes(1,HFBdat.encTim>=1000 & HFBdat.encTim<=2000,pi), 'all'); 
+    for ppi = 1:HFBdat.n_pair
+        chanMeans(ti) = mean(HFBdat.regRes(1,wins{2}(1): wins{2}(2),ppi), 'all'); 
         hmSort(ti) = 1; 
         ti = ti+1; 
-        chanMeans(ti) = mean(HFBdat.regRes(2,HFBdat.encTim>=1000 & HFBdat.encTim<=2000,pi), 'all'); 
+        chanMeans(ti) = mean(HFBdat.regRes(2,wins{2}(1): wins{2}(2),ppi), 'all'); 
         hmSort(ti) = 0; 
         ti = ti+1; 
        
@@ -228,7 +267,8 @@ for ii = 1:length(statFiles)
 %             meanX = round(mean(Xidx(tmp), 'all')); 
 %             meanY = round(mean(Yidx(tmp), 'all')); 
 %             LLvals = -150:150; 
-    title(['time:  1000-2000 ms' ])
+    title(['time: ' num2str(HFBdat.encTim(wins{2}(1))) ' to '...
+        num2str(HFBdat.encTim(wins{2}(2))) ' ms' ])
     PLH = chanMeans(hmSort==1); 
     PLM = chanMeans(hmSort==0); 
     randVals = (rand(length(PLH),1)-.5)*.5;
@@ -236,8 +276,8 @@ for ii = 1:length(statFiles)
     scatter(randVals, PLM, 10,  'blue')
     scatter(randVals+1, PLH, 10, 'blue')
     
-    for pi = 1:length(PLH)
-        plot([0+randVals(pi),1+randVals(pi)], [PLM(pi),PLH(pi)], 'color', [.2,.1,.5,.2], 'linewidth', .5 )
+    for ppi = 1:length(PLH)
+        plot([0+randVals(ppi),1+randVals(ppi)], [PLM(ppi),PLH(ppi)], 'color', [.2,.1,.5,.2], 'linewidth', .5 )
         
 
     end
@@ -275,11 +315,11 @@ for ii = 1:length(statFiles)
     chanMeans = zeros(HFBdat.n_pair*2,1); %hits, misses
     hmSort = chanMeans; 
     ti = 1; 
-    for pi = 1:HFBdat.n_pair
-        chanMeans(ti) = mean(HFBdat.regRes2(1,HFBdat.retTim>=0 & HFBdat.retTim<=1000,pi), 'all'); 
+    for ppi = 1:HFBdat.n_pair
+        chanMeans(ti) = mean(HFBdat.regRes2(2,wins2{1}(1): wins2{1}(2),ppi), 'all'); 
         hmSort(ti) = 1; 
         ti = ti+1; 
-        chanMeans(ti) = mean(HFBdat.regRes2(2,HFBdat.retTim>=0 & HFBdat.retTim<=1000,pi), 'all'); 
+        chanMeans(ti) = mean(HFBdat.regRes2(1,wins2{1}(1): wins2{1}(2),ppi), 'all'); 
         hmSort(ti) = 0; 
         ti = ti+1; 
        
@@ -294,7 +334,8 @@ for ii = 1:length(statFiles)
 %             meanX = round(mean(Xidx(tmp), 'all')); 
 %             meanY = round(mean(Yidx(tmp), 'all')); 
 %             LLvals = -150:150; 
-    title(['time:  0-1000 ms' ])
+    title(['time: ' num2str(HFBdat.encTim(wins2{1}(1))) ' to '...
+        num2str(HFBdat.encTim(wins2{1}(2))) ' ms' ])
     PLH = chanMeans(hmSort==1); 
     PLM = chanMeans(hmSort==0); 
     randVals = (rand(length(PLH),1)-.5)*.5;
@@ -302,8 +343,8 @@ for ii = 1:length(statFiles)
     scatter(randVals, PLM, 10,  'blue')
     scatter(randVals+1, PLH, 10, 'blue')
     
-    for pi = 1:length(PLH)
-        plot([0+randVals(pi),1+randVals(pi)], [PLM(pi),PLH(pi)], 'color', [.2,.1,.5,.2], 'linewidth', .5 )
+    for ppi = 1:length(PLH)
+        plot([0+randVals(ppi),1+randVals(ppi)], [PLM(ppi),PLH(ppi)], 'color', [.2,.1,.5,.2], 'linewidth', .5 )
         
 
     end
@@ -336,16 +377,16 @@ for ii = 1:length(statFiles)
     ylabel("HFB amplitude (z-score)")
 
 
-
+    if ~isempty(wins2{2})
      subplot(3, 4, 12)
     chanMeans = zeros(HFBdat.n_pair*2,1); %hits, misses
     hmSort = chanMeans; 
     ti = 1; 
-    for pi = 1:HFBdat.n_pair
-        chanMeans(ti) = mean(HFBdat.regRes2(1,HFBdat.retTim>=1000 & HFBdat.retTim<=2000,pi), 'all'); 
+    for ppi = 1:HFBdat.n_pair
+        chanMeans(ti) = mean(HFBdat.regRes2(1,HFBdat.retTim>=1000 & HFBdat.retTim<=2000,ppi), 'all'); 
         hmSort(ti) = 1; 
         ti = ti+1; 
-        chanMeans(ti) = mean(HFBdat.regRes2(2,HFBdat.retTim>=1000 & HFBdat.retTim<=2000,pi), 'all'); 
+        chanMeans(ti) = mean(HFBdat.regRes2(2,HFBdat.retTim>=1000 & HFBdat.retTim<=2000,ppi), 'all'); 
         hmSort(ti) = 0; 
         ti = ti+1; 
        
@@ -368,8 +409,8 @@ for ii = 1:length(statFiles)
     scatter(randVals, PLM, 10,  'blue')
     scatter(randVals+1, PLH, 10, 'blue')
     
-    for pi = 1:length(PLH)
-        plot([0+randVals(pi),1+randVals(pi)], [PLM(pi),PLH(pi)], 'color', [.2,.1,.5,.2], 'linewidth', .5 )
+    for ppi = 1:length(PLH)
+        plot([0+randVals(ppi),1+randVals(ppi)], [PLM(ppi),PLH(ppi)], 'color', [.2,.1,.5,.2], 'linewidth', .5 )
         
 
     end
@@ -401,9 +442,9 @@ for ii = 1:length(statFiles)
     end
     ylabel("HFB amplitude (z-score)")
 
-
-
-    export_fig(join(['G:\My Drive\Johnson\MTL_PFC_networkFigs\FinalizedHFB\' 'HFB_' HFBdat.aggTargs(HFBdat.reg1).lab '.jpg'],''), '-r300')
+    end
+    set(gcf, 'color', 'w')
+    export_fig(join(['G:\My Drive\Johnson\MTL_PFC_networkFigs\FinalizedHFB\' 'HFB_NEW_' HFBdat.aggTargs(HFBdat.reg1).lab '.jpg'],''), '-r300')
 
 
 

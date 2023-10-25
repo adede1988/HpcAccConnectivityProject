@@ -102,7 +102,7 @@ disp('working on PPC_time')
 
 %NOTE: all trial types must have at least two trials! 
 
-
+if ~isfield(pairDat, 'subMissPPC')
 pairDat.toc1 = toc; 
 %ENCODING DATA: ***********************************************************
 if sum(chanDat.use & chanDat.misses)>1 
@@ -112,14 +112,16 @@ end
 pairDat.toc2 = toc; 
 
 save([savFolder '/' fn], 'pairDat'); 
+end
 
+if ~isfield(pairDat, 'subHitPPC')
 if sum(chanDat.use & chanDat.hits)>1
 pairDat.subHitPPC= getChanPPC_time(chanDat.enc, enc2, ...
     frex, numfrex, stds, chanDat.fsample, pairDat.encdi, chanDat.use & chanDat.hits);
 end
 pairDat.toc2 = toc; 
 save([savFolder '/' fn], 'pairDat'); 
-
+end
 % TF
 pow = log10(abs(getChanTrialTF(chanDat.enc, frex, numfrex, stds, chanDat.fsample)).^2); %get power time series for all trials/frequencies
 pow = arrayfun(@(x) myChanZscore(pow(:,:,x), [find(chanDat.enctim>=-450,1), find(chanDat.enctim>=-50,1)] ), 1:size(pow,3), 'UniformOutput',false ); %z-score
@@ -143,20 +145,23 @@ pairDat.toc3 = toc;
 
 
 %RETRIEVAL STIM ONSET: ****************************************************
+if ~isfield(pairDat, 'hit_onPPC')
 if sum(chanDat.retInfo(:,1)==1) > 1
 pairDat.hit_onPPC = getChanPPC_time(chanDat.retOn, ret2, ...
     frex, numfrex, stds, chanDat.fsample, pairDat.ondi, chanDat.retInfo(:,1)==1);
 end
 pairDat.toc4 = toc; 
 save([savFolder '/' fn], 'pairDat'); 
+end
 
+if ~isfield(pairDat, 'miss_onPPC')
 if sum(chanDat.retInfo(:,1)==2) > 1
 pairDat.miss_onPPC = getChanPPC_time(chanDat.retOn, ret2, ...
     frex, numfrex, stds, chanDat.fsample, pairDat.ondi, chanDat.retInfo(:,1)==2);
 end
 pairDat.toc5 = toc; 
 save([savFolder '/' fn], 'pairDat'); 
-
+end
 % TF
 pow = log10(abs(getChanTrialTF(chanDat.retOn, frex, numfrex, stds, chanDat.fsample)).^2); %get power time series for all trials/frequencies
 pow = arrayfun(@(x) myChanZscore(pow(:,:,x), [find(chanDat.retOtim>=-450,1), find(chanDat.retOtim>=-50,1)]), 1:size(pow,3), 'UniformOutput',false ); %z-score

@@ -149,15 +149,15 @@ if ~isfield(chanDat, 'HFB_lat')
         chanDat.encInfo(chanDat.use & chanDat.misses, 4));
 
     %retrieval
-    idx = chanDat.retInfo(:,1)==1;
+    triali = chanDat.retInfo(:,1)==1;
     HFB_lat.retHit = gausLat(chanDat.HFB.hit_on, ...
         chanDat.HFB.onMulTim, ...
-        chanDat.retInfo(idx, 3));
+        chanDat.retInfo(triali, 3));
 
-    idx = chanDat.retInfo(:,1)==2;
+    triali = chanDat.retInfo(:,1)==2;
     HFB_lat.retMiss = gausLat(chanDat.HFB.miss_on, ...
         chanDat.HFB.onMulTim, ...
-        chanDat.retInfo(idx, 3));
+        chanDat.retInfo(triali, 3));
 
     chanDat.HFB_lat = HFB_lat; 
 
@@ -755,6 +755,20 @@ if ~isfield(chanDat, 'TF2')
 else
     disp('TF already done, skipping')
 end
+
+%scratch 
+% figure
+% plotMat =squeeze(chanDat.TF2.hit_on(:,:,3));
+% tim = chanDat.HFB.onMulTim; 
+% [sortHFB, order] = sort(chanDat.HFB_lat.retHit); 
+% imagesc(tim, [], plotMat(:,order)')
+% hold on 
+% plot(sortHFB, [1:length(sortHFB)], 'color', 'red')
+% caxis([-10,10])
+% peaki = arrayfun(@(x) find(tim>=x,1), chanDat.HFB_lat.retHit); 
+% test = cell2mat(arrayfun(@(x) plotMat(peaki(x)-20:peaki(x)+20, x), 1:length(peaki),...
+%     'uniformoutput', false));
+
 
 
 
