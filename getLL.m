@@ -1,5 +1,13 @@
 function LL = getLL(HFB1, pow2, missidx, hitidx, alltim, dstim)
 
+%inputs: 
+%HFB1: time X trials (needs to be at 1000hz)
+%pow2: time X trials (needs to be at 1000hz)
+%missidx: vector of either 1s and 0s coding misses or the indecies
+%           themselves
+%hitidx: as for missidx
+%alltim: the time points at the high sampling rate of the data
+%dstim: down sample time, the time points at which measurement is wanted
 
     %store the trials X offset X time info for each trial type
         missTemp = zeros(length(missidx), 301, length(dstim)); 

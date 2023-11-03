@@ -56,7 +56,11 @@ regions(2) = [];
 %6: time
 %7: subID
 %8: chani
-allResENC = cell(length(chanFiles), 8); 
+%9: TF trials X time LOW THETA HIT
+%10: TF trials X time LOW THETA MISS
+%11: TF trials X time HIGH theta HIT
+%12: TF trials X time HIGH theta MISS
+allResENC = cell(length(chanFiles), 12); 
 allResRET = allResENC; 
 parfor ii = 1:length(chanFiles)
 ii
@@ -66,7 +70,7 @@ if sum(cellfun(@(x) strcmp(x, lab), regions)) == 1  && sum(chanDat.reactiveRes==
     %the label of this channel matches one of the ROIs and is reactive
     
     % ENCODING
-    out = cell(6,1); 
+    out = cell(12,1); 
     out{1} = chanDat.HFB.subHit;  
     out{2} = chanDat.HFB.subMiss; 
     out{3} = chanDat.encInfo(chanDat.use & chanDat.hits, 4); 
@@ -75,6 +79,11 @@ if sum(cellfun(@(x) strcmp(x, lab), regions)) == 1  && sum(chanDat.reactiveRes==
     out{6} = chanDat.HFB.encMulTim; 
     out{7} = chanDat.subID; 
     out{8} = chanDat.chi; 
+    out{9} = mean(chanDat.TF2.subHit(:,:,1:23), 3); 
+    out{10}= mean(chanDat.TF2.subMiss(:,:,1:23), 3); 
+    out{11}= mean(chanDat.TF2.subHit(:,:,24:38), 3); 
+    out{12}= mean(chanDat.TF2.subMiss(:,:,24:38), 3); 
+
 
     allResENC(ii,:) = out; 
 
@@ -88,6 +97,10 @@ if sum(cellfun(@(x) strcmp(x, lab), regions)) == 1  && sum(chanDat.reactiveRes==
     out{6} = chanDat.HFB.onMulTim; 
     out{7} = chanDat.subID; 
     out{8} = chanDat.chi; 
+    out{9} = mean(chanDat.TF2.hit_on(:,:,1:23), 3); 
+    out{10}= mean(chanDat.TF2.miss_on(:,:,1:23), 3); 
+    out{11}= mean(chanDat.TF2.hit_on(:,:,24:38), 3); 
+    out{12}= mean(chanDat.TF2.miss_on(:,:,24:38), 3); 
 
     allResRET(ii,:) = out; 
 
@@ -101,19 +114,19 @@ test = allResENC;
 allResENC = test; 
 allResENC(cellfun(@(x) isempty(x), allResENC(:,1)), :) = []; 
 allResRET(cellfun(@(x) isempty(x), allResRET(:,1)), :) = [];
-%get the latency information and put it into the 9th and 10th columns
+%get the latency information and put it into the 13th and 14th columns
 tim = allResENC{1,6}; 
-allResENC(:,9) = cellfun(@(x,y) gausLat(x, tim, y), allResENC(:,1), allResENC(:,3), ...
+allResENC(:,13) = cellfun(@(x,y) gausLat(x, tim, y), allResENC(:,1), allResENC(:,3), ...
     'uniformoutput', false );
-allResENC(:,10) = cellfun(@(x,y) gausLat(x, tim, y), allResENC(:,2), allResENC(:,4), ...
+allResENC(:,14) = cellfun(@(x,y) gausLat(x, tim, y), allResENC(:,2), allResENC(:,4), ...
     'uniformoutput', false );
 tim = allResRET{1,6}; 
-allResRET(:,9) = cellfun(@(x,y) gausLat(x, tim, y), allResRET(:,1), allResRET(:,3), ...
+allResRET(:,13) = cellfun(@(x,y) gausLat(x, tim, y), allResRET(:,1), allResRET(:,3), ...
     'uniformoutput', false );
-allResRET(:,10) = cellfun(@(x,y) gausLat(x, tim, y), allResRET(:,2), allResRET(:,4), ...
+allResRET(:,14) = cellfun(@(x,y) gausLat(x, tim, y), allResRET(:,2), allResRET(:,4), ...
     'uniformoutput', false );
 
-
+%pulling out .csv file for stats in R
 %chan X stats
 %col 1: subID
 %col 2: chi
@@ -195,6 +208,8 @@ end
 writetable(aovDat, 'R:\MSS\Johnson_Lab\dtf8829\GitHub\HpcAccConnectivityProject\trialLatDat.csv')
 
 
+%% cross correlogram concept didn't really work very well. 
+
 %cross correlograms? I think the cross correlograms don't really work
 %these are not spikes, and areas have different time courses with HFB, so
 %the plots just aren't very compelling. 
@@ -256,14 +271,20 @@ for ri = 1:5
     end
 end
 
+%% key visualizations 
 
 %encoding visualizations 
 % subset by region
 regionalLatencies = cell(9,2); %regions X hit/miss
 for reg = 1:9
 
-    regionalLatencies(reg,:) = visualizeHFBsingleTrialDat(allResENC, reg, regions, 'sub');
-    visualizeHFBsingleTrialDat_RTsort(allResENC, reg, regions, 'sub');
+%     regionalLatencies(reg,:) = visualizeHFBsingleTrialDat(allResENC, reg, regions, 'sub');
+%     visualizeHFBsingleTrialDat_RTsort(allResENC, reg, regions, 'sub');
+    visualizeTFsingleTrialDat(allResENC, reg, regions, 'sub', 1); 
+    visualizeTFsingleTrialDat(allResENC, reg, regions, 'sub', 2);
+    visualizeTFsingleTrialDat(allResRET, reg, regions, 'ret', 1); 
+    visualizeTFsingleTrialDat(allResRET, reg, regions, 'ret', 2);  
+
 end
 
 % make a cool figure with the cumulative distributions of the peak
