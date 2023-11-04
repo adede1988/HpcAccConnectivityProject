@@ -196,8 +196,14 @@ pairDat.toc6 = toc;
 
 
 else %% this file has already been created and run to here, just adding on the leadlag analysis
+    tic
     chanDat2 = load([chanFiles.folder '/' chanFiles.name2]).chanDat; 
     chanDat = load([chanFiles.folder '/' chanFiles.name]).chanDat; 
+    %% get time info set
+chanDat.enctim = [-1000:3500];
+chanDat.enctimRT = [-2000:500];
+chanDat.retOtim = [-1000:3000];
+chanDat.retRtim = [-2000:500];
     pairDat = load([savFolder fn]).pairDat; 
     disp('doing encoding lead lag')
     % encoding lead lag
@@ -284,7 +290,7 @@ else %% this file has already been created and run to here, just adding on the l
 
     
     
-
+toc
 
 
 
