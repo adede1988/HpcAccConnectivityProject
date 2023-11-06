@@ -39,18 +39,18 @@ savFolder = [datPre 'PPC/'];
 chanFiles = load([codePre 'HpcAccConnectivityProject' '/questChanFiles.mat']).chanFiles;
 
 chanFiles(~[chanFiles.targPair]) = []; 
-
+chanFiles(~[chanFiles.bothReact]) = []; 
 
 % % how the partnerChan files were made: 
 % datFolder = [datPre 'CHANDAT']; 
 % chanFiles = dir(datFolder);
 % test = cellfun(@(x) length(x)>0, strfind({chanFiles.name}, '.mat'));
 % chanFiles = chanFiles(test); 
-
-
-%I need a way of assigning the partner channel 
+% 
+% 
+% %I need a way of assigning the partner channel 
 % partnerChans = struct; 
-% pi = 1; 
+% parti = 1; 
 % tic
 % for chan = 1:length(chanFiles)
 %    
@@ -65,16 +65,18 @@ chanFiles(~[chanFiles.targPair]) = [];
 %     
 %     curi = find(cellfun(@(x) strcmp(x, chanFiles(chan).name), {subFiles.name}));
 %     if curi <length(subFiles)
-%     for chan2 = curi+1:length(subFiles)
-%         partnerChans(pi).name = chanFiles(chan).name; 
-%         partnerChans(pi).folder = [chanFiles(chan).folder '/CHANRAW']; 
-%         partnerChans(pi).name2 = subFiles(chan2).name; 
-%         partnerChans(pi).folder2 = subFiles(chan2).folder; 
-%         pi = pi+1; 
-%         if mod(pi,1000)==0
-%             disp(pi)
+%     for chan2 = 1:length(subFiles)
+%         if chan2 ~= chan
+%         partnerChans(parti).name = chanFiles(chan).name; 
+%         partnerChans(parti).folder = [chanFiles(chan).folder '/CHANRAW']; 
+%         partnerChans(parti).name2 = subFiles(chan2).name; 
+%         partnerChans(parti).folder2 = subFiles(chan2).folder; 
+%         parti = parti+1; 
+%         if mod(parti,1000)==0
+%             disp(parti)
 %             toc
 %             tic
+%         end
 %         end
 %     end
 %     end
@@ -83,91 +85,117 @@ chanFiles(~[chanFiles.targPair]) = [];
 % 
 % save([codePre 'HpcAccConnectivityProject' '/localChanFiles.mat'], 'partnerChans')
 % 
-% partnerChans = struct; 
-% pi = 1; 
-% tic
-% for chan = 1:length(chanFiles)
-%    
-%     curChan = chanFiles(chan).name; 
-%     subID = split(curChan, '_');
+% % partnerChans = struct; 
+% % parti = 1; 
+% % tic
+% % for chan = 1:length(chanFiles)
+% %    
+% %     curChan = chanFiles(chan).name; 
+% %     subID = split(curChan, '_');
+% % 
+% %     subID = subID{2}; 
+% %     
+% %     subFiles = dir([datPre 'CHANDAT/CHANRAW']);
+% %     test = cellfun(@(x) length(x)>0, strfind({subFiles.name}, subID)); 
+% %     subFiles = subFiles(test);
+% %     
+% %     curi = find(cellfun(@(x) strcmp(x, chanFiles(chan).name), {subFiles.name}));
+% %     if curi < length(subFiles)
+% %     for chan2 = curi+1:length(subFiles)
+% %         partnerChans(parti).name = chanFiles(chan).name; 
+% %         partnerChans(parti).folder = '/projects/p31578/dtf8829/QuestConnect/CHANDAT/CHANRAW'; 
+% %         partnerChans(parti).name2 = subFiles(chan2).name; 
+% %         partnerChans(parti).folder2 = '/projects/p31578/dtf8829/QuestConnect/CHANDAT/CHANRAW'; 
+% %         parti = parti+1; 
+% %         if mod(parti,1000)==0
+% %             disp(parti)
+% %             toc
+% %             tic
+% %         end
+% %     end
+% %     end
+% % 
+% % end
+% % 
+% % save([codePre 'HpcAccConnectivityProject' '/questChanFiles.mat'], 'partnerChans')
 % 
-%     subID = subID{2}; 
+% chanFiles = partnerChans;
+% % select for the target region pairs of interest
+% HFBdat = load('R:\MSS\Johnson_Lab\dtf8829\QuestConnect\HFB_KEY_STATS\hip.mat').HFBdat; 
+% regions = {HFBdat.aggTargs.lab}; 
+% regions(2) = []; 
+% highfrex = linspace(70, 150, 81); 
+% regions([3,4,6,8]) =[]; 
+% 
+% parfor ii = 1:length(chanFiles)
 %     
-%     subFiles = dir([datPre 'CHANDAT/CHANRAW']);
-%     test = cellfun(@(x) length(x)>0, strfind({subFiles.name}, subID)); 
-%     subFiles = subFiles(test);
+% %     if isempty(chanFiles(ii).targPair)
+%     chanDat2 = load([chanFiles(ii).folder '/' chanFiles(ii).name2]).chanDat; 
+% 
+%     chanDat = load([chanFiles(ii).folder '/' chanFiles(ii).name]).chanDat; 
+% 
+%     targ1 = sum(cellfun(@(x) strcmp(chanDat.labels(chanDat.chi, 3),x), regions)) > 0;
+%     targ2 = sum(cellfun(@(x) strcmp(chanDat2.labels(chanDat2.chi, 3),x), regions)) > 0;
+%     if targ1 && targ2
+%         chanFiles(ii).targPair = true; 
+%         chanFiles(ii).chan1Reg = chanDat.labels(chanDat.chi,3); 
+%         chanFiles(ii).chan2Reg = chanDat2.labels(chanDat2.chi,3); 
+%         try
+%         
+%             chanDat = load(['R:/MSS/Johnson_Lab/dtf8829/QuestConnect/CHANDAT/finished/' ...
+%                 chanFiles(ii).name]).chanDat; 
+%             chanDat2 = load(['R:/MSS/Johnson_Lab/dtf8829/QuestConnect/CHANDAT/finished/' ...
+%                 chanFiles(ii).name2]).chanDat; 
 %     
-%     curi = find(cellfun(@(x) strcmp(x, chanFiles(chan).name), {subFiles.name}));
-%     if curi < length(subFiles)
-%     for chan2 = curi+1:length(subFiles)
-%         partnerChans(pi).name = chanFiles(chan).name; 
-%         partnerChans(pi).folder = '/projects/p31578/dtf8829/QuestConnect/CHANDAT/CHANRAW'; 
-%         partnerChans(pi).name2 = subFiles(chan2).name; 
-%         partnerChans(pi).folder2 = '/projects/p31578/dtf8829/QuestConnect/CHANDAT/CHANRAW'; 
-%         pi = pi+1; 
-%         if mod(pi,1000)==0
-%             disp(pi)
-%             toc
-%             tic
+%             if sum(chanDat.reactiveRes==1)>0 && sum(chanDat2.reactiveRes==1)>0
+%                 chanFiles(ii).bothReact = true; 
+%             else
+%                 chanFiles(ii).bothReact = false;
+%             end
+%         catch 
+%             chanDat2 = load([chanFiles(ii).folder '/' chanFiles(ii).name2]).chanDat; 
+%     
+%             chanDat = load([chanFiles(ii).folder '/' chanFiles(ii).name]).chanDat; 
+%             %both in target regions, so check HFB reactivity
+%             HFB1 = getHFB(chanDat, highfrex); 
+%             if sum(reactiveTest_100(HFB1)==1)>0
+%                 HFB2 = getHFB(chanDat2, highfrex);
+%                 if sum(reactiveTest_100(HFB2)==1)>0
+%                     
+%                 else
+%                     chanFiles(ii).bothReact = false; 
+%                 end
+%             else
+%                 chanFiles(ii).bothReact = false; 
+%             end
 %         end
+%     else
+%         chanFiles(ii).targPair = false; 
+%         chanFiles(ii).chan1Reg = chanDat.labels(chanDat.chi,3); 
+%         chanFiles(ii).chan2Reg = chanDat2.labels(chanDat2.chi,3); 
+%         chanFiles(ii).bothReact = false;
+% 
+% %         disp(['non targ Tim: ' num2str(round(toc, 2))])
 %     end
-%     end
+%         tims(ii) = toc; 
+% %     end
+% end
+% toc
+% save([codePre 'HpcAccConnectivityProject' '/localChanFiles.mat'], 'chanFiles')
+% 
+% %make a copy for running on Quest
+% 
+% 
+% tmp = chanFiles; 
+% chanFiles = load([codePre 'HpcAccConnectivityProject' '/localChanFiles.mat']).chanFiles;
+% parfor ii = 1:length(chanFiles)
+%    
+%     chanFiles(ii).folder = '/projects/p31578/dtf8829/QuestConnect/CHANDAT/CHANRAW';
+%     chanFiles(ii).folder2 = '/projects/p31578/dtf8829/QuestConnect/CHANDAT/CHANRAW';
+%   
 % 
 % end
-% 
-% save([codePre 'HpcAccConnectivityProject' '/questChanFiles.mat'], 'partnerChans')
-% % HFBdat = load('R:\MSS\Johnson_Lab\dtf8829\QuestConnect\HFB_KEY_STATS\hip.mat').HFBdat; 
-% % regions = {HFBdat.aggTargs.lab}; 
-% % regions(2) = []; 
-% % highfrex = linspace(70, 150, 81); 
-% % tic
-% % parfor ii = 1:length(chanFiles)
-% %     ii
-% % %     if isempty(chanFiles(ii).targPair)
-% %     chanDat2 = load([chanFiles(ii).folder '/' chanFiles(ii).name2]).chanDat; 
-% % 
-% %     chanDat = load([chanFiles(ii).folder '/' chanFiles(ii).name]).chanDat; 
-% % 
-% %     targ1 = sum(cellfun(@(x) strcmp(chanDat.labels(chanDat.chi, 3),x), regions)) > 0;
-% %     targ2 = sum(cellfun(@(x) strcmp(chanDat2.labels(chanDat2.chi, 3),x), regions)) > 0;
-% %     if targ1 && targ2
-% %         chanFiles(ii).targPair = true; 
-% %         chanFiles(ii).chan1Reg = chanDat.labels(chanDat.chi,3); 
-% %         chanFiles(ii).chan2Reg = chanDat2.labels(chanDat2.chi,3); 
-% % %         %both in target regions, so check HFB reactivity
-% % %         HFB1 = getHFB(chanDat, highfrex); 
-% % %         if sum(reactiveTest_100(HFB1)==1)>0
-% % %             HFB2 = getHFB(chanDat2, highfrex);
-% % %             if sum(reactiveTest_100(HFB2)==1)>0
-% % %                 chanFiles(ii).bothReact = true; 
-% % %             else
-% % %                 chanFiles(ii).bothReact = false; 
-% % %             end
-% % %         else
-% % %             chanFiles(ii).bothReact = false; 
-% % %         end
-% %     else
-% %         chanFiles(ii).targPair = false; 
-% %         chanFiles(ii).chan1Reg = chanDat.labels(chanDat.chi,3); 
-% %         chanFiles(ii).chan2Reg = chanDat2.labels(chanDat2.chi,3); 
-% %     end
-% %         
-% % %     end
-% % end
-% % toc
-% % save([codePre 'HpcAccConnectivityProject' '/localChanFiles.mat'], 'chanFiles')
-% % 
-% % tmp = chanFiles; 
-% % chanFiles = load([codePre 'HpcAccConnectivityProject' '/questChanFiles.mat']).partnerChans;
-% % parfor ii = 1:length(chanFiles)
-% %     
-% %     chanFiles(ii).targPair = tmp(ii).targPair; 
-% %     chanFiles(ii).chan1Reg = tmp(ii).chan1Reg; 
-% %     chanFiles(ii).chan2Reg = tmp(ii).chan2Reg; 
-% % 
-% % 
-% % end
-% % save([codePre 'HpcAccConnectivityProject' '/questChanFiles.mat'], 'chanFiles')
+% save([codePre 'HpcAccConnectivityProject' '/questChanFiles.mat'], 'chanFiles')
 
 %% run the pipeline
 

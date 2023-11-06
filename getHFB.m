@@ -56,7 +56,7 @@ function HFB = getHFB(chanDat, highfrex)
     HFB.encRTFrex = mulFrex; 
     %clean up
     clear pow
-    disp('encoding done')
+%     disp('encoding done')
 
 
     %RETRIEVAL STIM ONSET: ****************************************************
@@ -81,7 +81,7 @@ function HFB = getHFB(chanDat, highfrex)
     HFB.onFrex = mulFrex; 
     %clean up
     clear pow
-    disp('retrieval 1 done')
+%     disp('retrieval 1 done')
     
     %RETRIEVAL RESPONSE LOCKED: ***********************************************
     chanDat.HFBretRT = 0; 
@@ -107,7 +107,7 @@ function HFB = getHFB(chanDat, highfrex)
     HFB.rtFrex = mulFrex; 
     %clean up
     clear pow
-    disp('retrieval 2 done')
+%     disp('retrieval 2 done')
 
 
     end
