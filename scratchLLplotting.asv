@@ -49,11 +49,6 @@ end
 chanFiles2 = load([codePre 'HpcAccConnectivityProject' '/questChanFiles.mat']).chanFiles;
 chanFiles2(~[chanFiles2.targPair]) = []; 
 chanFiles2(~[chanFiles2.bothReact]) = []; 
-parfor ii = 1:length(chanFiles)
-    chanFiles2(ii).error = chanFiles(ii).error; 
-end
-chanFiles = chanFiles2; 
-save([codePre 'HpcAccConnectivityProject' '/questChanFiles.mat'], 'chanFiles')
 
 
 %% Get key information by region pair

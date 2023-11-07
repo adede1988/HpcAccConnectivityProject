@@ -39,7 +39,7 @@ parfor sub = 1:37
 end
 
 
-%% loop over channels and get single channel HFB responses
+%% loop over channels and get single trial level data for HFB and TF
 
 HFBdat = load('R:\MSS\Johnson_Lab\dtf8829\QuestConnect\HFB_KEY_STATS\hip.mat').HFBdat; 
 regions = {HFBdat.aggTargs.lab}; 

@@ -40,7 +40,7 @@ chanFiles = load([codePre 'HpcAccConnectivityProject' '/questChanFiles.mat']).ch
 
 chanFiles(~[chanFiles.targPair]) = []; 
 chanFiles(~[chanFiles.bothReact]) = []; 
-
+chanFiles([chanFiles.error]==0) = []; 
 % % how the partnerChan files were made: 
 % datFolder = [datPre 'CHANDAT']; 
 % chanFiles = dir(datFolder);
