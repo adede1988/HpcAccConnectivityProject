@@ -26,7 +26,7 @@ chanFiles = chanFiles(test);
 
 
 %% loop over channels and split saved files by output variables
-
+% THIS CODE IS NOT USED ANYMORE
 targVariable = 'TF';
 noneFlag = true; 
 errorChans = cell(37,1); 
@@ -60,17 +60,45 @@ regions(2) = [];
 %10: TF trials X time LOW THETA MISS
 %11: TF trials X time HIGH theta HIT
 %12: TF trials X time HIGH theta MISS
-allResENC = cell(length(chanFiles), 12); 
+%13: HFB latency hit
+%14: HFB latency miss
+%15: low Theta latency hit
+%16: low Theta latency miss
+%17: high Theta latency hit
+%18: high Theta latency miss
+%19: d
+%20: acc
+%21: age
+allResENC = cell(length(chanFiles), 21); 
 allResRET = allResENC; 
 parfor ii = 1:length(chanFiles)
 ii
 chanDat = load([chanFiles(ii).folder '/' chanFiles(ii).name]).chanDat; 
 lab = chanDat.labels{chanDat.chi,3}; 
+
+T = sum(chanDat.retInfo(:,1)==1 | chanDat.retInfo(:,1)==2); 
+Hr = sum(chanDat.retInfo(:,1)==1) / T; 
+T = sum(chanDat.retInfo(:,1)==3 | chanDat.retInfo(:,1)==4); 
+F = sum(chanDat.retInfo(:,1)==4);
+if F == 0
+    acc =  Hr - F/T; 
+    F = 1; 
+else
+    acc =  Hr - F/T; 
+end
+Fr = F / T; 
+
+d = norminv(Hr) - norminv(Fr); 
+
+if acc>0 && chanDat.age > 13 %memory and age 
+
+
+
 if sum(cellfun(@(x) strcmp(x, lab), regions)) == 1  && sum(chanDat.reactiveRes==1)>0 
     %the label of this channel matches one of the ROIs and is reactive
     
     % ENCODING
-    out = cell(12,1); 
+    out = cell(21,1); 
     out{1} = chanDat.HFB.subHit;  
     out{2} = chanDat.HFB.subMiss; 
     out{3} = chanDat.encInfo(chanDat.use & chanDat.hits, 4); 
@@ -83,12 +111,15 @@ if sum(cellfun(@(x) strcmp(x, lab), regions)) == 1  && sum(chanDat.reactiveRes==
     out{10}= mean(chanDat.TF2.subMiss(:,:,1:23), 3); 
     out{11}= mean(chanDat.TF2.subHit(:,:,24:38), 3); 
     out{12}= mean(chanDat.TF2.subMiss(:,:,24:38), 3); 
+    out{19}= d; 
+    out{20} = acc; 
+    out{21} = chanDat.age;
 
 
     allResENC(ii,:) = out; 
 
     % RETRIEVAL
-    out = cell(6,1); 
+    out = cell(21,1); 
     out{1} = chanDat.HFB.hit_on;  %pow(:, chanDat.use & chanDat.hits); 
     out{2} = chanDat.HFB.miss_on; %pow(:, chanDat.use & chanDat.misses);
     out{3} = chanDat.retInfo(chanDat.retInfo(:,1)==1, 3); 
@@ -101,11 +132,14 @@ if sum(cellfun(@(x) strcmp(x, lab), regions)) == 1  && sum(chanDat.reactiveRes==
     out{10}= mean(chanDat.TF2.miss_on(:,:,1:23), 3); 
     out{11}= mean(chanDat.TF2.hit_on(:,:,24:38), 3); 
     out{12}= mean(chanDat.TF2.miss_on(:,:,24:38), 3); 
+    out{19}= d; 
+    out{20} = acc; 
+    out{21} = chanDat.age;
 
     allResRET(ii,:) = out; 
 
 end
-
+end
 
 end
 
@@ -114,16 +148,39 @@ test = allResENC;
 allResENC = test; 
 allResENC(cellfun(@(x) isempty(x), allResENC(:,1)), :) = []; 
 allResRET(cellfun(@(x) isempty(x), allResRET(:,1)), :) = [];
-%get the latency information and put it into the 13th and 14th columns
+%get the latency information and put it into the 13th and 14th columns HFB
+%+ THETA power latency cols 15-18 are low frequency latencies
 tim = allResENC{1,6}; 
 allResENC(:,13) = cellfun(@(x,y) gausLat(x, tim, y), allResENC(:,1), allResENC(:,3), ...
     'uniformoutput', false );
 allResENC(:,14) = cellfun(@(x,y) gausLat(x, tim, y), allResENC(:,2), allResENC(:,4), ...
     'uniformoutput', false );
+%low frequency
+allResENC(:,15) = cellfun(@(x,y) gausLat(x, tim, y), allResENC(:,9), allResENC(:,3), ...
+    'uniformoutput', false );
+allResENC(:,16) = cellfun(@(x,y) gausLat(x, tim, y), allResENC(:,10), allResENC(:,4), ...
+    'uniformoutput', false );
+%high frequency
+allResENC(:,17) = cellfun(@(x,y) gausLat(x, tim, y), allResENC(:,11), allResENC(:,3), ...
+    'uniformoutput', false );
+allResENC(:,18) = cellfun(@(x,y) gausLat(x, tim, y), allResENC(:,12), allResENC(:,4), ...
+    'uniformoutput', false );
+
+
 tim = allResRET{1,6}; 
 allResRET(:,13) = cellfun(@(x,y) gausLat(x, tim, y), allResRET(:,1), allResRET(:,3), ...
     'uniformoutput', false );
 allResRET(:,14) = cellfun(@(x,y) gausLat(x, tim, y), allResRET(:,2), allResRET(:,4), ...
+    'uniformoutput', false );
+%low frequency
+allResRET(:,15) = cellfun(@(x,y) gausLat(x, tim, y), allResRET(:,9), allResRET(:,3), ...
+    'uniformoutput', false );
+allResRET(:,16) = cellfun(@(x,y) gausLat(x, tim, y), allResRET(:,10), allResRET(:,4), ...
+    'uniformoutput', false );
+%high frequency
+allResRET(:,17) = cellfun(@(x,y) gausLat(x, tim, y), allResRET(:,11), allResRET(:,3), ...
+    'uniformoutput', false );
+allResRET(:,18) = cellfun(@(x,y) gausLat(x, tim, y), allResRET(:,12), allResRET(:,4), ...
     'uniformoutput', false );
 
 %pulling out .csv file for stats in R
@@ -139,7 +196,9 @@ allResRET(:,14) = cellfun(@(x,y) gausLat(x, tim, y), allResRET(:,2), allResRET(:
 aovDat = table;
 aovDat.subID = repmat("askj", 75000,1); 
 aovDat.chi = zeros(75000,1); 
-aovDat.peakLat = zeros(75000,1); 
+aovDat.peakLatHFB = zeros(75000,1); 
+aovDat.peakLatLow = zeros(75000,1); 
+aovDat.peakLatHigh = zeros(75000,1); 
 aovDat.encRet = repmat("askj", 75000,1); 
 aovDat.hitMiss = repmat("askj", 75000,1); 
 aovDat.reg = repmat("askj", 75000,1); 
@@ -151,26 +210,30 @@ aovi = 1;
 for ii = 1:length(allResENC)
     ii
     %hits
-    L = length(allResENC{ii,9});
+    L = length(allResENC{ii,13});
     aovDat.subID(aovi:aovi+L-1) = allResENC{ii,7};
     aovDat.chi(aovi:aovi+L-1) = allResENC{ii,8};
-    aovDat.peakLat(aovi:aovi+L-1) = allResENC{ii,9};
+    aovDat.peakLatHFB(aovi:aovi+L-1) = allResENC{ii,13};
+    aovDat.peakLatLow(aovi:aovi+L-1) = allResENC{ii,15};
+    aovDat.peakLatHigh(aovi:aovi+L-1) = allResENC{ii,17};
     aovDat.encRet(aovi:aovi+L-1) = 'Enc';
     aovDat.hitMiss(aovi:aovi+L-1) = 'Hit';
     aovDat.reg(aovi:aovi+L-1) = allResENC{ii,5};
     aovDat.RT(aovi:aovi+L-1) = allResENC{ii,3};
-    aovDat.adjTime(aovi:aovi+L-1) = aovDat.peakLat(aovi:aovi+L-1) ./ aovDat.RT(aovi:aovi+L-1);
+%     aovDat.adjTime(aovi:aovi+L-1) = aovDat.peakLat(aovi:aovi+L-1) ./ aovDat.RT(aovi:aovi+L-1);
     %misses
     aovi = aovi + L; 
-    L = length(allResENC{ii,10});
+    L = length(allResENC{ii,14});
     aovDat.subID(aovi:aovi+L-1) = allResENC{ii,7};
     aovDat.chi(aovi:aovi+L-1) = allResENC{ii,8};
-    aovDat.peakLat(aovi:aovi+L-1) = allResENC{ii,10};
+    aovDat.peakLatHFB(aovi:aovi+L-1) = allResENC{ii,14};
+    aovDat.peakLatLow(aovi:aovi+L-1) = allResENC{ii,16};
+    aovDat.peakLatHigh(aovi:aovi+L-1) = allResENC{ii,18};
     aovDat.encRet(aovi:aovi+L-1) = 'Enc';
     aovDat.hitMiss(aovi:aovi+L-1) = 'Miss';
     aovDat.reg(aovi:aovi+L-1) = allResENC{ii,5};
     aovDat.RT(aovi:aovi+L-1) = allResENC{ii,4};
-    aovDat.adjTime(aovi:aovi+L-1) = aovDat.peakLat(aovi:aovi+L-1) ./ aovDat.RT(aovi:aovi+L-1);
+%     aovDat.adjTime(aovi:aovi+L-1) = aovDat.peakLat(aovi:aovi+L-1) ./ aovDat.RT(aovi:aovi+L-1);
 
     aovi = aovi + L; 
 
@@ -180,32 +243,50 @@ end
 for ii = 1:length(allResRET)
     ii
     %hits retrieval
-    L = length(allResRET{ii,9});
+    L = length(allResRET{ii,13});
     aovDat.subID(aovi:aovi+L-1) = allResRET{ii,7};
     aovDat.chi(aovi:aovi+L-1) = allResRET{ii,8};
-    aovDat.peakLat(aovi:aovi+L-1) = allResRET{ii,9};
+    aovDat.peakLatHFB(aovi:aovi+L-1) = allResRET{ii,13};
+    aovDat.peakLatLow(aovi:aovi+L-1) = allResRET{ii,15};
+    aovDat.peakLatHigh(aovi:aovi+L-1) = allResRET{ii,17};
     aovDat.encRet(aovi:aovi+L-1) = 'Ret';
     aovDat.hitMiss(aovi:aovi+L-1) = 'Hit';
     aovDat.reg(aovi:aovi+L-1) = allResRET{ii,5};
     aovDat.RT(aovi:aovi+L-1) = allResRET{ii,3};
-    aovDat.adjTime(aovi:aovi+L-1) = aovDat.peakLat(aovi:aovi+L-1) ./ aovDat.RT(aovi:aovi+L-1);
+%     aovDat.adjTime(aovi:aovi+L-1) = aovDat.peakLat(aovi:aovi+L-1) ./ aovDat.RT(aovi:aovi+L-1);
     %misses retrieval
     aovi = aovi + L; 
-    L = length(allResRET{ii,10});
+    L = length(allResRET{ii,14});
     aovDat.subID(aovi:aovi+L-1) = allResRET{ii,7};
     aovDat.chi(aovi:aovi+L-1) = allResRET{ii,8};
-    aovDat.peakLat(aovi:aovi+L-1) = allResRET{ii,10};
+    aovDat.peakLatHFB(aovi:aovi+L-1) = allResRET{ii,14};
+    aovDat.peakLatLow(aovi:aovi+L-1) = allResRET{ii,16};
+    aovDat.peakLatHigh(aovi:aovi+L-1) = allResRET{ii,18};
     aovDat.encRet(aovi:aovi+L-1) = 'Ret';
     aovDat.hitMiss(aovi:aovi+L-1) = 'Miss';
     aovDat.reg(aovi:aovi+L-1) = allResRET{ii,5};
     aovDat.RT(aovi:aovi+L-1) = allResRET{ii,4};
-    aovDat.adjTime(aovi:aovi+L-1) = aovDat.peakLat(aovi:aovi+L-1) ./ aovDat.RT(aovi:aovi+L-1);
+%     aovDat.adjTime(aovi:aovi+L-1) = aovDat.peakLat(aovi:aovi+L-1) ./ aovDat.RT(aovi:aovi+L-1);
 
      aovi = aovi + L; 
 
 end
 
 writetable(aovDat, 'R:\MSS\Johnson_Lab\dtf8829\GitHub\HpcAccConnectivityProject\trialLatDat.csv')
+
+
+%% make stats packages ready for Quest analysis
+
+for reg = 1:9
+
+    visualizeHFBsingleTrialDat(allResENC, reg, regions, 'sub');
+    visualizeHFBsingleTrialDat(allResRET, reg, regions, 'ret');
+%     visualizeTFsingleTrialDat(allResENC, reg, regions, 'sub', 1); 
+%     visualizeTFsingleTrialDat(allResENC, reg, regions, 'sub', 2);
+%     visualizeTFsingleTrialDat(allResRET, reg, regions, 'ret', 1); 
+%     visualizeTFsingleTrialDat(allResRET, reg, regions, 'ret', 2);  
+
+end
 
 
 %% cross correlogram concept didn't really work very well. 

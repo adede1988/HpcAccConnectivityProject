@@ -1,4 +1,8 @@
 function latency = visualizeHFBsingleTrialDat(allRes, reg, regions, phase)
+    statInfo = struct; %output for stats
+    statInfo.reg = regions{reg}; 
+    statInfo.regi = reg; 
+    statInfo.phase = phase; 
 
     %create vector to identify the data for the target region 
     test = cellfun(@(x) strcmp(x, regions{reg}), {allRes{:,5}});
@@ -7,69 +11,158 @@ function latency = visualizeHFBsingleTrialDat(allRes, reg, regions, phase)
     misses = []; 
     hitRT = [];
     missRT = []; 
+    hitChi = []; 
+    missChi = []; 
+    hitTriali = []; 
+    missTriali = []; 
+    hitSub = cell(5000, 1); 
+    missSub = cell(5000,1); 
+    hitAge = []; 
+    hitAcc = []; 
+    hitd = []; 
+    missAge = [];
+    missAcc = [];
+    missd = [];
+    hi = 1; 
+    mi = 1; 
+
+
     for ii = 1:size(curReg,1)
         hits = [hits, curReg{ii,1}];
         hitRT = [hitRT; curReg{ii, 3}]; 
         misses = [misses, curReg{ii,2}];
         missRT = [missRT; curReg{ii, 4}]; 
-    end
-    tim = curReg{1,6}; 
-
-    eliminate = []; 
-    latency = []; 
-    
-    %scale within the 0 to RT time period to make 0 to 1
-    for tt = 1:size(hits,2)
-        if hitRT(tt)<100 || hitRT(tt)>3000
-            eliminate = [eliminate, tt]; 
         
-        else
-            trial = hits(:,tt); 
-           
-            test = gausswin(11);
-            test = test ./ sum(test); 
-            trial = [zeros(5,1); trial; zeros(5,1)];
-            smoothT = conv(trial, test, 'valid'); 
-            [~, idx] = max(smoothT(find(tim==0):find(tim>hitRT(tt),1))); 
-            testTim = tim(find(tim==0):find(tim>hitRT(tt),1));
-           
-            latency = [latency, testTim(idx)];
 
-
-
+        L = size(curReg{ii,1},2);
+        hitChi = [hitChi; repmat(curReg{ii, 8}, L, 1) ]; 
+        hitAge = [hitAge; repmat(curReg{ii, 21}, L, 1) ]; 
+        hitAcc = [hitAcc; repmat(curReg{ii, 20}, L, 1) ]; 
+        hitd = [hitd; repmat(curReg{ii, 19}, L, 1) ]; 
+        hitTriali = [hitTriali; [1:L]' ]; 
+        for jj = 0:L-1
+            hitSub{hi+jj} = curReg{ii, 7}; 
         end
-    end
+        hi = hi + L;
+        L1 = L; 
 
-
-    eliminate2 = []; 
-    latency2 = []; 
-    for tt = 1:length(missRT)
-        if missRT(tt)<100 || missRT(tt)>3000
-            eliminate2 = [eliminate2, tt]; 
-        else
-            trial = misses(:,tt); 
-            test = gausswin(11);
-            test = test ./ sum(test); 
-            trial = [zeros(5,1); trial; zeros(5,1)];
-            smoothT = conv(trial, test, 'valid'); 
-            [~, idx] = max(smoothT(find(tim==0):find(tim>missRT(tt),1))); 
-            testTim = tim(find(tim==0):find(tim>missRT(tt),1));
-            latency2 = [latency2,  testTim(idx)];
-
-
-
+        L = size(curReg{ii,2},2);
+        missChi = [missChi; repmat(curReg{ii, 8}, L, 1) ];
+        missAge = [missAge; repmat(curReg{ii, 21}, L, 1) ];
+        missAcc = [missAcc; repmat(curReg{ii, 20}, L, 1) ];
+        missd = [missd; repmat(curReg{ii, 19}, L, 1) ];
+        missTriali = [missTriali; [L1+1:L1+L]' ];
+        for jj = 0:L-1
+            missSub{mi+jj} = curReg{ii, 7}; 
         end
+        mi = mi + L; 
+%         missSub = [missSub; repmat(curReg{ii, 7}, size(curReg{ii,2},2), 1) ];
     end
+    hitSub(hi:end) = []; 
+    missSub(mi:end) = []; 
 
-    
+    tim = curReg{1,6}; 
+   
+
+    %calcualte the latency values
+    latency = gausLat(hits, tim, hitRT);
+    latency2 = gausLat(misses, tim, missRT); 
+
+%     eliminate = []; 
+%     latency = []; 
+%     
+%     %scale within the 0 to RT time period to make 0 to 1
+%     for tt = 1:size(hits,2)
+%         if hitRT(tt)<100 || hitRT(tt)>3000
+%             eliminate = [eliminate, tt]; 
+%         
+%         else
+%             trial = hits(:,tt); 
+%            
+%             test = gausswin(11);
+%             test = test ./ sum(test); 
+%             trial = [zeros(5,1); trial; zeros(5,1)];
+%             smoothT = conv(trial, test, 'valid'); 
+%             [~, idx] = max(smoothT(find(tim==0):find(tim>hitRT(tt),1))); 
+%             testTim = tim(find(tim==0):find(tim>hitRT(tt),1));
+%            
+%             latency = [latency, testTim(idx)];
+% 
+% 
+% 
+%         end
+%     end
+% 
+% 
+%     eliminate2 = []; 
+%     latency2 = []; 
+%     for tt = 1:length(missRT)
+%         if missRT(tt)<100 || missRT(tt)>3000
+%             eliminate2 = [eliminate2, tt]; 
+%         else
+%             trial = misses(:,tt); 
+%             test = gausswin(11);
+%             test = test ./ sum(test); 
+%             trial = [zeros(5,1); trial; zeros(5,1)];
+%             smoothT = conv(trial, test, 'valid'); 
+%             [~, idx] = max(smoothT(find(tim==0):find(tim>missRT(tt),1))); 
+%             testTim = tim(find(tim==0):find(tim>missRT(tt),1));
+%             latency2 = [latency2,  testTim(idx)];
+% 
+% 
+% 
+%         end
+%     end
+
+    eliminate = latency == -1;
+    eliminate2 = latency2 == -1; 
+
+    latency(eliminate) = []; 
+    latency2(eliminate2) = []; 
     hits(:,eliminate) = [];
     hitRT(eliminate) = []; 
     misses(:,eliminate2) = []; 
     missRT(eliminate2) = []; 
-    
-    
+    hitChi(eliminate) = []; 
+    missChi(eliminate2) = []; 
+    hitSub(eliminate) = []; 
+    missSub(eliminate2) = []; 
+    hitTriali(eliminate) = []; 
+    missTriali(eliminate2) = []; 
+    hitAge(eliminate) = []; 
+    hitAcc(eliminate) = []; 
+    hitd(eliminate) = []; 
+    missAge(eliminate2) = [];
+    missAcc(eliminate2) = [];
+    missd(eliminate2) = [];
+
+
+
+    statInfo.hits = hits; 
+    statInfo.misses = misses; 
+    statInfo.tim = tim; 
+    statInfo.hitRT = hitRT; 
+    statInfo.missRT = missRT;
+    statInfo.hitLat = latency; 
+    statInfo.missLat = latency2; 
+    statInfo.hitChi = hitChi; 
+    statInfo.missChi = missChi; 
+    statInfo.hitSub = hitSub; 
+    statInfo.missSub = missSub; 
+    statInfo.hitTriali = hitTriali; 
+    statInfo.missTriali = missTriali; 
+    statInfo.hitAge = hitAge; 
+    statInfo.hitAcc = hitAcc ;
+    statInfo.hitd = hitd ;
+    statInfo.missAge = missAge;
+    statInfo.missAcc = missAcc;
+    statInfo.missd = missd;
+
+    save(['R:\MSS\Johnson_Lab\dtf8829\QuestConnect\HFB_singleTrial\' ...
+        statInfo.reg '_' statInfo.phase '.mat'], "statInfo")
     
 
+    
    
    %plotting subsequent all trials
       %plotting subsequent all trials
