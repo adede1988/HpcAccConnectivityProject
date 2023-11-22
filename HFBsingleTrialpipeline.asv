@@ -1,7 +1,7 @@
 function [] = HFBsingleTrialpipeline(statFiles, fileIdx, statType)
 
         HFBdat = load([statFiles(fileIdx).folder '/' statFiles(fileIdx).name]).statInfo; 
-        perms = 5000; 
+        perms = 200; 
     
         %% encoding mean difference
 

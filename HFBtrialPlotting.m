@@ -21,8 +21,8 @@ for ii = 1: length(regFiles)
     fileBits = split(regFiles(ii).name, 'stat'); 
     regFiles(ii).stat = str2num(fileBits{2}(1));
     fileBits = split(fileBits{2}, '_'); 
-    regFiles(ii).reg = fileBits{1}(2:end); 
-    fileBits = split(fileBits{2}, '.'); 
+    regFiles(ii).reg = fileBits{2}; 
+    fileBits = split(fileBits{3}, '.'); 
     regFiles(ii).phase = fileBits{1}; 
 
 
