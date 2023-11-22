@@ -49,7 +49,6 @@ function [] = HFBsingleTrialpipeline(statFiles, fileIdx, statType)
         subID = [HFBdat.hitSub; HFBdat.missSub]; 
         sub_uni = unique(subID); 
         chanUni = unique(chanID); 
-        hmSort = [ones(length(chanUni),1); zeros(length(chanUni),1)]; 
 
         
 
@@ -84,6 +83,8 @@ function [] = HFBsingleTrialpipeline(statFiles, fileIdx, statType)
         hitVals(eliminate,:) = []; 
         missVals(eliminate, :) = []; 
         sub_out(eliminate) = []; 
+        chanUni(eliminate) = []; 
+        hmSort = [ones(length(chanUni),1); zeros(length(chanUni),1)]; 
 
 
 
@@ -221,6 +222,8 @@ function [] = HFBsingleTrialpipeline(statFiles, fileIdx, statType)
         hitVals(eliminate,:) = []; 
         missVals(eliminate, :) = []; 
         sub_out(eliminate) = []; 
+        chanUni(eliminate) = []; 
+        hmSort = [ones(length(chanUni),1); zeros(length(chanUni),1)]; 
 
 % 
 %         for chan = 1:length(chanUni)
