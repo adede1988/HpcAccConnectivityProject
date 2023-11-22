@@ -103,7 +103,7 @@ function [] = HFBsingleTrialpipeline(statFiles, fileIdx, statType)
                 'VariableNames', {'HFB', 'hitMiss', 'chan', 'sub'}); 
            
             lme = fitlme(modDat, ...
-                'HFB ~ hitMiss + (1|chan:sub)');
+                'HFB ~ hitMiss + (1|chan)');
             tVals(ti) = lme.Coefficients(2,4); 
     
         end 
@@ -146,7 +146,7 @@ function [] = HFBsingleTrialpipeline(statFiles, fileIdx, statType)
                     'VariableNames', {'HFB', 'hitMiss', 'chan', 'sub'}); 
                
                 lme = fitlme(modDat, ...
-                    'HFB ~ hitMiss + (1|chan:sub)');
+                    'HFB ~ hitMiss + (1|chan)');
                 slice(ti) = lme.Coefficients(2,4); 
                      
             end
@@ -255,7 +255,7 @@ function [] = HFBsingleTrialpipeline(statFiles, fileIdx, statType)
                 'VariableNames', {'HFB', 'hitMiss', 'chan', 'sub'}); 
            
             lme = fitlme(modDat, ...
-                'HFB ~ hitMiss + (1|chan:sub)');
+                'HFB ~ hitMiss + (1|chan)');
             tVals(ti) = lme.Coefficients(2,4); 
     
         end 
@@ -303,7 +303,7 @@ function [] = HFBsingleTrialpipeline(statFiles, fileIdx, statType)
                     'VariableNames', {'HFB', 'hitMiss', 'chan', 'sub'}); 
                
                 lme = fitlme(modDat, ...
-                    'HFB ~ hitMiss + (1|chan:sub)');
+                    'HFB ~ hitMiss + (1|chan)');
                 slice(ti) = lme.Coefficients(2,4); 
                      
             end
