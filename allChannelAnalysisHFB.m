@@ -279,8 +279,10 @@ writetable(aovDat, 'R:\MSS\Johnson_Lab\dtf8829\GitHub\HpcAccConnectivityProject\
 
 for reg = 1:9
 
-    visualizeHFBsingleTrialDat(allResENC, reg, regions, 'sub');
-    visualizeHFBsingleTrialDat(allResRET, reg, regions, 'ret');
+%     visualizeHFBsingleTrialDat(allResENC, reg, regions, 'sub');
+%     visualizeHFBsingleTrialDat(allResRET, reg, regions, 'ret');
+%     getTFsingleTrialDat(allResENC, reg, regions, 'sub');
+    getTFsingleTrialDat(allResENC, reg, regions, 'ret');
 %     visualizeTFsingleTrialDat(allResENC, reg, regions, 'sub', 1); 
 %     visualizeTFsingleTrialDat(allResENC, reg, regions, 'sub', 2);
 %     visualizeTFsingleTrialDat(allResRET, reg, regions, 'ret', 1); 
