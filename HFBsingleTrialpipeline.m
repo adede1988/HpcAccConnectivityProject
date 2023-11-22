@@ -65,17 +65,25 @@ function [] = HFBsingleTrialpipeline(statFiles, fileIdx, statType)
         missVals = zeros(length(chanUni), length(tim)); 
         sub_out = cell(size(chanUni)); 
 
+        eliminate = []; 
+
         for chan = 1:length(chanUni)
 
             hitidx = ismember(chanID, chanUni(chan));
             missidx = ismember(chanID2, chanUni(chan)); 
-            hitVals(chan, :) = mean(hitTrials(hitidx, :), 1); 
-            missVals(chan, :) = mean(missTrials(missidx, :), 1); 
-            tmp = subID(hitidx); 
-            sub_out{chan} = tmp{1}; 
-
+            if sum(hitidx)>0 && sum(missidx)>0
+                hitVals(chan, :) = mean(hitTrials(hitidx, :), 1); 
+                missVals(chan, :) = mean(missTrials(missidx, :), 1); 
+                tmp = subID(hitidx); 
+                sub_out{chan} = tmp{1}; 
+            else
+                eliminate = [eliminate, chan]; 
+            end
         end
        
+        hitVals(eliminate,:) = []; 
+        missVals(eliminate, :) = []; 
+        sub_out(eliminate) = []; 
 
 
 
@@ -155,7 +163,7 @@ function [] = HFBsingleTrialpipeline(statFiles, fileIdx, statType)
        HFBdat.p_image = p; 
 
        statInfo = HFBdat; 
-       save([statFiles(fileIdx).folder '/' 'stat' num2str(statType) statFiles(fileIdx).name], 'statInfo', '-v7.3');
+       save([statFiles(fileIdx).folder '/out/' 'stat' num2str(statType) '_' statFiles(fileIdx).name], 'statInfo', '-v7.3');
         
         else
         
@@ -193,16 +201,38 @@ function [] = HFBsingleTrialpipeline(statFiles, fileIdx, statType)
         missVals = zeros(length(chanUni), 41); 
         sub_out = cell(size(chanUni)); 
 
+
+        eliminate = []; 
+
         for chan = 1:length(chanUni)
 
             hitidx = ismember(chanID, chanUni(chan));
             missidx = ismember(chanID2, chanUni(chan)); 
-            hitVals(chan, :) = mean(hitTrials(hitidx, :), 1); 
-            missVals(chan, :) = mean(missTrials(missidx, :), 1); 
-            tmp = subID(hitidx); 
-            sub_out{chan} = tmp{1}; 
-
+            if sum(hitidx)>0 && sum(missidx)>0
+                hitVals(chan, :) = mean(hitTrials(hitidx, :), 1); 
+                missVals(chan, :) = mean(missTrials(missidx, :), 1); 
+                tmp = subID(hitidx); 
+                sub_out{chan} = tmp{1}; 
+            else
+                eliminate = [eliminate, chan]; 
+            end
         end
+       
+        hitVals(eliminate,:) = []; 
+        missVals(eliminate, :) = []; 
+        sub_out(eliminate) = []; 
+
+% 
+%         for chan = 1:length(chanUni)
+% 
+%             hitidx = ismember(chanID, chanUni(chan));
+%             missidx = ismember(chanID2, chanUni(chan)); 
+%             hitVals(chan, :) = mean(hitTrials(hitidx, :), 1); 
+%             missVals(chan, :) = mean(missTrials(missidx, :), 1); 
+%             tmp = subID(hitidx); 
+%             sub_out{chan} = tmp{1}; 
+% 
+%         end
        
 
 
@@ -295,7 +325,7 @@ function [] = HFBsingleTrialpipeline(statFiles, fileIdx, statType)
 
       
        statInfo = HFBdat; 
-       save([statFiles(fileIdx).folder '/out/' 'stat' num2str(statType) statFiles(fileIdx).name], 'statInfo', '-v7.3');
+       save([statFiles(fileIdx).folder '/out/' 'stat' num2str(statType) '_' statFiles(fileIdx).name], 'statInfo', '-v7.3');
 
         end
 
