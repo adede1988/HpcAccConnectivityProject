@@ -1,7 +1,7 @@
 function [] = HFBsingleTrialpipeline(statFiles, fileIdx, statType)
 
         HFBdat = load([statFiles(fileIdx).folder '/' statFiles(fileIdx).name]).statInfo; 
-        perms = 2000; 
+        perms = 200; 
     
         %% encoding mean difference
 
@@ -15,42 +15,71 @@ function [] = HFBsingleTrialpipeline(statFiles, fileIdx, statType)
         tim(tim<-450 | tim>3000) = []; 
         
 
-
+        
         
         %vector that is 2*numchanels long and has 1s and 0s for hits and
         %misses
-        hmSort = [ones(size(hitVals,1),1); zeros(size(missVals,1),1)];
-        hmSort = hmSort==1; 
+%         hmSort = [ones(size(hitVals,1),1); zeros(size(missVals,1),1)];
+%         hmSort = hmSort==1; 
         
         %random effects variables
-        realID = cellfun(@(x, y, z) [x,'_', num2str(y),'_', num2str(z)], HFBdat.hitSub, ...
-            num2cell(HFBdat.hitTriali), num2cell(HFBdat.hitChi), 'UniformOutput',false);
-
-        realID2 = cellfun(@(x, y, z) [x,'_', num2str(y),'_', num2str(z)], HFBdat.missSub, ...
-            num2cell(HFBdat.missTriali), num2cell(HFBdat.missChi), 'UniformOutput',false);
-
-        realID = [realID; realID2]; 
+%         realID = cellfun(@(x, y, z) [x,'_', num2str(y),'_', num2str(z)], HFBdat.hitSub, ...
+%             num2cell(HFBdat.hitTriali), num2cell(HFBdat.hitChi), 'UniformOutput',false);
+% 
+%         realID2 = cellfun(@(x, y, z) [x,'_', num2str(y),'_', num2str(z)], HFBdat.missSub, ...
+%             num2cell(HFBdat.missTriali), num2cell(HFBdat.missChi), 'UniformOutput',false);
+% 
+%         realID = [realID; realID2]; 
 
         chanID = cellfun(@(x, z) [x,'_', '_', num2str(z)], HFBdat.hitSub, ...
              num2cell(HFBdat.hitChi), 'UniformOutput',false);
 
         chanID2 = cellfun(@(x, z) [x,'_', '_', num2str(z)], HFBdat.missSub, ...
              num2cell(HFBdat.missChi), 'UniformOutput',false);
+% 
+%         trialID = cellfun(@(x, z) [x,'_', '_', num2str(z)], HFBdat.hitSub, ...
+%              num2cell(HFBdat.hitTriali), 'UniformOutput',false);
+% 
+%         trialID2 = cellfun(@(x, z) [x,'_', '_', num2str(z)], HFBdat.missSub, ...
+%              num2cell(HFBdat.missTriali), 'UniformOutput',false);
 
-        trialID = cellfun(@(x, z) [x,'_', '_', num2str(z)], HFBdat.hitSub, ...
-             num2cell(HFBdat.hitTriali), 'UniformOutput',false);
 
-        trialID2 = cellfun(@(x, z) [x,'_', '_', num2str(z)], HFBdat.missSub, ...
-             num2cell(HFBdat.missTriali), 'UniformOutput',false);
-
-
-        chanID = [chanID; chanID2]; 
-        trialID = [trialID; trialID2]; 
+%         chanID = [chanID; chanID2]; 
+%         trialID = [trialID; trialID2]; 
         subID = [HFBdat.hitSub; HFBdat.missSub]; 
         sub_uni = unique(subID); 
+        chanUni = unique(chanID); 
+        hmSort = [ones(length(chanUni),1); zeros(length(chanUni),1)]; 
+
+        
+
 
 
         if statType == 1
+
+
+        %average across trials within channels
+        hitTrials = hitVals; 
+        missTrials = missVals; 
+        hitVals = zeros(length(chanUni), length(tim)); 
+        missVals = zeros(length(chanUni), length(tim)); 
+        sub_out = cell(size(chanUni)); 
+
+        for chan = 1:length(chanUni)
+
+            hitidx = ismember(chanID, chanUni(chan));
+            missidx = ismember(chanID2, chanUni(chan)); 
+            hitVals(chan, :) = mean(hitTrials(hitidx, :), 1); 
+            missVals(chan, :) = mean(missTrials(missidx, :), 1); 
+            tmp = subID(hitidx); 
+            sub_out{chan} = tmp{1}; 
+
+        end
+       
+
+
+
+
         %empty vector that is 1Xtimepoints for t values
         tVals = zeros(size(hitVals,2),1);
     
@@ -60,18 +89,19 @@ function [] = HFBsingleTrialpipeline(statFiles, fileIdx, statType)
 
             curdat = [hitVals(:,ti); missVals(:,ti)];
     
-            modDat = table(curdat, categorical(hmSort), chanID, trialID, subID, realID, ...
-                'VariableNames', {'HFB', 'hitMiss', 'chan', 'trial', 'sub', 'realID'}); 
+            modDat = table(curdat, categorical(hmSort), ...
+                [chanUni; chanUni], [sub_out; sub_out], ...
+                'VariableNames', {'HFB', 'hitMiss', 'chan', 'sub'}); 
            
             lme = fitlme(modDat, ...
-                'HFB ~ hitMiss + (1|chan:sub)  + (1|trial)');
+                'HFB ~ hitMiss + (1|chan:sub)');
             tVals(ti) = lme.Coefficients(2,4); 
     
         end 
         disp('calculated encoding t-vals ')
        
 
-      
+       
         
         tic
         nullTs = squeeze(zeros([size(tVals), perms])); 
@@ -82,32 +112,14 @@ function [] = HFBsingleTrialpipeline(statFiles, fileIdx, statType)
             end
 
             hmShuff = zeros(length(hmSort),1); 
-            for sub = 1:length(sub_uni)
-                curi = find(ismember(subID, sub_uni{sub}));
+            for chan = 1:length(chanUni)
+                curi = find(ismember([chanUni; chanUni], chanUni{chan}));
                 curHM = hmSort(curi);
-                %index into the curi set of current trials indicating
-                %unique trial identifiers 
-                curiUni = unique(cellfun(@(x) find(...
-                    strcmp(x, trialID(curi)),1), ...
-                    trialID(curi))); 
-                
-                %get unique trials
-                trials_uni = trialID(curi(curiUni)); 
-                curHits = sum(curHM(curiUni)); 
-                curMisses = length(curiUni) - curHits;  
 
-                %do the coin flipping!
-                for trial =1:length(trials_uni)
-                    trialidx = find(ismember(trialID,...
-                                            trials_uni{trial}));
-                    if rand() > curHits/(curHits+curMisses) 
-                        hmShuff(trialidx) = 0; 
-                        curMisses = curMisses - 1; 
-                    else
-                        hmShuff(trialidx) = 1; 
-                        curHits = curHits - 1; 
-                    end
-
+                if rand() > .5
+                    hmShuff(curi(1)) = 1; 
+                else
+                    hmShuff(curi(2)) = 1; 
                 end
 
             end
@@ -117,50 +129,21 @@ function [] = HFBsingleTrialpipeline(statFiles, fileIdx, statType)
             slice = nullTs(:,ii); 
             for ti = 1:size(hitVals,2)
                 curdat = [hitVals(:,ti); missVals(:,ti)]; 
-                
-                %shuffle such that the number of hits and misses per channel is preserved
-                %but which individual trials are hits and which are misses
-                %gets shuffled
-                
-                %to do this, I need to loop through channel IDs (sub + chi)
-                %and for each channel id, get its indices across hits and
-                %misses, then shuffle hit miss values across those indices
-%                 hmShuff = zeros(length(hmSort),1); 
-%                 for chan = 1:length(chan_uni)
-%                     curi = find(ismember(chanID, chan_uni{chan}));
-%                     curHits = find(diff(curi)>2); 
-%                     curMisses = length(curi) - curHits; 
-%                     %do the coin flipping!
-%                     for trial =1:length(curi)
-%                         if rand() > curHits/(curHits+curMisses)
-%                             hmShuff(curi(trial)) = 0; 
-%                             curMisses = curMisses - 1; 
-%                         else
-%                             hmShuff(curi(trial)) = 1; 
-%                             curHits = curHits - 1; 
-%                         end
-% 
-%                     end
-% 
-%                 end
-
-                %alternate shuffle: shuffle such that all observations of
-                %each trial are randomly changed to either hit or miss
-                %while maintaining the total number of hits and misses
-                %within an individual person
-                
-
-
-                modDat = table(curdat, categorical(hmShuff), chanID, trialID, subID, realID, ...
-                'VariableNames', {'HFB', 'hitMiss', 'chan', 'trial', 'sub', 'realID'}); 
-           
+         
+                curdat = [hitVals(:,ti); missVals(:,ti)];
+    
+                modDat = table(curdat, categorical(hmShuff), ...
+                    [chanUni; chanUni], [sub_out; sub_out], ...
+                    'VariableNames', {'HFB', 'hitMiss', 'chan', 'sub'}); 
+               
                 lme = fitlme(modDat, ...
-                'HFB ~ hitMiss + (1|chan:sub)  + (1|trial)');
-                slice(ti) = lme.Coefficients(2,4);
+                    'HFB ~ hitMiss + (1|chan:sub)');
+                slice(ti) = lme.Coefficients(2,4); 
+                     
             end
             nullTs(:,ii) = slice; 
         end
-        toc
+        
         
         [h, p, clusterinfo] = cluster_test(tVals, nullTs); 
         disp('calculated encoding permutation ')
@@ -201,86 +184,105 @@ function [] = HFBsingleTrialpipeline(statFiles, fileIdx, statType)
 
 
 
-        tVals = zeros(size(peakHit,2),1);
+
+
+        %average across trials within channels
+        hitTrials = peakHit; 
+        missTrials = peakMiss; 
+        hitVals = zeros(length(chanUni), 41); 
+        missVals = zeros(length(chanUni), 41); 
+        sub_out = cell(size(chanUni)); 
+
+        for chan = 1:length(chanUni)
+
+            hitidx = ismember(chanID, chanUni(chan));
+            missidx = ismember(chanID2, chanUni(chan)); 
+            hitVals(chan, :) = mean(hitTrials(hitidx, :), 1); 
+            missVals(chan, :) = mean(missTrials(missidx, :), 1); 
+            tmp = subID(hitidx); 
+            sub_out{chan} = tmp{1}; 
+
+        end
+       
+
+
+
+
+        %empty vector that is 1Xtimepoints for t values
+        tVals = zeros(size(hitVals,2),1);
     
         %loop on timepoints
-        for ti = 1:size(peakHit,2)
+        for ti = 1:size(hitVals,2)
     
 
-            curdat = [peakHit(:,ti); peakMiss(:,ti)];
+            curdat = [hitVals(:,ti); missVals(:,ti)];
     
-            modDat = table(curdat, categorical(hmSort), chanID, trialID, subID, realID, ...
-                'VariableNames', {'HFB', 'hitMiss', 'chan', 'trial', 'sub', 'realID'}); 
+            modDat = table(curdat, categorical(hmSort), ...
+                [chanUni; chanUni], [sub_out; sub_out], ...
+                'VariableNames', {'HFB', 'hitMiss', 'chan', 'sub'}); 
            
             lme = fitlme(modDat, ...
-                'HFB ~ hitMiss + (1|chan:sub)  + (1|trial)');
+                'HFB ~ hitMiss + (1|chan:sub)');
             tVals(ti) = lme.Coefficients(2,4); 
     
         end 
         disp('calculated encoding t-vals ')
 
-        tic
+
+
+
+
+        %% fix below here
+
+
+           tic
         nullTs = squeeze(zeros([size(tVals), perms])); 
         for ii = 1:perms
             if(mod(ii, 100)) ==0 
                 disp(['..........................' num2str(ii) ...
                     ' time:' num2str(round(toc/60,1))])
             end
-            
+
             hmShuff = zeros(length(hmSort),1); 
-            for sub = 1:length(sub_uni)
-                curi = find(ismember(subID, sub_uni{sub}));
-                curHM = hmSort(curi);
-                %index into the curi set of current trials indicating
-                %unique trial identifiers 
-                curiUni = unique(cellfun(@(x) find(...
-                    strcmp(x, trialID(curi)),1), ...
-                    trialID(curi))); 
-                
-                %get unique trials
-                trials_uni = trialID(curi(curiUni)); 
-                curHits = sum(curHM(curiUni)); 
-                curMisses = length(curiUni) - curHits;  
+            for chan = 1:length(chanUni)
+                curi = find(ismember([chanUni; chanUni], chanUni{chan}));
+              
 
-                %do the coin flipping!
-                for trial =1:length(trials_uni)
-                    trialidx = find(ismember(trialID,...
-                                            trials_uni{trial}));
-                    if rand() > curHits/(curHits+curMisses) 
-                        hmShuff(trialidx) = 0; 
-                        curMisses = curMisses - 1; 
-                    else
-                        hmShuff(trialidx) = 1; 
-                        curHits = curHits - 1; 
-                    end
-
+                if rand() > .5
+                    hmShuff(curi(1)) = 1; 
+                else
+                    hmShuff(curi(2)) = 1; 
                 end
 
+
+
             end
 
-            hmShuff = hmShuff ==1; 
+
             
             slice = nullTs(:,ii); 
-            for ti = 1:size(peakHit,2)
-                curdat = [peakHit(:,ti); peakMiss(:,ti)];
-                
-           
-                
-
-
-                 modDat = table(curdat, categorical(hmShuff), chanID, ...
-                     trialID, subID, realID, ...
-                'VariableNames', {'HFB', 'hitMiss', 'chan', ...
-                'trial', 'sub', 'realID'}); 
-           
-            lme = fitlme(modDat, ...
-                'HFB ~ hitMiss + (1|chan:sub)  + (1|trial)');
-             slice(ti) = lme.Coefficients(2,4);
+            for ti = 1:size(hitVals,2)
+             
+                curdat = [hitVals(:,ti); missVals(:,ti)];
+    
+                modDat = table(curdat, categorical(hmShuff), ...
+                    [chanUni; chanUni], [sub_out; sub_out], ...
+                    'VariableNames', {'HFB', 'hitMiss', 'chan', 'sub'}); 
+               
+                lme = fitlme(modDat, ...
+                    'HFB ~ hitMiss + (1|chan:sub)');
+                slice(ti) = lme.Coefficients(2,4); 
+                     
             end
             nullTs(:,ii) = slice; 
-            
         end
-        toc
+        
+
+
+        %% 
+
+
+
         
         [h, p, clusterinfo] = cluster_test(tVals, nullTs); 
         disp('calculated encoding permutation ')
@@ -293,7 +295,7 @@ function [] = HFBsingleTrialpipeline(statFiles, fileIdx, statType)
 
       
        statInfo = HFBdat; 
-       save([statFiles(fileIdx).folder '/' 'stat' num2str(statType) statFiles(fileIdx).name], 'statInfo', '-v7.3');
+       save([statFiles(fileIdx).folder '/out/' 'stat' num2str(statType) statFiles(fileIdx).name], 'statInfo', '-v7.3');
 
         end
 
