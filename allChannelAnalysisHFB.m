@@ -8,6 +8,7 @@
 
 %local paths: 
 
+
 codePre = 'R:\MSS\Johnson_Lab\dtf8829\GitHub\';
 datPre = 'R:\MSS\Johnson_Lab\dtf8829\QuestConnect\';
 
@@ -69,7 +70,8 @@ regions(2) = [];
 %19: d
 %20: acc
 %21: age
-allResENC = cell(length(chanFiles), 21); 
+%22: sex
+allResENC = cell(length(chanFiles), 22); 
 allResRET = allResENC; 
 parfor ii = 1:length(chanFiles)
 ii
@@ -114,6 +116,7 @@ if sum(cellfun(@(x) strcmp(x, lab), regions)) == 1  && sum(chanDat.reactiveRes==
     out{19}= d; 
     out{20} = acc; 
     out{21} = chanDat.age;
+    out{22} = chanDat.sex{1};
 
 
     allResENC(ii,:) = out; 
@@ -135,6 +138,7 @@ if sum(cellfun(@(x) strcmp(x, lab), regions)) == 1  && sum(chanDat.reactiveRes==
     out{19}= d; 
     out{20} = acc; 
     out{21} = chanDat.age;
+    out{22} = chanDat.sex{1};
 
     allResRET(ii,:) = out; 
 
@@ -183,6 +187,21 @@ allResRET(:,17) = cellfun(@(x,y) gausLat(x, tim, y), allResRET(:,11), allResRET(
 allResRET(:,18) = cellfun(@(x,y) gausLat(x, tim, y), allResRET(:,12), allResRET(:,4), ...
     'uniformoutput', false );
 
+%% get demographics 
+subIDs = unique(allResENC(:,7));
+firstidx = cellfun(@(x) find(cellfun(@(y) strcmp(x,y), allResENC(:,7)),1), subIDs );
+ages = allResENC(firstidx, 21);
+sexes = allResENC(firstidx, 22); 
+sum(cellfun(@(x) strcmp(x, 'M'), sexes))
+
+regSums = zeros(9,0); 
+for reg = 1:length(regions)
+    regSums(reg) = ...
+        sum(cellfun(@(x) strcmp(x, regions{reg}), allResENC(:, 5))); 
+end
+
+
+%% 
 %pulling out .csv file for stats in R
 %chan X stats
 %col 1: subID
@@ -282,13 +301,52 @@ for reg = 1:9
 %     visualizeHFBsingleTrialDat(allResENC, reg, regions, 'sub');
 %     visualizeHFBsingleTrialDat(allResRET, reg, regions, 'ret');
 %     getTFsingleTrialDat(allResENC, reg, regions, 'sub');
-    getTFsingleTrialDat(allResENC, reg, regions, 'ret');
+    getTFsingleTrialDat(allResRET, reg, regions, 'ret');
 %     visualizeTFsingleTrialDat(allResENC, reg, regions, 'sub', 1); 
 %     visualizeTFsingleTrialDat(allResENC, reg, regions, 'sub', 2);
 %     visualizeTFsingleTrialDat(allResRET, reg, regions, 'ret', 1); 
 %     visualizeTFsingleTrialDat(allResRET, reg, regions, 'ret', 2);  
 
 end
+
+
+
+%% quick checking of whether each channel is always a theta first or an HFB first channel
+
+%enc/ret X hit/miss X stat: 
+%stat Col1: HFBlat - low lat
+%stat col2: 
+length([-500:100:500])
+allLatProp = zeros(2,2)
+
+for ii = 1:size(allResENC,1)
+
+    if strcmp('mtl', allResENC{ii,5})
+    figure
+    histogram(allResENC{ii,15} - allResENC{ii,13}, [-450:150:450], ...
+        'normalization', 'probability')
+    xline(0, 'linewidth', 2, 'linestyle', '--')
+    xlabel('low freq first                            HFB first')
+    hold on 
+    histogram(allResENC{ii,16} - allResENC{ii,14}, [-450:150:450], ...
+        'normalization', 'probability')
+    end
+
+%13: HFB latency hit
+%14: HFB latency miss
+%15: low Theta latency hit
+%16: low Theta latency miss
+%17: high Theta latency hit
+%18: high Theta latency miss
+
+end
+
+
+
+
+%% really it's all scratch below here
+
+
 
 
 %% cross correlogram concept didn't really work very well. 

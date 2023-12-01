@@ -9,13 +9,14 @@ function HFB = getHFB(chanDat, highfrex)
     %ENCODING DATA: ***********************************************************
     chanDat.HFBenc = 0; %note if it's a reactive channel, assume not
     [pow, mulTim, mulFrex] = getChanMultiTF(chanDat.enc, highfrex, chanDat.fsample, chanDat.enctim, 5); 
+   
     pow = arrayfun(@(x) myChanZscore(pow(:,:,x), [find(mulTim>=-450,1), find(mulTim>=-50,1)] ), 1:size(pow,3), 'UniformOutput',false ); %z-score
     highnumfrex = length(mulFrex); 
     pow = cell2mat(pow); %organize
     pow = reshape(pow, size(pow,1), size(pow,2)/highnumfrex, []); %organize
 
     %take the mean across frequencies
-    pow = squeeze(mean(pow, 3)); 
+    pow = squeeze(mean(pow, 3, 'omitnan')); 
     
    
     %get mean misses: 
@@ -29,7 +30,7 @@ function HFB = getHFB(chanDat, highfrex)
     %ENCODING RT aligned DATA: ***********************************************************
     [pow, mulTim, mulFrex] = getChanMultiTF(chanDat.encRT, highfrex, chanDat.fsample, chanDat.retRtim, 5); 
     %hack for long RT trials: 
-        nanIdx = find(isnan(pow(30,:,1)));
+        nanIdx = find(isnan(pow(100,:,1)));
         if ~isempty(nanIdx)
             for nani = 1:length(nanIdx)
                 pow(:,nanIdx(nani),:) = mean(pow, 2, 'omitnan'); 
@@ -42,7 +43,7 @@ function HFB = getHFB(chanDat, highfrex)
     pow = reshape(pow, size(pow,1), size(pow,2)/highnumfrex, []); %organize
 
     %take the mean across frequencies
-    pow = squeeze(mean(pow, 3)); 
+    pow = squeeze(mean(pow, 3, 'omitnan')); 
 
 
     %get misses RT locked
@@ -62,20 +63,21 @@ function HFB = getHFB(chanDat, highfrex)
     %RETRIEVAL STIM ONSET: ****************************************************
     chanDat.HFBretOn = 0; 
     [pow, mulTim, mulFrex] = getChanMultiTF(chanDat.retOn, highfrex, chanDat.fsample, chanDat.retOtim, 5); 
+ 
     pow = arrayfun(@(x) myChanZscore(pow(:,:,x), [find(mulTim>=-450,1), find(mulTim>=-50,1)] ), 1:size(pow,3), 'UniformOutput',false ); %z-score
     pow = cell2mat(pow); %organize
     highnumfrex = length(mulFrex); 
     pow = reshape(pow, size(pow,1), size(pow,2)/highnumfrex, []); %organize
-
+    pow = squeeze(mean(pow, 3, 'omitnan')); 
     
     %get mean hit: 
-    HFB.hit_on = squeeze(mean(pow(:,chanDat.retInfo(:,1)==1, :), [3])); 
+    HFB.hit_on = pow(:,chanDat.retInfo(:,1)==1, :); 
     %get mean CRs: 
-    HFB.cr_on = squeeze(mean(pow(:,chanDat.retInfo(:,1)==3, :), [3]));
+    HFB.cr_on = pow(:,chanDat.retInfo(:,1)==3, :);
     %get mean miss: 
-    HFB.miss_on = squeeze(mean(pow(:,chanDat.retInfo(:,1)==2, :), [3]));
+    HFB.miss_on = pow(:,chanDat.retInfo(:,1)==2, :);
     %get mean FA: 
-    HFB.fa_on = squeeze(mean(pow(:,chanDat.retInfo(:,1)==4, :), [3]));
+    HFB.fa_on = pow(:,chanDat.retInfo(:,1)==4, :);
     %multi taper stats    
     HFB.onMulTim = mulTim; 
     HFB.onFrex = mulFrex; 
@@ -91,17 +93,17 @@ function HFB = getHFB(chanDat, highfrex)
     highnumfrex = length(mulFrex); 
     pow = reshape(pow, size(pow,1), size(pow,2)/highnumfrex, []); %organize
     %take the mean across trials and frequencies to get a test timeseries
-   
+    pow = squeeze(mean(pow, 3, 'omitnan')); 
 
 
     %get mean hit: 
-    HFB.hit_rt = squeeze(mean(pow(:,chanDat.retInfo(:,1)==1, :), [3])); 
+    HFB.hit_rt = pow(:,chanDat.retInfo(:,1)==1, :); 
     %get mean CRs: 
-    HFB.cr_rt = squeeze(mean(pow(:,chanDat.retInfo(:,1)==3, :), [3]));
+    HFB.cr_rt = pow(:,chanDat.retInfo(:,1)==3, :);
     %get mean miss: 
-    HFB.miss_rt = squeeze(mean(pow(:,chanDat.retInfo(:,1)==2, :), [3]));
+    HFB.miss_rt = pow(:,chanDat.retInfo(:,1)==2, :);
     %get mean FA: 
-    HFB.fa_rt = squeeze(mean(pow(:,chanDat.retInfo(:,1)==4, :), [3]));
+    HFB.fa_rt = pow(:,chanDat.retInfo(:,1)==4, :);
      %multi taper stats    
     HFB.rtMulTim = mulTim; 
     HFB.rtFrex = mulFrex; 

@@ -3,16 +3,16 @@ function [] = singleChanPipeline(chanFiles, idx, subFiles, codePre)
 %% set frequency parameters
 frex = logspace(log10(2),log10(80),100);
 numfrex = length(frex); 
-stds = linspace(2,5,numfrex);
+stds = logspace(log10(3),log10(10),numfrex)./(2*pi*frex);
 
 highfrex = linspace(70, 150, 81); 
 highnumfrex = length(highfrex); 
-highstds = linspace(5, 7, highnumfrex); 
+highstds = logspace(log10(10),log10(20),highnumfrex)./(2*pi*highfrex);
 
 %% load the data
 
 try %try loading the processed file
-    chanDat = load([chanFiles(idx).folder '/finished/' chanFiles(idx).name]).chanDat; 
+    chanDat = load([chanFiles(idx).folder '/finishedNOPE/' chanFiles(idx).name]).chanDat; 
 catch
     chanDat = load([chanFiles(idx).folder '/' chanFiles(idx).name]).chanDat; % go raw if it's not working!
 end
@@ -20,42 +20,42 @@ end
 disp(['data loaded: ' chanDat.subID ' ' num2str(chanDat.chi)])
 
 %% get channel labels from Zach's CSV
-
-zachLabs = readtable([codePre 'HpcAccConnectivityProject/brodmann_by_subj.csv']);
-zachLabs = zachLabs(cell2mat(cellfun(@(x) strcmp(x, chanDat.subID), {zachLabs.subj}, 'uniformoutput', false )), :);
-zachLabs(isnan(zachLabs.x), :) = []; 
-%check that order is the same 
-try
-
-    if sum(abs(zachLabs.x - chanDat.elecpos(:,1))) < .00001
-        zachLabs = zachLabs(chanDat.chi, :); 
-        chanDat.brodmann = zachLabs.brodmann{1}; 
-        chanDat.ogChan = zachLabs.Channel{1}; 
-        if isfield(chanDat, 'aal_lab')
-            chanDat = rmfield(chanDat, 'aal_lab');
-        end
-    else
-        disp(['MISMATCH WITH ZACH COORDINATES!!!'])
-        chanDat.brodmann = 'ERROR'; 
-        chanDat.aal_lab = 'ERROR'; 
-    end
-catch
-        for xx = 1:length(chanDat.elecpos(:,1))
-        labIdx = find(arrayfun(@(x) abs(chanDat.elecpos(xx,1)-x), zachLabs.x)<.00001);
-        if isempty(labIdx)
-            disp(xx)
-        end
-
-        end
-
-
+% 
+% zachLabs = readtable([codePre 'HpcAccConnectivityProject/brodmann_by_subj.csv']);
+% zachLabs = zachLabs(cell2mat(cellfun(@(x) strcmp(x, chanDat.subID), {zachLabs.subj}, 'uniformoutput', false )), :);
+% zachLabs(isnan(zachLabs.x), :) = []; 
+% %check that order is the same 
+% try
+% 
+%     if sum(abs(zachLabs.x - chanDat.elecpos(:,1))) < .00001
+%         zachLabs = zachLabs(chanDat.chi, :); 
+%         chanDat.brodmann = zachLabs.brodmann{1}; 
+%         chanDat.ogChan = zachLabs.Channel{1}; 
+%         if isfield(chanDat, 'aal_lab')
+%             chanDat = rmfield(chanDat, 'aal_lab');
+%         end
+%     else
+%         disp(['MISMATCH WITH ZACH COORDINATES!!!'])
+%         chanDat.brodmann = 'ERROR'; 
+%         chanDat.aal_lab = 'ERROR'; 
 %     end
-
-    disp(['MISMATCH WITH ZACH COORDINATES!!!'])
-    chanDat.brodmann = 'ERROR'; 
-    chanDat.aal_lab = 'ERROR';
-
-end
+% catch
+%         for xx = 1:length(chanDat.elecpos(:,1))
+%         labIdx = find(arrayfun(@(x) abs(chanDat.elecpos(xx,1)-x), zachLabs.x)<.00001);
+%         if isempty(labIdx)
+%             disp(xx)
+%         end
+% 
+%         end
+% 
+% 
+% %     end
+% 
+%     disp(['MISMATCH WITH ZACH COORDINATES!!!'])
+%     chanDat.brodmann = 'ERROR'; 
+%     chanDat.aal_lab = 'ERROR';
+% 
+% end
 
 %% check for encoding info
 % if ~isfield(chanDat, 'encInfo')
@@ -126,8 +126,8 @@ if ~isfield(chanDat, 'reactiveRes')
     clear HFB 
     % done downsample 
     disp('attempting saving')
-    save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat'); 
-    disp(['save success: ' chanFiles(idx).folder '/' chanFiles(idx).name])
+    save([chanFiles(idx).folder '/finished/' chanFiles(idx).name], 'chanDat'); 
+    disp(['save success: ' chanFiles(idx).folder '/finished/' chanFiles(idx).name])
 
 else
     disp('HFB already done')
@@ -169,187 +169,187 @@ end
 
 %% Lead lag analysis
 
-
-if isfield(chanDat, 'leadLag4') && ~isstruct(chanDat.leadLag4)
-    if ~isstruct(chanDat.leadLag4)
-        chanDat.leadLag4 = 1; 
-    disp('non-reactive channel save')
-    save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat'); 
-    disp(['save success: ' chanFiles(idx).folder '/' chanFiles(idx).name])
-    end
-
-else
-    
-if isfield(chanDat, 'leadLag4')
-    
-%     if ~isstruct(chanDat, 'leadLag4')
-
-    start = find(~isnan(squeeze(chanDat.leadLag4.subMem(:,1,1,1))), 1, 'last')+1;
-    if start>= length(subFiles)
-        start = length(subFiles); 
-    end
-
-    leadLag = chanDat.leadLag4; 
-    reactive = chanDat.reactiveRes; 
-    includedChans = leadLag.inclChan; 
-   
-
-
-      
-    leadLagEncTim = leadLag.encTim;
-    leadLagRetTim = leadLag.retTim;
-
-    %correlation matrices
-    %partner chan, hit/miss, offset, time
-    outCluStats = leadLag.subMem; %subsequent memory
-    outCluStats2 = leadLag.retMem; %retrieval
-
-
-
-
-else 
-    start = 1; 
-
-    
-
-    leadLag = struct; 
-    reactive = chanDat.reactiveRes; 
-    includedChans = []; 
-   
-
-
-      
-    leadLagEncTim = chanDat.enctim(501:25:end-500);
-    leadLagRetTim = chanDat.retOtim(501:25:end-500);
-
-    %correlation matrices
-    %partner chan, hit/miss, offset, time
-    outCluStats = nan(length(subFiles), 2, 301, length(leadLagEncTim)); %subsequent memory
-    outCluStats2 = nan(length(subFiles), 2, 301, length(leadLagRetTim)); %retrieval
-
-
-end
-
-% only do lead lag for reactive channels
-
-if sum(reactive==1)>0
-
-
-%trial index values
-subMiss = find(chanDat.use & chanDat.misses); 
-subHit = find(chanDat.use & chanDat.hits); 
-miss_on = find(chanDat.retInfo(:,1)==2);
-hit_on = find(chanDat.retInfo(:,1)==1); 
-
-
-
-
-
-
-
-%     if start<length(chanFiles) %is there even any work left to be done? 
-
-for chan = start:length(subFiles)
-    disp(['leadLag analysis with channel: ' num2str(chan) ' of ' num2str(length(subFiles))])
-    tic
-
-    chanDat2 = load([subFiles(chan).folder '/' subFiles(chan).name]).chanDat; 
-    HFB = getHFB(chanDat2, highfrex);
-    reactive2 = reactiveTest_100(HFB);
-    clear HFB
-    if sum(reactive2==1)>0
-        includedChans = [includedChans chan]; 
-    %need to grab the HFB data at higher resolution, so calculate from
-    %scratch 
-
-    %ENCODING DATA%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %CHAN 1
-    [pow, mulTim, mulFrex] = getChanMultiTF(chanDat.enc, highfrex, chanDat.fsample, chanDat.enctim, 1);  
-    pow = arrayfun(@(x) myChanZscore(pow(:,:,x), [find(mulTim>=-450,1), find(mulTim>=-50,1)] ), 1:size(pow,3), 'UniformOutput',false ); %z-score
-    pow = cell2mat(pow); %organize
-    highnumfrex = length(mulFrex); 
-    pow = reshape(pow, size(pow,1), size(pow,2)/highnumfrex, []); %organize
-    pow = squeeze(mean(pow, 3)); %take the mean over frequencies
-
-    HFB1 = pow; 
-    clear pow
-
-    %CHAN 2
-    [pow2, mulTim, mulFrex] = getChanMultiTF(chanDat2.enc, highfrex, chanDat.fsample, chanDat.enctim, 1);  
-    pow2 = arrayfun(@(x) myChanZscore(pow2(:,:,x), [find(mulTim>=-450,1), find(mulTim>=-50,1)] ), 1:size(pow2,3), 'UniformOutput',false ); %z-score
-    pow2 = cell2mat(pow2); %organize
-    highnumfrex = length(mulFrex); 
-    pow2 = reshape(pow2, size(pow2,1), size(pow2,2)/highnumfrex, []); %organize
-    pow2 = squeeze(mean(pow2, 3)); %take the mean over frequencies
-    
-    disp('encoding: ')
-    outCluStats(chan,:,:,:) = getLL(HFB1, pow2, subMiss, subHit, chanDat.enctim, leadLagEncTim);
-
-
-  
-
-
-
-    %RERTRIEVAL DATA%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %CHAN 1
-    [pow, mulTim, mulFrex] = getChanMultiTF(chanDat.retOn, highfrex, chanDat.fsample, chanDat.retOtim, 1);  
-    pow = arrayfun(@(x) myChanZscore(pow(:,:,x), [find(mulTim>=-450,1), find(mulTim>=-50,1)] ), 1:size(pow,3), 'UniformOutput',false ); %z-score
-    pow = cell2mat(pow); %organize
-    highnumfrex = length(mulFrex); 
-    pow = reshape(pow, size(pow,1), size(pow,2)/highnumfrex, []); %organize
-    pow = squeeze(mean(pow, 3)); %take the mean over frequencies
-
-    HFB1 = pow; 
-    clear pow
-
-    %CHAN 2
-    [pow2, mulTim, mulFrex] = getChanMultiTF(chanDat2.retOn, highfrex, chanDat.fsample, chanDat.retOtim, 1);  
-    pow2 = arrayfun(@(x) myChanZscore(pow2(:,:,x), [find(mulTim>=-450,1), find(mulTim>=-50,1)] ), 1:size(pow2,3), 'UniformOutput',false ); %z-score
-    pow2 = cell2mat(pow2); %organize
-    highnumfrex = length(mulFrex); 
-    pow2 = reshape(pow2, size(pow2,1), size(pow2,2)/highnumfrex, []); %organize
-    pow2 = squeeze(mean(pow2, 3)); %take the mean over frequencies
-    
-
-    disp('retrieval: ')
-    outCluStats2(chan,:,:,:) = getLL(HFB1, pow2, miss_on, hit_on, chanDat.retOtim, leadLagRetTim);
-
-    x = num2str(toc/60); 
-    disp(['.......................................................' x])
-    leadLag.inclChan = includedChans; 
-    leadLag.encTim = leadLagEncTim; 
-    leadLag.retTim = leadLagRetTim; 
-    leadLag.subMem = outCluStats; 
-    leadLag.retMem = outCluStats2; 
-    chanDat.leadLag4 = leadLag; 
-    disp('interim save')
-    save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat');
-    end
-end
-
-leadLag.inclChan = includedChans; 
-leadLag.encTim = leadLagEncTim; 
-leadLag.retTim = leadLagRetTim; 
-leadLag.subMem = outCluStats; 
-leadLag.retMem = outCluStats2; 
-chanDat.leadLag4 = leadLag; 
-
-clear HFB1 HFB2 pow2 leadLag subMiss subHit miss_on hit_on 
-disp('attempting saving')
-save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat'); 
-disp(['save success: ' chanFiles(idx).folder '/' chanFiles(idx).name])
-
-%     else %there was no work to be done
-%         disp('channel leadLag already complete!')
+% 
+% if isfield(chanDat, 'leadLag4') && ~isstruct(chanDat.leadLag4)
+%     if ~isstruct(chanDat.leadLag4)
+%         chanDat.leadLag4 = 1; 
+%     disp('non-reactive channel save')
+%     save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat'); 
+%     disp(['save success: ' chanFiles(idx).folder '/' chanFiles(idx).name])
 %     end
-else
-    chanDat.leadLag4 = 1; 
-    disp('non-reactive channel save')
-    save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat'); 
-    disp(['save success: ' chanFiles(idx).folder '/' chanFiles(idx).name])
-end
-
-end %ugly wrapper to check for non struct leadLag4 indicating non reactive channel
+% 
+% else
+%     
+% if isfield(chanDat, 'leadLag4')
+%     
+% %     if ~isstruct(chanDat, 'leadLag4')
+% 
+%     start = find(~isnan(squeeze(chanDat.leadLag4.subMem(:,1,1,1))), 1, 'last')+1;
+%     if start>= length(subFiles)
+%         start = length(subFiles); 
+%     end
+% 
+%     leadLag = chanDat.leadLag4; 
+%     reactive = chanDat.reactiveRes; 
+%     includedChans = leadLag.inclChan; 
+%    
+% 
+% 
+%       
+%     leadLagEncTim = leadLag.encTim;
+%     leadLagRetTim = leadLag.retTim;
+% 
+%     %correlation matrices
+%     %partner chan, hit/miss, offset, time
+%     outCluStats = leadLag.subMem; %subsequent memory
+%     outCluStats2 = leadLag.retMem; %retrieval
+% 
+% 
+% 
+% 
+% else 
+%     start = 1; 
+% 
+%     
+% 
+%     leadLag = struct; 
+%     reactive = chanDat.reactiveRes; 
+%     includedChans = []; 
+%    
+% 
+% 
+%       
+%     leadLagEncTim = chanDat.enctim(501:25:end-500);
+%     leadLagRetTim = chanDat.retOtim(501:25:end-500);
+% 
+%     %correlation matrices
+%     %partner chan, hit/miss, offset, time
+%     outCluStats = nan(length(subFiles), 2, 301, length(leadLagEncTim)); %subsequent memory
+%     outCluStats2 = nan(length(subFiles), 2, 301, length(leadLagRetTim)); %retrieval
+% 
+% 
+% end
+% 
+% % only do lead lag for reactive channels
+% 
+% if sum(reactive==1)>0
+% 
+% 
+% %trial index values
+% subMiss = find(chanDat.use & chanDat.misses); 
+% subHit = find(chanDat.use & chanDat.hits); 
+% miss_on = find(chanDat.retInfo(:,1)==2);
+% hit_on = find(chanDat.retInfo(:,1)==1); 
+% 
+% 
+% 
+% 
+% 
+% 
+% 
+% %     if start<length(chanFiles) %is there even any work left to be done? 
+% 
+% for chan = start:length(subFiles)
+%     disp(['leadLag analysis with channel: ' num2str(chan) ' of ' num2str(length(subFiles))])
+%     tic
+% 
+%     chanDat2 = load([subFiles(chan).folder '/' subFiles(chan).name]).chanDat; 
+%     HFB = getHFB(chanDat2, highfrex);
+%     reactive2 = reactiveTest_100(HFB);
+%     clear HFB
+%     if sum(reactive2==1)>0
+%         includedChans = [includedChans chan]; 
+%     %need to grab the HFB data at higher resolution, so calculate from
+%     %scratch 
+% 
+%     %ENCODING DATA%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%     %CHAN 1
+%     [pow, mulTim, mulFrex] = getChanMultiTF(chanDat.enc, highfrex, chanDat.fsample, chanDat.enctim, 1);  
+%     pow = arrayfun(@(x) myChanZscore(pow(:,:,x), [find(mulTim>=-450,1), find(mulTim>=-50,1)] ), 1:size(pow,3), 'UniformOutput',false ); %z-score
+%     pow = cell2mat(pow); %organize
+%     highnumfrex = length(mulFrex); 
+%     pow = reshape(pow, size(pow,1), size(pow,2)/highnumfrex, []); %organize
+%     pow = squeeze(mean(pow, 3)); %take the mean over frequencies
+% 
+%     HFB1 = pow; 
+%     clear pow
+% 
+%     %CHAN 2
+%     [pow2, mulTim, mulFrex] = getChanMultiTF(chanDat2.enc, highfrex, chanDat.fsample, chanDat.enctim, 1);  
+%     pow2 = arrayfun(@(x) myChanZscore(pow2(:,:,x), [find(mulTim>=-450,1), find(mulTim>=-50,1)] ), 1:size(pow2,3), 'UniformOutput',false ); %z-score
+%     pow2 = cell2mat(pow2); %organize
+%     highnumfrex = length(mulFrex); 
+%     pow2 = reshape(pow2, size(pow2,1), size(pow2,2)/highnumfrex, []); %organize
+%     pow2 = squeeze(mean(pow2, 3)); %take the mean over frequencies
+%     
+%     disp('encoding: ')
+%     outCluStats(chan,:,:,:) = getLL(HFB1, pow2, subMiss, subHit, chanDat.enctim, leadLagEncTim);
+% 
+% 
+%   
+% 
+% 
+% 
+%     %RERTRIEVAL DATA%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%     %CHAN 1
+%     [pow, mulTim, mulFrex] = getChanMultiTF(chanDat.retOn, highfrex, chanDat.fsample, chanDat.retOtim, 1);  
+%     pow = arrayfun(@(x) myChanZscore(pow(:,:,x), [find(mulTim>=-450,1), find(mulTim>=-50,1)] ), 1:size(pow,3), 'UniformOutput',false ); %z-score
+%     pow = cell2mat(pow); %organize
+%     highnumfrex = length(mulFrex); 
+%     pow = reshape(pow, size(pow,1), size(pow,2)/highnumfrex, []); %organize
+%     pow = squeeze(mean(pow, 3)); %take the mean over frequencies
+% 
+%     HFB1 = pow; 
+%     clear pow
+% 
+%     %CHAN 2
+%     [pow2, mulTim, mulFrex] = getChanMultiTF(chanDat2.retOn, highfrex, chanDat.fsample, chanDat.retOtim, 1);  
+%     pow2 = arrayfun(@(x) myChanZscore(pow2(:,:,x), [find(mulTim>=-450,1), find(mulTim>=-50,1)] ), 1:size(pow2,3), 'UniformOutput',false ); %z-score
+%     pow2 = cell2mat(pow2); %organize
+%     highnumfrex = length(mulFrex); 
+%     pow2 = reshape(pow2, size(pow2,1), size(pow2,2)/highnumfrex, []); %organize
+%     pow2 = squeeze(mean(pow2, 3)); %take the mean over frequencies
+%     
+% 
+%     disp('retrieval: ')
+%     outCluStats2(chan,:,:,:) = getLL(HFB1, pow2, miss_on, hit_on, chanDat.retOtim, leadLagRetTim);
+% 
+%     x = num2str(toc/60); 
+%     disp(['.......................................................' x])
+%     leadLag.inclChan = includedChans; 
+%     leadLag.encTim = leadLagEncTim; 
+%     leadLag.retTim = leadLagRetTim; 
+%     leadLag.subMem = outCluStats; 
+%     leadLag.retMem = outCluStats2; 
+%     chanDat.leadLag4 = leadLag; 
+%     disp('interim save')
+%     save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat');
+%     end
+% end
+% 
+% leadLag.inclChan = includedChans; 
+% leadLag.encTim = leadLagEncTim; 
+% leadLag.retTim = leadLagRetTim; 
+% leadLag.subMem = outCluStats; 
+% leadLag.retMem = outCluStats2; 
+% chanDat.leadLag4 = leadLag; 
+% 
+% clear HFB1 HFB2 pow2 leadLag subMiss subHit miss_on hit_on 
+% disp('attempting saving')
+% save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat'); 
+% disp(['save success: ' chanFiles(idx).folder '/' chanFiles(idx).name])
+% 
+% %     else %there was no work to be done
+% %         disp('channel leadLag already complete!')
+% %     end
+% else
+%     chanDat.leadLag4 = 1; 
+%     disp('non-reactive channel save')
+%     save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat'); 
+%     disp(['save success: ' chanFiles(idx).folder '/' chanFiles(idx).name])
+% end
+% 
+% end %ugly wrapper to check for non struct leadLag4 indicating non reactive channel
 
 
 
@@ -659,61 +659,81 @@ if ~isfield(chanDat, 'TF2')
     %to keep size down, don't put large variables into the chanDat struct!
     TFout = struct;
     %ENCODING DATA: ***********************************************************
-    pow = log10(abs(getChanTrialTF(chanDat.enc, frex, numfrex, stds, chanDat.fsample)).^2); %get power time series for all trials/frequencies
+    pow = getChanTrialTF(chanDat.enc, frex, numfrex, stds, chanDat.fsample); %get power time series for all trials/frequencies
+    phase = angle(pow); 
+    pow = abs(pow).^2; 
     pow = arrayfun(@(x) myChanZscore(pow(:,:,x), [find(chanDat.enctim>=-450,1), find(chanDat.enctim>=-50,1)] ), 1:size(pow,3), 'UniformOutput',false ); %z-score
     pow = cell2mat(pow); %organize
     pow = reshape(pow, size(pow,1), size(pow,2)/100, []); %organize
     %get mean misses: 
     TFout.subMiss = squeeze(pow(:,chanDat.use & chanDat.misses, :)); 
+    TFout.subMiss_p = squeeze(phase(:,chanDat.use & chanDat.misses, :)); 
     %get mean hits: 
     TFout.subHit = squeeze(pow(:,chanDat.use & chanDat.hits, :));
+    TFout.subHit_p = squeeze(phase(:,chanDat.use & chanDat.hits, :));
     %clean up
     clear pow
     disp('encoding done')
 
-    %ENCODING DATA RESPONSE: ***********************************************************
-    pow = log10(abs(getChanTrialTF(chanDat.encRT, frex, numfrex, stds, chanDat.fsample)).^2); %get power time series for all trials/frequencies
+    %ENCODING DATA RESPONSE: *********************************************************** 
+    pow = getChanTrialTF(chanDat.encRT, frex, numfrex, stds, chanDat.fsample); %get power time series for all trials/frequencies
+    phase = angle(pow);
+    pow = abs(pow).^2; 
     pow = arrayfun(@(x) myChanZscore(pow(:,:,x), [find(chanDat.enctimRT>=-2000,1), find(chanDat.enctimRT>=-1600,1)] ), 1:size(pow,3), 'UniformOutput',false ); %z-score
     pow = cell2mat(pow); %organize
     pow = reshape(pow, size(pow,1), size(pow,2)/100, []); %organize
     %get mean misses: 
     TFout.subMissRT = squeeze(pow(:,chanDat.use & chanDat.misses, :)); 
+    TFout.subMissRT_p = squeeze(phase(:,chanDat.use & chanDat.misses, :)); 
     %get mean hits: 
     TFout.subHitRT = squeeze(pow(:,chanDat.use & chanDat.hits, :));
+    TFout.subHitRT_p = squeeze(phase(:,chanDat.use & chanDat.hits, :));
     %clean up
     clear pow
     disp('encoding RT done')
 
     %RETRIEVAL STIM ONSET: ****************************************************
-    pow = log10(abs(getChanTrialTF(chanDat.retOn, frex, numfrex, stds, chanDat.fsample)).^2); %get power time series for all trials/frequencies
+    pow = getChanTrialTF(chanDat.retOn, frex, numfrex, stds, chanDat.fsample); %get power time series for all trials/frequencies
+    phase = angle(pow);
+    pow = abs(pow).^2; 
     pow = arrayfun(@(x) myChanZscore(pow(:,:,x), [find(chanDat.retOtim>=-450,1), find(chanDat.retOtim>=-50,1)]), 1:size(pow,3), 'UniformOutput',false ); %z-score
     pow = cell2mat(pow); %organize
     pow = reshape(pow, size(pow,1), size(pow,2)/100, []); %organize
     %get mean hit: 
     TFout.hit_on = squeeze(pow(:,chanDat.retInfo(:,1)==1, :)); 
+    TFout.hit_on_p = squeeze(phase(:,chanDat.retInfo(:,1)==1, :)); 
     %get mean CRs: 
     TFout.cr_on = squeeze(pow(:,chanDat.retInfo(:,1)==3, :));
+    TFout.cr_on_p = squeeze(phase(:,chanDat.retInfo(:,1)==3, :));
     %get mean miss: 
     TFout.miss_on = squeeze(pow(:,chanDat.retInfo(:,1)==2 , :));
+    TFout.miss_on_p = squeeze(phase(:,chanDat.retInfo(:,1)==2 , :));
     %get mean FA: 
     TFout.fa_on = squeeze(pow(:,chanDat.retInfo(:,1)==4 , :));
+    TFout.fa_on_p = squeeze(phase(:,chanDat.retInfo(:,1)==4 , :));
     %clean up
     clear pow
     disp('retrieval 1 done')
     
     %RETRIEVAL RESPONSE LOCKED: ***********************************************
-    pow = log10(abs(getChanTrialTF(chanDat.retRT, frex, numfrex, stds, chanDat.fsample)).^2); %get power time series for all trials/frequencies
+    pow = getChanTrialTF(chanDat.retRT, frex, numfrex, stds, chanDat.fsample); %get power time series for all trials/frequencies
+    phase = angle(pow);
+    pow = abs(pow).^2;
     pow = arrayfun(@(x) myChanZscore(pow(:,:,x), [find(chanDat.retRtim>=-2000,1), find(chanDat.retRtim>=-1600,1)] ), 1:size(pow,3), 'UniformOutput',false ); %z-score
     pow = cell2mat(pow); %organize
     pow = reshape(pow, size(pow,1), size(pow,2)/100, []); %organize
     %get mean hit: 
     TFout.hit_rt = squeeze(pow(:,chanDat.retInfo(:,1)==1 , :)); 
+    TFout.hit_rt_p = squeeze(phase(:,chanDat.retInfo(:,1)==1 , :));
     %get mean CRs: 
     TFout.cr_rt = squeeze(pow(:,chanDat.retInfo(:,1)==3 , :));
+    TFout.cr_rt_p = squeeze(phase(:,chanDat.retInfo(:,1)==3 , :));
     %get mean miss: 
     TFout.miss_rt = squeeze(pow(:,chanDat.retInfo(:,1)==2 , :));
+    TFout.miss_rt_p = squeeze(phase(:,chanDat.retInfo(:,1)==2 , :));
     %get mean FA: 
     TFout.fa_rt = squeeze(pow(:,chanDat.retInfo(:,1)==4 , :));
+    TFout.fa_rt_p = squeeze(phase(:,chanDat.retInfo(:,1)==4 , :));
     %clean up
     clear pow
     disp('retrieval 2 done')
@@ -724,11 +744,15 @@ if ~isfield(chanDat, 'TF2')
     encIDX = arrayfun(@(x) find(x<=chanDat.enctim,1), multim);
     TFout.subMiss = TFout.subMiss(encIDX, :, :); 
     TFout.subHit = TFout.subHit(encIDX, :, :);
+    TFout.subMiss_p = TFout.subMiss_p(encIDX, :, :); 
+    TFout.subHit_p = TFout.subHit_p(encIDX, :, :);
 
     multim = chanDat.HFB.encRT_tim; 
     encIDX = arrayfun(@(x) find(x<=chanDat.enctimRT,1), multim);
     TFout.subMissRT = TFout.subMissRT(encIDX, :, :); 
     TFout.subHitRT = TFout.subHitRT(encIDX, :, : );
+    TFout.subMissRT_p = TFout.subMissRT_p(encIDX, :, :); 
+    TFout.subHitRT_p = TFout.subHitRT_p(encIDX, :, : );
 
     multim = chanDat.HFB.onMulTim; 
     encIDX = arrayfun(@(x) find(x<=chanDat.retOtim,1), multim);
@@ -736,6 +760,10 @@ if ~isfield(chanDat, 'TF2')
     TFout.miss_on = TFout.miss_on(encIDX, :,:);
     TFout.fa_on = TFout.fa_on(encIDX, :,:); 
     TFout.cr_on = TFout.cr_on(encIDX, :,:);
+    TFout.hit_on_p = TFout.hit_on_p(encIDX, :,:); 
+    TFout.miss_on_p = TFout.miss_on_p(encIDX, :,:);
+    TFout.fa_on_p = TFout.fa_on_p(encIDX, :,:); 
+    TFout.cr_on_p = TFout.cr_on_p(encIDX, :,:);
 
     multim = chanDat.HFB.rtMulTim; 
     encIDX = arrayfun(@(x) find(x<=chanDat.retRtim,1), multim);
@@ -743,6 +771,10 @@ if ~isfield(chanDat, 'TF2')
     TFout.miss_rt = TFout.miss_rt(encIDX, :,:);
     TFout.fa_rt = TFout.fa_rt(encIDX, :,:); 
     TFout.cr_rt = TFout.cr_rt(encIDX, :,:);
+    TFout.hit_rt_p = TFout.hit_rt_p(encIDX, :,:); 
+    TFout.miss_rt_p = TFout.miss_rt_p(encIDX, :,:);
+    TFout.fa_rt_p = TFout.fa_rt_p(encIDX, :,:); 
+    TFout.cr_rt_p = TFout.cr_rt_p(encIDX, :,:);
 
 
 
@@ -750,8 +782,8 @@ if ~isfield(chanDat, 'TF2')
     
     clear TFout 
     disp('attempting saving')
-    save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat'); 
-    disp(['save success: ' chanFiles(idx).folder '/' chanFiles(idx).name])
+    save([chanFiles(idx).folder '/finished/' chanFiles(idx).name], 'chanDat'); 
+    disp(['save success: ' chanFiles(idx).folder '/finished/' chanFiles(idx).name])
 else
     disp('TF already done, skipping')
 end
@@ -772,125 +804,134 @@ end
 
 
 
+%% scratch 
+% figure
+% imagesc(squeeze(abs(mean(TFout.subMiss_p,2)))')
+% yticks([1:9:100])
+% yticklabels(round(frex([1:9:100])))
+% set (gca,'Ydir','normal')
+% caxis([-10,10])
+% 
+
 %% get ISPC and PPC values 
-
-if ~isfield(chanDat, 'ISPC')
-    disp('working on ISPC')
-    ISPCout = struct; 
-    %store the downsample index (di) 
-    multim = chanDat.HFB.encMulTim; 
-    ISPCout.encdi = arrayfun(@(x) find(x<=chanDat.enctim,1), multim);
-    
-    multim = chanDat.HFB.encRT_tim; 
-    ISPCout.encRdi = arrayfun(@(x) find(x<=chanDat.enctimRT,1), multim);
-
-    multim = chanDat.HFB.onMulTim; 
-    ISPCout.ondi = arrayfun(@(x) find(x<=chanDat.retOtim,1), multim);
-    
-    multim = chanDat.HFB.rtMulTim; 
-    ISPCout.rtdi = arrayfun(@(x) find(x<=chanDat.retRtim,1), multim);
-    
-    %preallocate: 
-    %channels X time X frequencies X ISPC/PPC
-    frex = logspace(log10(2), log10(25), 20); 
-    numfrex = length(frex); 
-    ISPCout.subMiss = zeros(length(subFiles), length(ISPCout.encdi), length(frex), 4); 
-    ISPCout.subHit = zeros(length(subFiles), length(ISPCout.encdi), length(frex), 4); 
-
-    ISPCout.subMissR = zeros(length(subFiles), length(ISPCout.encRdi), length(frex), 4); 
-    ISPCout.subHitR = zeros(length(subFiles), length(ISPCout.encRdi), length(frex), 4); 
-    
-    ISPCout.hit_on = zeros(length(subFiles), length(ISPCout.ondi), length(frex), 4);
-    ISPCout.cr_on = zeros(length(subFiles), length(ISPCout.ondi), length(frex), 4);
-    ISPCout.miss_on = zeros(length(subFiles), length(ISPCout.ondi), length(frex), 4);
-    ISPCout.fa_on = zeros(length(subFiles), length(ISPCout.ondi), length(frex), 4);
-
-
-    ISPCout.hit_rt = zeros(length(subFiles), length(ISPCout.rtdi), length(frex), 4);
-    ISPCout.cr_rt = zeros(length(subFiles), length(ISPCout.rtdi), length(frex), 4);
-    ISPCout.miss_rt = zeros(length(subFiles), length(ISPCout.rtdi), length(frex), 4);
-    ISPCout.fa_rt = zeros(length(subFiles), length(ISPCout.rtdi), length(frex), 4);
-
-
-    %will need to loop channels
-    %NOTE: all trial types must have at least two trials! 
-    for chan = 1:length(subFiles)
-        tic
-%         chan
-        if chan > idx %don't do repeat work! 
-        chanDat2 = load([subFiles(chan).folder '/' subFiles(chan).name]).chanDat; 
-
-        %ENCODING DATA: ***********************************************************
-        if sum(chanDat.use & chanDat.misses)>1
-        ISPCout.subMiss(chan,:,:,:) = getChanISPC(chanDat.enc, chanDat2.enc, ...
-            frex, numfrex, stds, chanDat.fsample, ISPCout.encdi, chanDat.use & chanDat.misses);
-        end
-        if sum(chanDat.use & chanDat.hits)>1
-        ISPCout.subHit(chan,:,:,:) = getChanISPC(chanDat.enc, chanDat2.enc, ...
-            frex, numfrex, stds, chanDat.fsample, ISPCout.encdi, chanDat.use & chanDat.hits);
-        end
-
-        %ENCODING DATA RT: ***********************************************************
-        if sum(chanDat.use & chanDat.misses)>1
-        ISPCout.subMissR(chan,:,:,:) = getChanISPC(chanDat.encRT, chanDat2.encRT, ...
-            frex, numfrex, stds, chanDat.fsample, ISPCout.encRdi, chanDat.use & chanDat.misses);
-        end
-        if sum(chanDat.use & chanDat.hits)>1
-        ISPCout.subHitR(chan,:,:,:) = getChanISPC(chanDat.encRT, chanDat2.encRT, ...
-            frex, numfrex, stds, chanDat.fsample, ISPCout.encRdi, chanDat.use & chanDat.hits);
-        end
-
-        %RETRIEVAL STIM ONSET: ****************************************************
-        if sum(chanDat.retInfo(:,1)==1) > 1
-        ISPCout.hit_on(chan,:,:,:) = getChanISPC(chanDat.retOn, chanDat2.retOn, ...
-            frex, numfrex, stds, chanDat.fsample, ISPCout.ondi, chanDat.retInfo(:,1)==1);
-        end
-        if sum(chanDat.retInfo(:,1)==3) > 1
-        ISPCout.cr_on(chan,:,:,:) = getChanISPC(chanDat.retOn, chanDat2.retOn, ...
-            frex, numfrex, stds, chanDat.fsample, ISPCout.ondi, chanDat.retInfo(:,1)==3);
-        end
-        if sum(chanDat.retInfo(:,1)==2) > 1
-        ISPCout.miss_on(chan,:,:,:) = getChanISPC(chanDat.retOn, chanDat2.retOn, ...
-            frex, numfrex, stds, chanDat.fsample, ISPCout.ondi, chanDat.retInfo(:,1)==2);
-        end
-        if sum(chanDat.retInfo(:,1)==4) > 1
-        ISPCout.fa_on(chan,:,:,:) = getChanISPC(chanDat.retOn, chanDat2.retOn, ...
-            frex, numfrex, stds, chanDat.fsample, ISPCout.ondi, chanDat.retInfo(:,1)==4);
-        end
-        
-        %RETRIEVAL RESPONSE LOCKED: ****************************************************
-        if sum(chanDat.retInfo(:,1)==1) > 1
-        ISPCout.hit_rt(chan,:,:,:) = getChanISPC(chanDat.retRT, chanDat2.retRT, ...
-            frex, numfrex, stds, chanDat.fsample, ISPCout.rtdi, chanDat.retInfo(:,1)==1);
-        end
-        if sum(chanDat.retInfo(:,1)==3) > 1
-        ISPCout.cr_rt(chan,:,:,:) = getChanISPC(chanDat.retRT, chanDat2.retRT, ...
-            frex, numfrex, stds, chanDat.fsample, ISPCout.rtdi, chanDat.retInfo(:,1)==3);
-        end
-        if sum(chanDat.retInfo(:,1)==2) > 1
-        ISPCout.miss_rt(chan,:,:,:) = getChanISPC(chanDat.retRT, chanDat2.retRT, ...
-            frex, numfrex, stds, chanDat.fsample, ISPCout.rtdi, chanDat.retInfo(:,1)==2);
-        end
-        if sum(chanDat.retInfo(:,1)==4) > 1
-        ISPCout.fa_rt(chan,:,:,:) = getChanISPC(chanDat.retRT, chanDat2.retRT, ...
-            frex, numfrex, stds, chanDat.fsample, ISPCout.rtdi, chanDat.retInfo(:,1)==4);
-        end
-        
-
-        end
-        disp(['channel: ' num2str(chan) ' took ' num2str(round(toc/60,1)) ' minutes'])
-    end
-    chanDat.ISPC = ISPCout; 
-%     chanDat = rmfield(chanDat, 'sizeReduce'); 
-    disp('attempting saving')
-    save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat'); 
-    disp(['save success: ' chanFiles(idx).folder '/' chanFiles(idx).name])
-
-
-
-else
-    disp('connectivity already done, skipping')
-end
+% 
+% if ~isfield(chanDat, 'ISPC')
+%     disp('working on ISPC')
+%     ISPCout = struct; 
+%     %store the downsample index (di) 
+%     multim = chanDat.HFB.encMulTim; 
+%     ISPCout.encdi = arrayfun(@(x) find(x<=chanDat.enctim,1), multim);
+%     
+%     multim = chanDat.HFB.encRT_tim; 
+%     ISPCout.encRdi = arrayfun(@(x) find(x<=chanDat.enctimRT,1), multim);
+% 
+%     multim = chanDat.HFB.onMulTim; 
+%     ISPCout.ondi = arrayfun(@(x) find(x<=chanDat.retOtim,1), multim);
+%     
+%     multim = chanDat.HFB.rtMulTim; 
+%     ISPCout.rtdi = arrayfun(@(x) find(x<=chanDat.retRtim,1), multim);
+%     
+%     %preallocate: 
+%     %channels X time X frequencies X ISPC/PPC
+%     frex = logspace(log10(2), log10(25), 20); 
+%     numfrex = length(frex); 
+%     ISPCout.subMiss = zeros(length(subFiles), length(ISPCout.encdi), length(frex), 4); 
+%     ISPCout.subHit = zeros(length(subFiles), length(ISPCout.encdi), length(frex), 4); 
+% 
+%     ISPCout.subMissR = zeros(length(subFiles), length(ISPCout.encRdi), length(frex), 4); 
+%     ISPCout.subHitR = zeros(length(subFiles), length(ISPCout.encRdi), length(frex), 4); 
+%     
+%     ISPCout.hit_on = zeros(length(subFiles), length(ISPCout.ondi), length(frex), 4);
+%     ISPCout.cr_on = zeros(length(subFiles), length(ISPCout.ondi), length(frex), 4);
+%     ISPCout.miss_on = zeros(length(subFiles), length(ISPCout.ondi), length(frex), 4);
+%     ISPCout.fa_on = zeros(length(subFiles), length(ISPCout.ondi), length(frex), 4);
+% 
+% 
+%     ISPCout.hit_rt = zeros(length(subFiles), length(ISPCout.rtdi), length(frex), 4);
+%     ISPCout.cr_rt = zeros(length(subFiles), length(ISPCout.rtdi), length(frex), 4);
+%     ISPCout.miss_rt = zeros(length(subFiles), length(ISPCout.rtdi), length(frex), 4);
+%     ISPCout.fa_rt = zeros(length(subFiles), length(ISPCout.rtdi), length(frex), 4);
+% 
+% 
+%     %will need to loop channels
+%     %NOTE: all trial types must have at least two trials! 
+%     for chan = 1:length(subFiles)
+%         tic
+% %         chan
+%         if chan > idx %don't do repeat work! 
+%         chanDat2 = load([subFiles(chan).folder '/' subFiles(chan).name]).chanDat; 
+% 
+%         %ENCODING DATA: ***********************************************************
+%         if sum(chanDat.use & chanDat.misses)>1
+%         ISPCout.subMiss(chan,:,:,:) = getChanISPC(chanDat.enc, chanDat2.enc, ...
+%             frex, numfrex, stds, chanDat.fsample, ISPCout.encdi, chanDat.use & chanDat.misses);
+%         end
+%         if sum(chanDat.use & chanDat.hits)>1
+%         ISPCout.subHit(chan,:,:,:) = getChanISPC(chanDat.enc, chanDat2.enc, ...
+%             frex, numfrex, stds, chanDat.fsample, ISPCout.encdi, chanDat.use & chanDat.hits);
+%         end
+% 
+%         %ENCODING DATA RT: ***********************************************************
+%         if sum(chanDat.use & chanDat.misses)>1
+%         ISPCout.subMissR(chan,:,:,:) = getChanISPC(chanDat.encRT, chanDat2.encRT, ...
+%             frex, numfrex, stds, chanDat.fsample, ISPCout.encRdi, chanDat.use & chanDat.misses);
+%         end
+%         if sum(chanDat.use & chanDat.hits)>1
+%         ISPCout.subHitR(chan,:,:,:) = getChanISPC(chanDat.encRT, chanDat2.encRT, ...
+%             frex, numfrex, stds, chanDat.fsample, ISPCout.encRdi, chanDat.use & chanDat.hits);
+%         end
+% 
+%         %RETRIEVAL STIM ONSET: ****************************************************
+%         if sum(chanDat.retInfo(:,1)==1) > 1
+%         ISPCout.hit_on(chan,:,:,:) = getChanISPC(chanDat.retOn, chanDat2.retOn, ...
+%             frex, numfrex, stds, chanDat.fsample, ISPCout.ondi, chanDat.retInfo(:,1)==1);
+%         end
+%         if sum(chanDat.retInfo(:,1)==3) > 1
+%         ISPCout.cr_on(chan,:,:,:) = getChanISPC(chanDat.retOn, chanDat2.retOn, ...
+%             frex, numfrex, stds, chanDat.fsample, ISPCout.ondi, chanDat.retInfo(:,1)==3);
+%         end
+%         if sum(chanDat.retInfo(:,1)==2) > 1
+%         ISPCout.miss_on(chan,:,:,:) = getChanISPC(chanDat.retOn, chanDat2.retOn, ...
+%             frex, numfrex, stds, chanDat.fsample, ISPCout.ondi, chanDat.retInfo(:,1)==2);
+%         end
+%         if sum(chanDat.retInfo(:,1)==4) > 1
+%         ISPCout.fa_on(chan,:,:,:) = getChanISPC(chanDat.retOn, chanDat2.retOn, ...
+%             frex, numfrex, stds, chanDat.fsample, ISPCout.ondi, chanDat.retInfo(:,1)==4);
+%         end
+%         
+%         %RETRIEVAL RESPONSE LOCKED: ****************************************************
+%         if sum(chanDat.retInfo(:,1)==1) > 1
+%         ISPCout.hit_rt(chan,:,:,:) = getChanISPC(chanDat.retRT, chanDat2.retRT, ...
+%             frex, numfrex, stds, chanDat.fsample, ISPCout.rtdi, chanDat.retInfo(:,1)==1);
+%         end
+%         if sum(chanDat.retInfo(:,1)==3) > 1
+%         ISPCout.cr_rt(chan,:,:,:) = getChanISPC(chanDat.retRT, chanDat2.retRT, ...
+%             frex, numfrex, stds, chanDat.fsample, ISPCout.rtdi, chanDat.retInfo(:,1)==3);
+%         end
+%         if sum(chanDat.retInfo(:,1)==2) > 1
+%         ISPCout.miss_rt(chan,:,:,:) = getChanISPC(chanDat.retRT, chanDat2.retRT, ...
+%             frex, numfrex, stds, chanDat.fsample, ISPCout.rtdi, chanDat.retInfo(:,1)==2);
+%         end
+%         if sum(chanDat.retInfo(:,1)==4) > 1
+%         ISPCout.fa_rt(chan,:,:,:) = getChanISPC(chanDat.retRT, chanDat2.retRT, ...
+%             frex, numfrex, stds, chanDat.fsample, ISPCout.rtdi, chanDat.retInfo(:,1)==4);
+%         end
+%         
+% 
+%         end
+%         disp(['channel: ' num2str(chan) ' took ' num2str(round(toc/60,1)) ' minutes'])
+%     end
+%     chanDat.ISPC = ISPCout; 
+% %     chanDat = rmfield(chanDat, 'sizeReduce'); 
+%     disp('attempting saving')
+%     save([chanFiles(idx).folder '/' chanFiles(idx).name], 'chanDat'); 
+%     disp(['save success: ' chanFiles(idx).folder '/' chanFiles(idx).name])
+% 
+% 
+% 
+% else
+%     disp('connectivity already done, skipping')
+% end
 
 
 

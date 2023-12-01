@@ -29,7 +29,8 @@ datPre = '/projects/p31578/dtf8829/QuestConnect/';
 
 addpath([codePre 'HpcAccConnectivityProject'])
 addpath([codePre 'myFrequentUse'])
-% addpath(genpath([codePre 'fieldtrip-20230118']))
+addpath([codePre 'fieldtrip-20230118'])
+ft_defaults;
 
 %% initialize chanFiles, dif versions for local v. quest running
 
