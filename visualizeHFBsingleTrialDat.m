@@ -68,51 +68,7 @@ function latency = visualizeHFBsingleTrialDat(allRes, reg, regions, phase)
     latency = gausLat(hits, tim, hitRT);
     latency2 = gausLat(misses, tim, missRT); 
 
-%     eliminate = []; 
-%     latency = []; 
-%     
-%     %scale within the 0 to RT time period to make 0 to 1
-%     for tt = 1:size(hits,2)
-%         if hitRT(tt)<100 || hitRT(tt)>3000
-%             eliminate = [eliminate, tt]; 
-%         
-%         else
-%             trial = hits(:,tt); 
-%            
-%             test = gausswin(11);
-%             test = test ./ sum(test); 
-%             trial = [zeros(5,1); trial; zeros(5,1)];
-%             smoothT = conv(trial, test, 'valid'); 
-%             [~, idx] = max(smoothT(find(tim==0):find(tim>hitRT(tt),1))); 
-%             testTim = tim(find(tim==0):find(tim>hitRT(tt),1));
-%            
-%             latency = [latency, testTim(idx)];
-% 
-% 
-% 
-%         end
-%     end
-% 
-% 
-%     eliminate2 = []; 
-%     latency2 = []; 
-%     for tt = 1:length(missRT)
-%         if missRT(tt)<100 || missRT(tt)>3000
-%             eliminate2 = [eliminate2, tt]; 
-%         else
-%             trial = misses(:,tt); 
-%             test = gausswin(11);
-%             test = test ./ sum(test); 
-%             trial = [zeros(5,1); trial; zeros(5,1)];
-%             smoothT = conv(trial, test, 'valid'); 
-%             [~, idx] = max(smoothT(find(tim==0):find(tim>missRT(tt),1))); 
-%             testTim = tim(find(tim==0):find(tim>missRT(tt),1));
-%             latency2 = [latency2,  testTim(idx)];
-% 
-% 
-% 
-%         end
-%     end
+
 
     eliminate = latency == -1;
     eliminate2 = latency2 == -1; 
@@ -166,7 +122,7 @@ function latency = visualizeHFBsingleTrialDat(allRes, reg, regions, phase)
    
    %plotting subsequent all trials
       %plotting subsequent all trials
-    figure('visible', false, 'position', [0,0,600,1000])
+    figure('visible', true, 'position', [0,0,600,1000])
 
     subplot(4,2,5)
     x = tim(10:end-10)'; 
@@ -281,7 +237,7 @@ function latency = visualizeHFBsingleTrialDat(allRes, reg, regions, phase)
 %      hold on 
 %      histogram(latency2'./missRT, [0:.05:1], 'normalization', 'probability')
      export_fig(['G:\My Drive\Johnson\MTL_PFC_networkFigs\FinalizedHFB\' 'singleTrial_' ...
-         phase 's_' regions{reg} '.jpg'], '-r300')
+         phase '_new_' regions{reg} '.jpg'], '-r300')
 
 
     latency = {latency ./ hitRT, latency2 ./ missRT};  

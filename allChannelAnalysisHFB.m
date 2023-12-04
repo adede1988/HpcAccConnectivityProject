@@ -35,7 +35,7 @@ allDat = cell(37,1);
 parfor sub = 1:37
     sub
     if isempty(allDat{sub})
-        [errorChans{sub}, allDat{sub}] = getAllChanDat(chanFiles, sub, targVariable, noneFlag); %includes age and memory filter
+        [errorChans{sub}, allDat{sub}] = getAllChanDat2(chanFiles, sub, targVariable, noneFlag); %includes age and memory filter
     end
 end
 
@@ -57,10 +57,10 @@ regions(2) = [];
 %6: time
 %7: subID
 %8: chani
-%9: TF trials X time LOW THETA HIT
-%10: TF trials X time LOW THETA MISS
-%11: TF trials X time HIGH theta HIT
-%12: TF trials X time HIGH theta MISS
+%9: TF time X trials X freq hit power
+%10: TF time X trials X freq miss power
+%11: TF time X trials X freq hit phase
+%12: TF time X trials X freq miss phase
 %13: HFB latency hit
 %14: HFB latency miss
 %15: low Theta latency hit
@@ -96,7 +96,8 @@ if acc>0 && chanDat.age > 13 %memory and age
 
 
 
-if sum(cellfun(@(x) strcmp(x, lab), regions)) == 1  && sum(chanDat.reactiveRes==1)>0 
+if sum(cellfun(@(x) strcmp(x, lab), regions)) == 1  &&...
+        sum(chanDat.reactiveRes==1)>0 
     %the label of this channel matches one of the ROIs and is reactive
     
     % ENCODING
@@ -109,10 +110,10 @@ if sum(cellfun(@(x) strcmp(x, lab), regions)) == 1  && sum(chanDat.reactiveRes==
     out{6} = chanDat.HFB.encMulTim; 
     out{7} = chanDat.subID; 
     out{8} = chanDat.chi; 
-    out{9} = mean(chanDat.TF2.subHit(:,:,1:23), 3); 
-    out{10}= mean(chanDat.TF2.subMiss(:,:,1:23), 3); 
-    out{11}= mean(chanDat.TF2.subHit(:,:,24:38), 3); 
-    out{12}= mean(chanDat.TF2.subMiss(:,:,24:38), 3); 
+    out{9} = chanDat.TF2.subHit; 
+    out{10}= chanDat.TF2.subMiss; 
+    out{11}= chanDat.TF2.subHit_p; 
+    out{12}= chanDat.TF2.subMiss_p; 
     out{19}= d; 
     out{20} = acc; 
     out{21} = chanDat.age;
@@ -131,10 +132,10 @@ if sum(cellfun(@(x) strcmp(x, lab), regions)) == 1  && sum(chanDat.reactiveRes==
     out{6} = chanDat.HFB.onMulTim; 
     out{7} = chanDat.subID; 
     out{8} = chanDat.chi; 
-    out{9} = mean(chanDat.TF2.hit_on(:,:,1:23), 3); 
-    out{10}= mean(chanDat.TF2.miss_on(:,:,1:23), 3); 
-    out{11}= mean(chanDat.TF2.hit_on(:,:,24:38), 3); 
-    out{12}= mean(chanDat.TF2.miss_on(:,:,24:38), 3); 
+    out{9} = chanDat.TF2.hit_on; 
+    out{10}= chanDat.TF2.miss_on; 
+    out{11}= chanDat.TF2.hit_on_p; 
+    out{12}= chanDat.TF2.miss_on_p; 
     out{19}= d; 
     out{20} = acc; 
     out{21} = chanDat.age;
@@ -159,16 +160,16 @@ allResENC(:,13) = cellfun(@(x,y) gausLat(x, tim, y), allResENC(:,1), allResENC(:
     'uniformoutput', false );
 allResENC(:,14) = cellfun(@(x,y) gausLat(x, tim, y), allResENC(:,2), allResENC(:,4), ...
     'uniformoutput', false );
-%low frequency
-allResENC(:,15) = cellfun(@(x,y) gausLat(x, tim, y), allResENC(:,9), allResENC(:,3), ...
-    'uniformoutput', false );
-allResENC(:,16) = cellfun(@(x,y) gausLat(x, tim, y), allResENC(:,10), allResENC(:,4), ...
-    'uniformoutput', false );
-%high frequency
-allResENC(:,17) = cellfun(@(x,y) gausLat(x, tim, y), allResENC(:,11), allResENC(:,3), ...
-    'uniformoutput', false );
-allResENC(:,18) = cellfun(@(x,y) gausLat(x, tim, y), allResENC(:,12), allResENC(:,4), ...
-    'uniformoutput', false );
+% %low frequency
+% allResENC(:,15) = cellfun(@(x,y) gausLat(x, tim, y), allResENC(:,9), allResENC(:,3), ...
+%     'uniformoutput', false );
+% allResENC(:,16) = cellfun(@(x,y) gausLat(x, tim, y), allResENC(:,10), allResENC(:,4), ...
+%     'uniformoutput', false );
+% %high frequency
+% allResENC(:,17) = cellfun(@(x,y) gausLat(x, tim, y), allResENC(:,11), allResENC(:,3), ...
+%     'uniformoutput', false );
+% allResENC(:,18) = cellfun(@(x,y) gausLat(x, tim, y), allResENC(:,12), allResENC(:,4), ...
+%     'uniformoutput', false );
 
 
 tim = allResRET{1,6}; 
@@ -177,15 +178,15 @@ allResRET(:,13) = cellfun(@(x,y) gausLat(x, tim, y), allResRET(:,1), allResRET(:
 allResRET(:,14) = cellfun(@(x,y) gausLat(x, tim, y), allResRET(:,2), allResRET(:,4), ...
     'uniformoutput', false );
 %low frequency
-allResRET(:,15) = cellfun(@(x,y) gausLat(x, tim, y), allResRET(:,9), allResRET(:,3), ...
-    'uniformoutput', false );
-allResRET(:,16) = cellfun(@(x,y) gausLat(x, tim, y), allResRET(:,10), allResRET(:,4), ...
-    'uniformoutput', false );
-%high frequency
-allResRET(:,17) = cellfun(@(x,y) gausLat(x, tim, y), allResRET(:,11), allResRET(:,3), ...
-    'uniformoutput', false );
-allResRET(:,18) = cellfun(@(x,y) gausLat(x, tim, y), allResRET(:,12), allResRET(:,4), ...
-    'uniformoutput', false );
+% allResRET(:,15) = cellfun(@(x,y) gausLat(x, tim, y), allResRET(:,9), allResRET(:,3), ...
+%     'uniformoutput', false );
+% allResRET(:,16) = cellfun(@(x,y) gausLat(x, tim, y), allResRET(:,10), allResRET(:,4), ...
+%     'uniformoutput', false );
+% %high frequency
+% allResRET(:,17) = cellfun(@(x,y) gausLat(x, tim, y), allResRET(:,11), allResRET(:,3), ...
+%     'uniformoutput', false );
+% allResRET(:,18) = cellfun(@(x,y) gausLat(x, tim, y), allResRET(:,12), allResRET(:,4), ...
+%     'uniformoutput', false );
 
 %% get demographics 
 subIDs = unique(allResENC(:,7));
@@ -296,12 +297,12 @@ writetable(aovDat, 'R:\MSS\Johnson_Lab\dtf8829\GitHub\HpcAccConnectivityProject\
 
 %% make stats packages ready for Quest analysis
 
-for reg = 1:9
+for reg = 2:9
 
 %     visualizeHFBsingleTrialDat(allResENC, reg, regions, 'sub');
 %     visualizeHFBsingleTrialDat(allResRET, reg, regions, 'ret');
-%     getTFsingleTrialDat(allResENC, reg, regions, 'sub');
-    getTFsingleTrialDat(allResRET, reg, regions, 'ret');
+    getTFsingleTrialDat2(allResENC, reg, regions, 'sub');
+    getTFsingleTrialDat2(allResRET, reg, regions, 'ret');
 %     visualizeTFsingleTrialDat(allResENC, reg, regions, 'sub', 1); 
 %     visualizeTFsingleTrialDat(allResENC, reg, regions, 'sub', 2);
 %     visualizeTFsingleTrialDat(allResRET, reg, regions, 'ret', 1); 

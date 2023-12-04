@@ -37,7 +37,7 @@ addpath([codePre 'myFrequentUse/export_fig_repo'])
 
 datFolder = [datPre 'TF_singleTrial']; 
 cndFiles = dir(datFolder);
-test = cellfun(@(x) length(x)>0, strfind({cndFiles.name}, '.mat'));
+test = cellfun(@(x) length(x)>0, strfind({cndFiles.name}, 'all.mat'));
 cndFiles = cndFiles(test); 
 
 %% run the pipeline

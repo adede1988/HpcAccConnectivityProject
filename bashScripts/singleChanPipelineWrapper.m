@@ -127,11 +127,12 @@ test = cellfun(@(x) length(x)>0, strfind({subFiles.name}, subID));
 subFiles = subFiles(test);
 
 
-
+parfor start = 1:2415
 disp(['going for ' subID ' ' chanFiles(start).name] )
-tic
+
 singleChanPipeline(chanFiles, start, subFiles, codePre); 
-toc
+
+end
 
 %% put encoding behavioral data onto it
 % curSub = 'something'; 

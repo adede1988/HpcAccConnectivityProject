@@ -74,7 +74,7 @@ function [] = TFsingleTrialpipeline(statFiles, fileIdx, statType)
         tVals = zeros(size(hitVals,[2,3]));
     
         %loop on timepoints
-        for ti = 1:size(hitVals,2)
+        parfor ti = 1:size(hitVals,2)
             slice = tVals(ti,:); 
             for fi = 1:100
 
@@ -127,7 +127,7 @@ function [] = TFsingleTrialpipeline(statFiles, fileIdx, statType)
             
             curSet = nullTs(:,:,ii); 
                     %loop on timepoints
-            for ti = 1:size(hitVals,2)
+            parfor ti = 1:size(hitVals,2)
                 slice = curSet(ti,:); 
                 for fi = 1:100
     
@@ -235,7 +235,7 @@ function [] = TFsingleTrialpipeline(statFiles, fileIdx, statType)
         tVals = zeros(size(hitVals,[2,3]));
     
         %loop on timepoints
-        for ti = 1:size(hitVals,2)
+        parfor ti = 1:size(hitVals,2)
             slice = tVals(ti,:); 
             for fi = 1:100
 
@@ -288,7 +288,7 @@ function [] = TFsingleTrialpipeline(statFiles, fileIdx, statType)
             
             curSet = nullTs(:,:,ii); 
                     %loop on timepoints
-            for ti = 1:size(hitVals,2)
+            parfor ti = 1:size(hitVals,2)
                 slice = curSet(ti,:); 
                 for fi = 1:100
     
