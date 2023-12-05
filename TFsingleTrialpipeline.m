@@ -103,7 +103,7 @@ function [] = TFsingleTrialpipeline(statFiles, fileIdx, statType, permi)
         nullTs = squeeze(zeros([size(tVals), perms])); 
         for ii = 1:perms
             ii
-            if(mod(ii, 100)) ==0 
+            if(mod(ii, 10)) ==0 
                 disp(['..........................' num2str(ii) ...
                     ' time:' num2str(round(toc/60,1))])
             end
@@ -155,9 +155,9 @@ function [] = TFsingleTrialpipeline(statFiles, fileIdx, statType, permi)
 %         disp('calculated encoding permutation ')
        outDat = struct;
 
-       outDat.tVals_image = tVals; 
-       outDat.hitVals_image = mean(hitVals); 
-       outDat.missVals_image = mean(missVals);
+       outDat.tVals = tVals; 
+       outDat.hitVals = mean(hitVals); 
+       outDat.missVals = mean(missVals);
 %        HFBdat.p_image = p; 
        outDat.eliminate = eliminate; 
        outDat.nulls = nullTs; 
@@ -266,7 +266,7 @@ function [] = TFsingleTrialpipeline(statFiles, fileIdx, statType, permi)
         nullTs = squeeze(zeros([size(tVals), perms])); 
         for ii = 1:perms
             ii
-            if(mod(ii, 100)) ==0 
+            if(mod(ii, 10)) ==0 
                 disp(['..........................' num2str(ii) ...
                     ' time:' num2str(round(toc/60,1))])
             end
@@ -319,9 +319,9 @@ function [] = TFsingleTrialpipeline(statFiles, fileIdx, statType, permi)
 
        outDat = struct;
 
-       outDat.tVals_image = tVals; 
-       outDat.hitVals_image = mean(hitVals); 
-       outDat.missVals_image = mean(missVals);
+       outDat.tVals = tVals; 
+       outDat.hitVals = mean(hitVals); 
+       outDat.missVals = mean(missVals);
 %        HFBdat.p_image = p; 
        outDat.eliminate = eliminate; 
        outDat.nulls = nullTs; 
