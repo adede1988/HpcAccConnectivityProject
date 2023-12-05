@@ -40,12 +40,16 @@ cndFiles = dir(datFolder);
 test = cellfun(@(x) length(x)>0, strfind({cndFiles.name}, 'all.mat'));
 cndFiles = cndFiles(test); 
 
+test = readtable([codePre 'HpcAccConnectivityProject\TFstatMaster.csv']);
+
+
 %% run the pipeline
 
 
-fileidx = round(start/2); 
-statType = mod(start, 2); 
+fileidx = test.filei(start); 
+statType = test.stati(start); 
+permi = test.permi(start); 
 tic
-TFsingleTrialpipeline(cndFiles, fileidx, statType); 
+TFsingleTrialpipeline(cndFiles, fileidx, statType, permi); 
 toc
 

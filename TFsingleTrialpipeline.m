@@ -1,7 +1,7 @@
-function [] = TFsingleTrialpipeline(statFiles, fileIdx, statType)
+function [] = TFsingleTrialpipeline(statFiles, fileIdx, statType, permi)
 
         HFBdat = load([statFiles(fileIdx).folder '/' statFiles(fileIdx).name]).statInfo; 
-        perms = 5000; 
+        perms = 100; 
     
         %% encoding mean difference
 
@@ -151,18 +151,20 @@ function [] = TFsingleTrialpipeline(statFiles, fileIdx, statType)
 
         
         
-        [h, p, clusterinfo] = cluster_test(tVals, nullTs); 
-        disp('calculated encoding permutation ')
+%         [h, p, clusterinfo] = cluster_test(tVals, nullTs); 
+%         disp('calculated encoding permutation ')
+       outDat = struct;
 
-
-       HFBdat.tVals_image = tVals; 
-       HFBdat.hitVals_image = mean(hitVals); 
-       HFBdat.missVals_image = mean(missVals);
-       HFBdat.p_image = p; 
-       HFBdat.eliminate = eliminate; 
-
-       statInfo = HFBdat; 
-       save([statFiles(fileIdx).folder '/out/' 'stat' num2str(statType) '_' statFiles(fileIdx).name], 'statInfo', '-v7.3');
+       outDat.tVals_image = tVals; 
+       outDat.hitVals_image = mean(hitVals); 
+       outDat.missVals_image = mean(missVals);
+%        HFBdat.p_image = p; 
+       outDat.eliminate = eliminate; 
+       outDat.nulls = nullTs; 
+ 
+       save([statFiles(fileIdx).folder '/out/'...
+           'stat' num2str(statType) '_' permi '_' statFiles(fileIdx).name], ...
+           'outDat', '-v7.3');
         
         else
         
@@ -311,20 +313,22 @@ function [] = TFsingleTrialpipeline(statFiles, fileIdx, statType)
 
 
         
-        [h, p, clusterinfo] = cluster_test(tVals, nullTs); 
+%         [h, p, clusterinfo] = cluster_test(tVals, nullTs); 
         disp('calculated encoding permutation ')
 
 
-       HFBdat.tVals_HFB = tVals; 
-       HFBdat.hitVals_HFB = mean(hitVals); 
-       HFBdat.missVals_HFB = mean(missVals);
-       HFBdat.p_HFB = p; 
-       HFBdat.eliminate = eliminate; 
+       outDat = struct;
 
-      
-       statInfo = HFBdat; 
-       save([statFiles(fileIdx).folder '/out/' 'stat' num2str(statType) '_' statFiles(fileIdx).name], 'statInfo', '-v7.3');
-
+       outDat.tVals_image = tVals; 
+       outDat.hitVals_image = mean(hitVals); 
+       outDat.missVals_image = mean(missVals);
+%        HFBdat.p_image = p; 
+       outDat.eliminate = eliminate; 
+       outDat.nulls = nullTs; 
+ 
+       save([statFiles(fileIdx).folder '/out/'...
+           'stat' num2str(statType) '_' permi '_' statFiles(fileIdx).name], ...
+           'outDat', '-v7.3');
         end
 
 end
