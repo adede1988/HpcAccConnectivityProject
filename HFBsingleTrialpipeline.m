@@ -69,7 +69,7 @@ function [] = HFBsingleTrialpipeline(statFiles, fileIdx, statType, permi)
     
         %loop on timepoints
         for ti = 1:size(hitVals,2)
-    
+            try
 
             curdat = [hitVals(:,ti); missVals(:,ti)];
     
@@ -80,7 +80,8 @@ function [] = HFBsingleTrialpipeline(statFiles, fileIdx, statType, permi)
             lme = fitlme(modDat, ...
                 'HFB ~ hitMiss + (1|chan:sub) ');
             tVals(ti) = lme.Coefficients(2,4); 
-    
+            catch 
+            end
         end 
         disp('calculated encoding t-vals ')
        
@@ -112,6 +113,7 @@ function [] = HFBsingleTrialpipeline(statFiles, fileIdx, statType, permi)
             
             slice = nullTs(:,ii); 
             for ti = 1:size(hitVals,2)
+                try
                 curdat = [hitVals(:,ti); missVals(:,ti)]; 
          
     
@@ -122,6 +124,8 @@ function [] = HFBsingleTrialpipeline(statFiles, fileIdx, statType, permi)
                 lme = fitlme(modDat, ...
                     'HFB ~ hitMiss + (1|chan:sub)');
                 slice(ti) = lme.Coefficients(2,4); 
+                catch
+                end
                      
             end
             nullTs(:,ii) = slice; 
