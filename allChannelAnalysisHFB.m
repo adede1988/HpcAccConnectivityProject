@@ -331,10 +331,14 @@ end
 %HFBsingleTrialpipeline.m
 
 %stats running for TF is accomplished with: 
+%power: 
 %TFstatsSubmit.sh
 %TFsingleTrialWrapper.m
 %TFsingleTrialpipeline.m
-
+%phase resetting: 
+%TFphaseStatsSubmit.sh
+%TFphaseTrialWrapper.m
+%TFpahseTrialpipeline.m
 
 % the outputs from stats are then integrated in this script: 
 %finalStatsIntegratePlot.m

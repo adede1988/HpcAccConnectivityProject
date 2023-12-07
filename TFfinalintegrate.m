@@ -189,7 +189,7 @@ set(gca, 'ydir', 'normal')
 caxis([2, 10])
 colorbar
 xticks([1:20:161])
-xticklabels(tim([1:20:161]))
+xticklabels(tim([1:20:131]))
 yticks([1:19:100])
 yticklabels(round(dat.frex([1:19:100])))
 title([regions{reg} ' ' phase ' hit phase reset'])
