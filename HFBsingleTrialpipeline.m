@@ -1,4 +1,4 @@
-function [] = HFBsingleTrialpipeline(statFiles, fileIdx, statType)
+function [] = HFBsingleTrialpipeline(statFiles, fileIdx, statType, permi)
 
         HFBdat = load([statFiles(fileIdx).folder '/' statFiles(fileIdx).name]).statInfo; 
         perms = 50; 

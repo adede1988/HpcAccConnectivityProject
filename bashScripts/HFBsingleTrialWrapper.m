@@ -49,6 +49,6 @@ fileidx = test.filei(start);
 statType = test.stati(start); 
 permi = test.permi(start); 
 tic
-HFBsingleTrialpipeline(cndFiles, fileidx, statType); 
+HFBsingleTrialpipeline(cndFiles, fileidx, statType, permi); 
 toc
 
