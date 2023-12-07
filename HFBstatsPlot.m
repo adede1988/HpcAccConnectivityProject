@@ -11,16 +11,17 @@ addpath([codePre 'HpcAccConnectivityProject'])
 addpath([codePre 'myFrequentUse'])
 addpath([codePre 'myFrequentUse/export_fig_repo'])
 
-path = 'R:\MSS\Johnson_Lab\dtf8829\QuestConnect\HFB_KEY_STATS';
+HFBdat = load('R:\MSS\Johnson_Lab\dtf8829\QuestConnect\HFB_KEY_STATS\hip.mat').HFBdat; 
+regions = {HFBdat.aggTargs.lab}; 
+regions(2) = []; 
+
+
+path = 'R:\MSS\Johnson_Lab\dtf8829\QuestConnect\HFB_singleTrial\out';
 
 statFiles = dir(path); 
 
 statFiles(1:2) = []; 
-HFBdat = load([statFiles(1).folder '/' statFiles(1).name]).HFBdat; 
 
-allSigEnc = zeros(length(HFBdat.encTim), 11); 
-allSigRet = zeros(length(HFBdat.retTim), 11); 
-regNames = cell(11,1); 
 
 %hit/miss X region X early/late X encode/retrieve
 %early = 0-1000ms; late = 1000-2000ms

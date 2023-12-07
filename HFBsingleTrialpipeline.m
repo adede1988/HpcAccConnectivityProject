@@ -1,7 +1,7 @@
 function [] = HFBsingleTrialpipeline(statFiles, fileIdx, statType)
 
         HFBdat = load([statFiles(fileIdx).folder '/' statFiles(fileIdx).name]).statInfo; 
-        perms = 5000; 
+        perms = 50; 
     
         %% encoding mean difference
 
@@ -90,6 +90,7 @@ function [] = HFBsingleTrialpipeline(statFiles, fileIdx, statType)
         tic
         nullTs = squeeze(zeros([size(tVals), perms])); 
         for ii = 1:perms
+            ii
             if(mod(ii, 100)) ==0 
                 disp(['..........................' num2str(ii) ...
                     ' time:' num2str(round(toc/60,1))])
@@ -126,20 +127,21 @@ function [] = HFBsingleTrialpipeline(statFiles, fileIdx, statType)
             nullTs(:,ii) = slice; 
         end
         
-        
-        [h, p, clusterinfo] = cluster_test(tVals, nullTs); 
-        disp('calculated encoding permutation ')
 
 
-       HFBdat.tVals_image = tVals; 
-       HFBdat.hitVals_image = mean(hitVals); 
-       HFBdat.missVals_image = mean(missVals);
-       HFBdat.p_image = p; 
-       HFBdat.eliminate = eliminate; 
+        outDat = struct;
 
-       statInfo = HFBdat; 
-       save([statFiles(fileIdx).folder '/out/' 'stat' num2str(statType) '_' statFiles(fileIdx).name], 'statInfo', '-v7.3');
-        
+       outDat.tVals = tVals; 
+       outDat.hitVals = hitVals; 
+       outDat.missVals = missVals;
+       outDat.eliminate = eliminate; 
+       outDat.nulls = nullTs; 
+ 
+       save([statFiles(fileIdx).folder '/out/'...
+           'stat' num2str(statType) '_' num2str(permi) '_' statFiles(fileIdx).name], ...
+           'outDat', '-v7.3');
+
+  
         else
         
         %% HFB peak aligned analysis
@@ -195,10 +197,10 @@ function [] = HFBsingleTrialpipeline(statFiles, fileIdx, statType)
                 eliminate = [eliminate, chan]; 
             end
         end
-
+        
         hmSort = [ones(length(chanUni),1); zeros(length(chanUni),1)]; 
 
-
+        
 
 
 
@@ -231,6 +233,7 @@ function [] = HFBsingleTrialpipeline(statFiles, fileIdx, statType)
            tic
         nullTs = squeeze(zeros([size(tVals), perms])); 
         for ii = 1:perms
+            ii
             if(mod(ii, 100)) ==0 
                 disp(['..........................' num2str(ii) ...
                     ' time:' num2str(round(toc/60,1))])
@@ -271,24 +274,17 @@ function [] = HFBsingleTrialpipeline(statFiles, fileIdx, statType)
         end
         
 
+       outDat = struct;
 
-
-
-
-        
-        [h, p, clusterinfo] = cluster_test(tVals, nullTs); 
-        disp('calculated encoding permutation ')
-
-
-       HFBdat.tVals_HFB = tVals; 
-       HFBdat.hitVals_HFB = mean(hitVals); 
-       HFBdat.missVals_HFB = mean(missVals);
-       HFBdat.p_HFB = p; 
-       HFBdat.eliminate = eliminate; 
-
-      
-       statInfo = HFBdat; 
-       save([statFiles(fileIdx).folder '/out/' 'stat' num2str(statType) '_' statFiles(fileIdx).name], 'statInfo', '-v7.3');
+       outDat.tVals = tVals; 
+       outDat.hitVals = hitVals; 
+       outDat.missVals = missVals;
+       outDat.eliminate = eliminate; 
+       outDat.nulls = nullTs; 
+ 
+       save([statFiles(fileIdx).folder '/out/'...
+           'stat' num2str(statType) '_' num2str(permi) '_' statFiles(fileIdx).name], ...
+           'outDat', '-v7.3');
 
         end
 

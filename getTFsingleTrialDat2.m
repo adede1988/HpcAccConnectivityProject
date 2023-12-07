@@ -33,10 +33,10 @@ function latency = getTFsingleTrialDat2(allRes, reg, regions, phase)
 
     for ii = 1:size(curReg,1)
         hits = [hits, curReg{ii,9}];
-        hits_p = [hits, curReg{ii,11}];
+        hits_p = [hits_p, curReg{ii,11}];
         hitRT = [hitRT; curReg{ii, 3}]; 
         misses = [misses, curReg{ii,10}];
-        misses_p = [misses, curReg{ii,12}];
+        misses_p = [misses_p, curReg{ii,12}];
         missRT = [missRT; curReg{ii, 4}]; 
         latency = [latency; curReg{ii, 13}]; 
         latency2 = [latency2; curReg{ii, 14}]; 

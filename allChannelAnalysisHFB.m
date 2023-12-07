@@ -28,16 +28,16 @@ chanFiles = chanFiles(test);
 
 %% loop over channels and split saved files by output variables
 % THIS CODE IS NOT USED ANYMORE
-targVariable = 'TF';
-noneFlag = true; 
-errorChans = cell(37,1); 
-allDat = cell(37,1); 
-parfor sub = 1:37
-    sub
-    if isempty(allDat{sub})
-        [errorChans{sub}, allDat{sub}] = getAllChanDat2(chanFiles, sub, targVariable, noneFlag); %includes age and memory filter
-    end
-end
+% targVariable = 'TF';
+% noneFlag = true; 
+% errorChans = cell(37,1); 
+% allDat = cell(37,1); 
+% parfor sub = 1:37
+%     sub
+%     if isempty(allDat{sub})
+%         [errorChans{sub}, allDat{sub}] = getAllChanDat2(chanFiles, sub, targVariable, noneFlag); %includes age and memory filter
+%     end
+% end
 
 
 %% loop over channels and get single trial level data for HFB and TF
@@ -189,6 +189,7 @@ allResRET(:,14) = cellfun(@(x,y) gausLat(x, tim, y), allResRET(:,2), allResRET(:
 %     'uniformoutput', false );
 
 %% get demographics 
+%in general this doesn't need to be run 
 subIDs = unique(allResENC(:,7));
 firstidx = cellfun(@(x) find(cellfun(@(y) strcmp(x,y), allResENC(:,7)),1), subIDs );
 ages = allResENC(firstidx, 21);
@@ -202,7 +203,10 @@ for reg = 1:length(regions)
 end
 
 
-%% 
+%% making a .csv for export to R for overall latency
+%current version is only taking the HFB latency because there's the entire
+%frequency space available at lower frequency and it's unclear what
+%frequencies might be best to use when thinking about latency 
 %pulling out .csv file for stats in R
 %chan X stats
 %col 1: subID
@@ -217,8 +221,10 @@ aovDat = table;
 aovDat.subID = repmat("askj", 75000,1); 
 aovDat.chi = zeros(75000,1); 
 aovDat.peakLatHFB = zeros(75000,1); 
+%these are commented out for now because of the lack of one d variables
 aovDat.peakLatLow = zeros(75000,1); 
 aovDat.peakLatHigh = zeros(75000,1); 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 aovDat.encRet = repmat("askj", 75000,1); 
 aovDat.hitMiss = repmat("askj", 75000,1); 
 aovDat.reg = repmat("askj", 75000,1); 
@@ -228,14 +234,14 @@ aovDat.adjTime = zeros(75000,1);
 aovi = 1; 
 
 for ii = 1:length(allResENC)
-    ii
+    
     %hits
     L = length(allResENC{ii,13});
     aovDat.subID(aovi:aovi+L-1) = allResENC{ii,7};
     aovDat.chi(aovi:aovi+L-1) = allResENC{ii,8};
     aovDat.peakLatHFB(aovi:aovi+L-1) = allResENC{ii,13};
-    aovDat.peakLatLow(aovi:aovi+L-1) = allResENC{ii,15};
-    aovDat.peakLatHigh(aovi:aovi+L-1) = allResENC{ii,17};
+%     aovDat.peakLatLow(aovi:aovi+L-1) = allResENC{ii,15};
+%     aovDat.peakLatHigh(aovi:aovi+L-1) = allResENC{ii,17};
     aovDat.encRet(aovi:aovi+L-1) = 'Enc';
     aovDat.hitMiss(aovi:aovi+L-1) = 'Hit';
     aovDat.reg(aovi:aovi+L-1) = allResENC{ii,5};
@@ -247,8 +253,8 @@ for ii = 1:length(allResENC)
     aovDat.subID(aovi:aovi+L-1) = allResENC{ii,7};
     aovDat.chi(aovi:aovi+L-1) = allResENC{ii,8};
     aovDat.peakLatHFB(aovi:aovi+L-1) = allResENC{ii,14};
-    aovDat.peakLatLow(aovi:aovi+L-1) = allResENC{ii,16};
-    aovDat.peakLatHigh(aovi:aovi+L-1) = allResENC{ii,18};
+%     aovDat.peakLatLow(aovi:aovi+L-1) = allResENC{ii,16};
+%     aovDat.peakLatHigh(aovi:aovi+L-1) = allResENC{ii,18};
     aovDat.encRet(aovi:aovi+L-1) = 'Enc';
     aovDat.hitMiss(aovi:aovi+L-1) = 'Miss';
     aovDat.reg(aovi:aovi+L-1) = allResENC{ii,5};
@@ -261,14 +267,14 @@ end
 
 
 for ii = 1:length(allResRET)
-    ii
+    
     %hits retrieval
     L = length(allResRET{ii,13});
     aovDat.subID(aovi:aovi+L-1) = allResRET{ii,7};
     aovDat.chi(aovi:aovi+L-1) = allResRET{ii,8};
     aovDat.peakLatHFB(aovi:aovi+L-1) = allResRET{ii,13};
-    aovDat.peakLatLow(aovi:aovi+L-1) = allResRET{ii,15};
-    aovDat.peakLatHigh(aovi:aovi+L-1) = allResRET{ii,17};
+%     aovDat.peakLatLow(aovi:aovi+L-1) = allResRET{ii,15};
+%     aovDat.peakLatHigh(aovi:aovi+L-1) = allResRET{ii,17};
     aovDat.encRet(aovi:aovi+L-1) = 'Ret';
     aovDat.hitMiss(aovi:aovi+L-1) = 'Hit';
     aovDat.reg(aovi:aovi+L-1) = allResRET{ii,5};
@@ -280,8 +286,8 @@ for ii = 1:length(allResRET)
     aovDat.subID(aovi:aovi+L-1) = allResRET{ii,7};
     aovDat.chi(aovi:aovi+L-1) = allResRET{ii,8};
     aovDat.peakLatHFB(aovi:aovi+L-1) = allResRET{ii,14};
-    aovDat.peakLatLow(aovi:aovi+L-1) = allResRET{ii,16};
-    aovDat.peakLatHigh(aovi:aovi+L-1) = allResRET{ii,18};
+%     aovDat.peakLatLow(aovi:aovi+L-1) = allResRET{ii,16};
+%     aovDat.peakLatHigh(aovi:aovi+L-1) = allResRET{ii,18};
     aovDat.encRet(aovi:aovi+L-1) = 'Ret';
     aovDat.hitMiss(aovi:aovi+L-1) = 'Miss';
     aovDat.reg(aovi:aovi+L-1) = allResRET{ii,5};
@@ -292,17 +298,26 @@ for ii = 1:length(allResRET)
 
 end
 
-writetable(aovDat, 'R:\MSS\Johnson_Lab\dtf8829\GitHub\HpcAccConnectivityProject\trialLatDat.csv')
+%table output for analysis in R
+writetable(aovDat, ...
+    ['R:\MSS\Johnson_Lab\dtf8829\GitHub\' ...
+    'HpcAccConnectivityProject\trialLatDatNEW.csv'])
 
 
 %% make stats packages ready for Quest analysis
 
-for reg = 2:9
+for reg = 1:9
+
 
 %     visualizeHFBsingleTrialDat(allResENC, reg, regions, 'sub');
 %     visualizeHFBsingleTrialDat(allResRET, reg, regions, 'ret');
     getTFsingleTrialDat2(allResENC, reg, regions, 'sub');
     getTFsingleTrialDat2(allResRET, reg, regions, 'ret');
+    
+
+    %visualizeTFsingleTrialDat relies on low frequencies being treated as
+    %one dimensional vectors rather than two d matrices with values over
+    %the whole frequency space. As such, these are kind of depricated now. 
 %     visualizeTFsingleTrialDat(allResENC, reg, regions, 'sub', 1); 
 %     visualizeTFsingleTrialDat(allResENC, reg, regions, 'sub', 2);
 %     visualizeTFsingleTrialDat(allResRET, reg, regions, 'ret', 1); 
@@ -310,10 +325,26 @@ for reg = 2:9
 
 end
 
+%stats running for HFB is accomplished with: 
+%HFBstatsSubmit.sh
+%HFBsingleTrialWrapper.m
+%HFBsingleTrialpipeline.m
+
+%stats running for TF is accomplished with: 
+%TFstatsSubmit.sh
+%TFsingleTrialWrapper.m
+%TFsingleTrialpipeline.m
+
+
+% the outputs from stats are then integrated in this script: 
+%finalStatsIntegratePlot.m
+
+
+
 
 
 %% quick checking of whether each channel is always a theta first or an HFB first channel
-
+%SCRATCH CODE THAT'S NOT REALLY USED RIGHT NOW
 %enc/ret X hit/miss X stat: 
 %stat Col1: HFBlat - low lat
 %stat col2: 

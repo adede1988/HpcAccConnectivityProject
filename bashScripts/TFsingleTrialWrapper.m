@@ -40,7 +40,7 @@ cndFiles = dir(datFolder);
 test = cellfun(@(x) length(x)>0, strfind({cndFiles.name}, 'all.mat'));
 cndFiles = cndFiles(test); 
 
-test = readtable([codePre 'HpcAccConnectivityProject\TFstatMaster.csv']);
+test = readtable([codePre 'HpcAccConnectivityProject/TFstatMaster.csv']);
 
 
 %% run the pipeline
