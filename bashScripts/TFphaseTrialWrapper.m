@@ -45,7 +45,7 @@ test = readtable([codePre 'HpcAccConnectivityProject/TFstatMaster.csv']);
 
 %% run the pipeline
 
-
+% start = 501; 
 fileidx = test.filei(start); 
 statType = test.stati(start); 
 permi = test.permi(start); 
