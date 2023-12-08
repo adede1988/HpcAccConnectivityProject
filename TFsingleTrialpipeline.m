@@ -1,7 +1,7 @@
 function [] = TFsingleTrialpipeline(statFiles, fileIdx, statType, permi)
 
         HFBdat = load([statFiles(fileIdx).folder '/' statFiles(fileIdx).name]).statInfo; 
-        perms = 100; 
+        perms = 50; 
     
         %% encoding mean difference
 
@@ -327,7 +327,7 @@ function [] = TFsingleTrialpipeline(statFiles, fileIdx, statType, permi)
        outDat.nulls = nullTs; 
  
        save([statFiles(fileIdx).folder '/out/'...
-           'stat' num2str(statType) '_' permi '_' statFiles(fileIdx).name], ...
+           'stat' num2str(statType) '_' num2str(permi) '_' statFiles(fileIdx).name], ...
            'outDat', '-v7.3');
         end
 

@@ -1,7 +1,7 @@
 function [] = TFphaseTrialpipeline(statFiles, fileIdx, statType, permi)
 
         HFBdat = load([statFiles(fileIdx).folder '/' statFiles(fileIdx).name]).statInfo; 
-        perms = 50; 
+        perms = 5; 
     
         %% encoding mean difference
 
@@ -83,7 +83,6 @@ function [] = TFphaseTrialpipeline(statFiles, fileIdx, statType, permi)
 
 
         hmSort = [ones(length(chanUni),1); zeros(length(chanUni),1)]; 
-
 
 
 

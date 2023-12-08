@@ -1,5 +1,5 @@
 function [] = TFfinalintegrate(reg, headFiles, ...
-    outStatFiles, regions, phase)
+    outStatFiles, regions, phase, outStatFilesPhase)
 
 
 %down select files to the current target region and phase of experiment
@@ -15,6 +15,21 @@ HFBperms= outStatFiles(test);
 test = cellfun(@(x) length(x)>0, ...
     strfind({outStatFiles.name}, 'stat1'));
 Imageperms= outStatFiles(test); 
+
+%down select the phase permutation files
+test = cellfun(@(x) length(x)>0, ...
+    strfind({outStatFilesPhase.name}, regions{reg}));
+outStatFilesPhase(~test) = []; 
+test = cellfun(@(x) length(x)>0, ...
+    strfind({outStatFilesPhase.name}, phase));
+outStatFilesPhase(~test) = []; 
+test = cellfun(@(x) length(x)>0, ...
+    strfind({outStatFilesPhase.name}, 'stat0'));
+HFBpermsPhase= outStatFilesPhase(test); 
+test = cellfun(@(x) length(x)>0, ...
+    strfind({outStatFilesPhase.name}, 'stat1'));
+ImagepermsPhase= outStatFilesPhase(test); 
+
 %do the same for the head files, there will only be 1
 test = cellfun(@(x) length(x)>0, ...
     strfind({headFiles.name}, regions{reg}));
@@ -170,6 +185,33 @@ title([regions{reg} ' ' phase ' hit - miss tVals'])
 
 export_fig(['G:\My Drive\Johnson\MTL_PFC_networkFigs\TF_regional\wavelet'...
     '/' regions{reg} '_' phase '.jpg'], '-r300')
+
+
+%% phase figure
+%load in the main data
+perm = load([ImagepermsPhase(1).folder '/' ImagepermsPhase(1).name]).outDat;
+%aggregate the perms
+nullTs = zeros([size(perm.nulls, [1,2]), length(ImagepermsPhase)*50]);
+for ii = 1:length(ImagepermsPhase)
+    perm = load([ImagepermsPhase(ii).folder '/' ImagepermsPhase(ii).name]).outDat;
+    nullTs(:,:,(ii-1)*50+1:ii*50) = perm.nulls; 
+
+end
+
+[h, p, clusterinfo] = cluster_test(perm.tVals, nullTs); 
+
+perm2 = load([HFBpermsPhase(1).folder '/' HFBpermsPhase(1).name]).outDat;
+%aggregate the perms
+nullTs = zeros([size(perm2.nulls, [1,2]), length(HFBpermsPhase)*50]);
+for ii = 1:length(HFBpermsPhase)
+    perm2 = load([HFBpermsPhase(ii).folder '/' HFBpermsPhase(ii).name]).outDat;
+    nullTs(:,:,(ii-1)*50+1:ii*50) = perm2.nulls; 
+
+end
+
+[h, p2, clusterinfo] = cluster_test(perm2.tVals, nullTs); 
+
+
 
 
 figure('visible', false, 'position', [0,0,600,1000])
