@@ -10,6 +10,9 @@ function [] = TFphaseTrialpipeline(statFiles, fileIdx, statType, permi)
         missVals = HFBdat.misses_p;
         tim = HFBdat.tim; 
       
+        save([statFiles(fileIdx).folder '/out/TestModDat_' ...
+                'startHitVals' '.mat'], 'hitVals')
+
         hitVals(tim<-450 | tim>3000, :, :) = []; 
         missVals(tim<-450 | tim>3000, :, :) = []; 
         tim(tim<-450 | tim>3000) = []; 
@@ -80,7 +83,8 @@ function [] = TFphaseTrialpipeline(statFiles, fileIdx, statType, permi)
             end
         end
 
-
+        save([statFiles(fileIdx).folder '/out/TestModDat_' ...
+                'ITPChitVals' '.mat'], 'hitVals')
 
         hmSort = [ones(length(chanUni),1); zeros(length(chanUni),1)]; 
 
