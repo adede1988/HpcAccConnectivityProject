@@ -187,8 +187,9 @@ export_fig(['G:\My Drive\Johnson\MTL_PFC_networkFigs\TF_regional\wavelet'...
     '/' regions{reg} '_' phase '.jpg'], '-r300')
 
 
-%% phase figure
-%load in the main data
+figure('visible', false, 'position', [0,0,600,1000])
+
+
 perm = load([ImagepermsPhase(1).folder '/' ImagepermsPhase(1).name]).outDat;
 %aggregate the perms
 nullTs = zeros([size(perm.nulls, [1,2]), length(ImagepermsPhase)*50]);
@@ -200,11 +201,11 @@ end
 
 [h, p, clusterinfo] = cluster_test(perm.tVals, nullTs); 
 
-perm2 = load([HFBpermsPhase(1).folder '/' HFBpermsPhase(1).name]).outDat;
+perm2 = load([HFBperms(1).folder '/' HFBperms(1).name]).outDat;
 %aggregate the perms
-nullTs = zeros([size(perm2.nulls, [1,2]), length(HFBpermsPhase)*50]);
-for ii = 1:length(HFBpermsPhase)
-    perm2 = load([HFBpermsPhase(ii).folder '/' HFBpermsPhase(ii).name]).outDat;
+nullTs = zeros([size(perm2.nulls, [1,2]), length(HFBperms)*50]);
+for ii = 1:length(HFBperms)
+    perm2 = load([HFBperms(ii).folder '/' HFBperms(ii).name]).outDat;
     nullTs(:,:,(ii-1)*50+1:ii*50) = perm2.nulls; 
 
 end
@@ -214,7 +215,6 @@ end
 
 
 
-figure('visible', false, 'position', [0,0,600,1000])
 
 subplot(5,2,1)
 hold off
@@ -226,6 +226,7 @@ test = arrayfun(@(y) arrayfun(@(x) size(hitPhase,2)*...
     abs(mean(exp(1i*squeeze(dat.hits_p(x,:,y)) ))).^2,...
     1:size(hitPhase,1) ), 1:100, 'uniformoutput', false);
 test = cat(1, test{:}); 
+test = squeeze(mean(perm.hitVals,1))';
 imagesc(test)
 set(gca, 'ydir', 'normal')
 caxis([2, 10])

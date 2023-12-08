@@ -88,7 +88,7 @@ function [] = TFphaseTrialpipeline(statFiles, fileIdx, statType, permi)
 
          %empty vector that is timepoints X frequency
         tVals = zeros(size(hitVals,[2,3]));
-        
+    
         %loop on timepoints
         for ti = 1:size(hitVals,2)
             slice = tVals(ti,:); 
@@ -100,9 +100,7 @@ function [] = TFphaseTrialpipeline(statFiles, fileIdx, statType, permi)
             modDat = table(curdat, categorical(hmSort), ...
                 [chanUni; chanUni], [sub_out; sub_out], ...
                 'VariableNames', {'HFB', 'hitMiss', 'chan', 'sub'}); 
-
-            save([statFiles(fileIdx).folder '/out/TestModDat_' ...
-                num2str(ti) '_' num2str(fi) '.mat'], 'modDat')
+            save([statFiles(fileIdx).folder '/out/TestModDat' nu)
            
             lme = fitlme(modDat, ...
                     'HFB ~ hitMiss + (1|chan)');
