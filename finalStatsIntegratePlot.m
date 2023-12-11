@@ -36,7 +36,7 @@ headFiles(~test) = [];
 %TF phase files
 outStatFilesPhase = dir([datPre 'TF_singleTrial/out']);
 test = cellfun(@(x) length(x)>0, ...
-    strfind({outStatFilesPhase.name}, 'phase'));
+    strfind({outStatFilesPhase.name}, 'NEWphase'));
 outStatFilesPhase(~test) = []; 
 
 %HFB files
@@ -49,15 +49,19 @@ test = cellfun(@(x) length(x)>0, ...
     strfind({headFilesHFB.name}, '.mat'));
 headFilesHFB(~test) = []; 
 
+%record all the significant frequencies across regions/conditions
+%freq X sub/ret X image/HFB X power/ITPC
+sigFreqs = zeros(100,2, 2, 2);
+
 for reg = 1:length(regions)
     reg
-    TFfinalintegrate(reg, headFiles, outStatFiles, regions, ...
-        'sub', outStatFilesPhase)
-    TFfinalintegrate(reg, headFiles, outStatFiles, regions, ...
-        'ret', outStatFilesPhase)
+    sigFreqs = TFfinalintegrate(reg, headFiles, outStatFiles, regions, ...
+        'sub', outStatFilesPhase, sigFreqs);
+    sigFreqs = TFfinalintegrate(reg, headFiles, outStatFiles, regions, ...
+        'ret', outStatFilesPhase, sigFreqs);
 
-    HFBfinalintegrate(reg, headFilesHFB, outStatFilesHFB, regions, 'sub')
-    HFBfinalintegrate(reg, headFilesHFB, outStatFilesHFB, regions, 'ret')
+%     HFBfinalintegrate(reg, headFilesHFB, outStatFilesHFB, regions, 'sub')
+%     HFBfinalintegrate(reg, headFilesHFB, outStatFilesHFB, regions, 'ret')
 
 
 end

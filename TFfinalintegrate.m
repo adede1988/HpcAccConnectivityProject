@@ -1,5 +1,6 @@
-function [] = TFfinalintegrate(reg, headFiles, ...
-    outStatFiles, regions, phase, outStatFilesPhase)
+function [sigFreqs] = TFfinalintegrate(reg, headFiles, ...
+    outStatFiles, regions, phase, outStatFilesPhase, ...
+    sigFreqs)
 
 
 %down select files to the current target region and phase of experiment
@@ -66,6 +67,20 @@ end
 if ~isempty(perm.eliminate)
     [perm, perm2] = fixMissing(dat, perm, perm2);
 end
+
+% update significant frequencies
+pSum = sum(p<.05);
+pSumHFB = sum(p2<.05); 
+if strcmp(phase, 'sub')
+    sigFreqs(:,1,1,1) = sigFreqs(:,1,1,1) + pSum'; 
+    sigFreqs(:,1,2,1) = sigFreqs(:,1,2,1) + pSumHFB'; 
+else
+    sigFreqs(:,2,1,1) = sigFreqs(:,2,1,1) + pSum'; 
+    sigFreqs(:,2,2,1) = sigFreqs(:,2,2,1) + pSumHFB'; 
+
+end
+
+
 
 figure('visible', false, 'position', [0,0,600, 1000])
 %hit Image plot
@@ -190,68 +205,94 @@ export_fig(['G:\My Drive\Johnson\MTL_PFC_networkFigs\TF_regional\wavelet'...
 figure('visible', false, 'position', [0,0,600,1000])
 
 
-perm = load([ImagepermsPhase(1).folder '/' ImagepermsPhase(1).name]).outDat;
+perm = load([ImagepermsPhase(1).folder '/'...
+    ImagepermsPhase(1).name]).outDat;
 %aggregate the perms
-nullTs = zeros([size(perm.nulls, [1,2]), length(ImagepermsPhase)*50]);
+nullTs = zeros([size(perm.nulls, [1,2]), length(ImagepermsPhase)*5]);
 for ii = 1:length(ImagepermsPhase)
-    perm = load([ImagepermsPhase(ii).folder '/' ImagepermsPhase(ii).name]).outDat;
-    nullTs(:,:,(ii-1)*50+1:ii*50) = perm.nulls; 
+    perm = load([ImagepermsPhase(ii).folder '/' ...
+        ImagepermsPhase(ii).name]).outDat;
+    nullTs(:,:,(ii-1)*5+1:ii*5) = perm.nulls; 
 
 end
 
 [h, p, clusterinfo] = cluster_test(perm.tVals, nullTs); 
 
-perm2 = load([HFBperms(1).folder '/' HFBperms(1).name]).outDat;
+perm2 = load([HFBpermsPhase(1).folder '/' HFBpermsPhase(1).name]).outDat;
 %aggregate the perms
-nullTs = zeros([size(perm2.nulls, [1,2]), length(HFBperms)*50]);
-for ii = 1:length(HFBperms)
-    perm2 = load([HFBperms(ii).folder '/' HFBperms(ii).name]).outDat;
-    nullTs(:,:,(ii-1)*50+1:ii*50) = perm2.nulls; 
+nullTs = zeros([size(perm2.nulls, [1,2]), length(HFBpermsPhase)*5]);
+for ii = 1:length(HFBpermsPhase)
+    perm2 = load([HFBpermsPhase(ii).folder '/' HFBpermsPhase(ii).name]).outDat;
+    nullTs(:,:,(ii-1)*5+1:ii*5) = perm2.nulls; 
 
 end
 
 [h, p2, clusterinfo] = cluster_test(perm2.tVals, nullTs); 
 
 
+if ~isempty(perm.eliminate)
+    keep = 1:size(perm.hitVals,1);
+    keep(perm.eliminate) = []; 
+    perm.missVals = perm.missVals(keep,:,:); 
+    perm2.missVals = perm2.missVals(keep,:,:); 
+    perm.hitVals = perm.hitVals(keep,:,:); 
+    perm2.hitVals = perm2.hitVals(keep,:,:); 
+end
+
+
+% update significant frequencies
+pSum = sum(p<.05);
+pSumHFB = sum(p2<.05); 
+if strcmp(phase, 'sub')
+    sigFreqs(:,1,1,2) = sigFreqs(:,1,1,2) + pSum'; 
+    sigFreqs(:,1,2,2) = sigFreqs(:,1,2,2) + pSumHFB'; 
+else
+    sigFreqs(:,2,1,2) = sigFreqs(:,2,1,2) + pSum'; 
+    sigFreqs(:,2,2,2) = sigFreqs(:,2,2,2) + pSumHFB'; 
+
+end
 
 
 
-subplot(5,2,1)
+subplot(4,2,1)
 hold off
 tim = dat.tim; 
+tim(tim<-450 | tim>3000) = []; 
 hitPhase = squeeze(dat.hits_p(:,:,5)); 
-missPhase = squeeze(dat.misses_p(:,:,5)); 
-%time point to align at will be determined by peak ITPC
-test = arrayfun(@(y) arrayfun(@(x) size(hitPhase,2)*...
-    abs(mean(exp(1i*squeeze(dat.hits_p(x,:,y)) ))).^2,...
-    1:size(hitPhase,1) ), 1:100, 'uniformoutput', false);
-test = cat(1, test{:}); 
+% missPhase = squeeze(dat.misses_p(:,:,5)); 
+% %time point to align at will be determined by peak ITPC
+% test = arrayfun(@(y) arrayfun(@(x) size(hitPhase,2)*...
+%     abs(mean(exp(1i*squeeze(dat.hits_p(x,:,y)) ))).^2,...
+%     1:size(hitPhase,1) ), 1:100, 'uniformoutput', false);
+% test = cat(1, test{:}); 
 test = squeeze(mean(perm.hitVals,1))';
 imagesc(test)
 set(gca, 'ydir', 'normal')
-caxis([2, 10])
+caxis([2, 5])
 colorbar
-xticks([1:20:161])
-xticklabels(tim([1:20:131]))
+xticks([3:16:160])
+xticklabels(tim([3:16:139]))
 yticks([1:19:100])
 yticklabels(round(dat.frex([1:19:100])))
 title([regions{reg} ' ' phase ' hit phase reset'])
 
-subplot(5,2,2)
+subplot(4,2,2)
 hold off
-hitPeakPhase = arrayfun(@(fi)...
-    getPeaks(dat.hits_p(:,:,fi), dat.hitLat, tim),...
-    1:100, 'uniformoutput', false); 
-hitPeakPhase = cat(3, hitPeakPhase{:}); 
-[tL, trialL, frexL] = size(hitPeakPhase);
-%time point to align at will be determined by peak ITPC
-testHFB = arrayfun(@(fi) arrayfun(@(ti) trialL*...
-    abs(mean(exp(1i*squeeze(hitPeakPhase(ti,:,fi)) ))).^2,...
-    1:tL ), 1:frexL, 'uniformoutput', false);
-testHFB = cat(1, testHFB{:}); 
+timCut = [-500:25:500]; 
+% hitPeakPhase = arrayfun(@(fi)...
+%     getPeaks(dat.hits_p(:,:,fi), dat.hitLat, tim),...
+%     1:100, 'uniformoutput', false); 
+% hitPeakPhase = cat(3, hitPeakPhase{:}); 
+% [tL, trialL, frexL] = size(hitPeakPhase);
+% %time point to align at will be determined by peak ITPC
+% testHFB = arrayfun(@(fi) arrayfun(@(ti) trialL*...
+%     abs(mean(exp(1i*squeeze(hitPeakPhase(ti,:,fi)) ))).^2,...
+%     1:tL ), 1:frexL, 'uniformoutput', false);
+% testHFB = cat(1, testHFB{:}); 
+testHFB = squeeze(mean(perm2.hitVals,1))';
 imagesc(testHFB)
 set(gca, 'ydir', 'normal')
-caxis([2, 10])
+caxis([2, 5])
 colorbar
 xticks([1:10:41])
 xticklabels(timCut([1:10:41]))
@@ -260,40 +301,42 @@ yticklabels(round(dat.frex([1:19:100])))
 title([regions{reg} ' ' phase ' hit phase reset'])
 
 
-subplot(5,2,3)
+subplot(4,2,3)
 hold off
-hitPhase = squeeze(dat.hits_p(:,:,5)); 
-missPhase = squeeze(dat.misses_p(:,:,5)); 
-%time point to align at will be determined by peak ITPC
-test2 = arrayfun(@(y) arrayfun(@(x) size(missPhase,2)*...
-    abs(mean(exp(1i*squeeze(dat.misses_p(x,:,y)) ))).^2,...
-    1:size(missPhase,1) ), 1:100, 'uniformoutput', false);
-test2 = cat(1, test2{:}); 
+% hitPhase = squeeze(dat.hits_p(:,:,5)); 
+% missPhase = squeeze(dat.misses_p(:,:,5)); 
+% %time point to align at will be determined by peak ITPC
+% test2 = arrayfun(@(y) arrayfun(@(x) size(missPhase,2)*...
+%     abs(mean(exp(1i*squeeze(dat.misses_p(x,:,y)) ))).^2,...
+%     1:size(missPhase,1) ), 1:100, 'uniformoutput', false);
+% test2 = cat(1, test2{:}); 
+test2 = squeeze(mean(perm.missVals))';
 imagesc(test2)
 set(gca, 'ydir', 'normal')
-caxis([2, 10])
+caxis([2, 5])
 colorbar
-xticks([1:20:161])
-xticklabels(tim([1:20:161]))
+xticks([3:16:160])
+xticklabels(tim([3:16:139]))
 yticks([1:19:100])
 yticklabels(round(dat.frex([1:19:100])))
 title([regions{reg} ' ' phase ' miss phase reset'])
 
-subplot(5,2,4)
+subplot(4,2,4)
 hold off
-missPeakPhase = arrayfun(@(fi)...
-    getPeaks(dat.misses_p(:,:,fi), dat.missLat, tim),...
-    1:100, 'uniformoutput', false); 
-missPeakPhase = cat(3, missPeakPhase{:}); 
-[tL, trialL, frexL] = size(missPeakPhase);
-%time point to align at will be determined by peak ITPC
-testHFB2 = arrayfun(@(fi) arrayfun(@(ti) trialL*...
-    abs(mean(exp(1i*squeeze(missPeakPhase(ti,:,fi)) ))).^2,...
-    1:tL ), 1:frexL, 'uniformoutput', false);
-testHFB2 = cat(1, testHFB2{:}); 
+% missPeakPhase = arrayfun(@(fi)...
+%     getPeaks(dat.misses_p(:,:,fi), dat.missLat, tim),...
+%     1:100, 'uniformoutput', false); 
+% missPeakPhase = cat(3, missPeakPhase{:}); 
+% [tL, trialL, frexL] = size(missPeakPhase);
+% %time point to align at will be determined by peak ITPC
+% testHFB2 = arrayfun(@(fi) arrayfun(@(ti) trialL*...
+%     abs(mean(exp(1i*squeeze(missPeakPhase(ti,:,fi)) ))).^2,...
+%     1:tL ), 1:frexL, 'uniformoutput', false);
+% testHFB2 = cat(1, testHFB2{:}); 
+testHFB2 = squeeze(mean(perm2.missVals))';
 imagesc(testHFB2)
 set(gca, 'ydir', 'normal')
-caxis([2, 10])
+caxis([2, 5])
 colorbar
 xticks([1:10:41])
 xticklabels(timCut([1:10:41]))
@@ -301,21 +344,24 @@ yticks([1:19:100])
 yticklabels(round(dat.frex([1:19:100])))
 title([regions{reg} ' ' phase ' hit phase reset'])
 
-subplot(5,2,5)
-imagesc(abs(test - test2))
+subplot(4,2,5)
+imagesc(test - test2)
 set(gca, 'ydir', 'normal')
-caxis([4, 10])
+addRedOutline(p, .05, 'red');
+caxis([-3, 3])
 colorbar
-xticks([1:20:161])
-xticklabels(tim([1:20:161]))
+xticks([3:16:160])
+xticklabels(tim([3:16:139]))
 yticks([1:19:100])
 yticklabels(round(dat.frex([1:19:100])))
 title([regions{reg} ' ' phase ' hit - miss phase reset'])
 
-subplot(5,2,6)
-imagesc(abs(testHFB - testHFB2))
+subplot(4,2,6)
+hold off
+imagesc(testHFB - testHFB2)
 set(gca, 'ydir', 'normal')
-caxis([4, 10])
+addRedOutline(p2, .05, 'red');
+caxis([-3, 3])
 colorbar
 xticks([1:10:41])
 xticklabels(timCut([1:10:41]))
@@ -324,17 +370,20 @@ yticklabels(round(dat.frex([1:19:100])))
 title([regions{reg} ' ' phase ' hit - miss phase reset'])
 
 
-subplot(5,2,7)
-plot(squeeze(perm2.hitVals(1,21,:)), 'color', 'blue',...
+test = mean(perm.tVals,2);
+[~, timepoint] = max(test);
+subplot(4,2,7)
+hold off
+plot(squeeze(mean(perm.hitVals(:,timepoint,:))), 'color', 'blue',...
     'linewidth', 2)
 hold on 
-plot(squeeze(perm2.missVals(1,21,:)), 'color', 'red',...
+plot(squeeze(mean(perm.missVals(:,timepoint,:))), 'color', 'red',...
     'linewidth', 2)
 xticks([1:19:100])
 xticklabels(round(dat.frex([1:19:100])))
-title('broadband power at HFB peak')
+title(['phase reset at peak significance ' num2str(tim(timepoint))])
 
-subplot(5,2,8)
+subplot(4,2,8)
 hold off
 plot(squeeze(testHFB(:,21)), 'color', 'blue',...
     'linewidth', 2)
