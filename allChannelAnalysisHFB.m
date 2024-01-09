@@ -71,6 +71,8 @@ regions(2) = [];
 %20: acc
 %21: age
 %22: sex
+%23: HFB peaks hit
+%24: HFB peaks miss
 allResENC = cell(length(chanFiles), 22); 
 allResRET = allResENC; 
 parfor ii = 1:length(chanFiles)
@@ -156,9 +158,9 @@ allResRET(cellfun(@(x) isempty(x), allResRET(:,1)), :) = [];
 %get the latency information and put it into the 13th and 14th columns HFB
 %+ THETA power latency cols 15-18 are low frequency latencies
 tim = allResENC{1,6}; 
-allResENC(:,13) = cellfun(@(x,y) gausLat(x, tim, y), allResENC(:,1), allResENC(:,3), ...
+allResENC(:,13) = cellfun(@(x,y) gausLat(x, tim, y,1), allResENC(:,1), allResENC(:,3), ...
     'uniformoutput', false );
-allResENC(:,14) = cellfun(@(x,y) gausLat(x, tim, y), allResENC(:,2), allResENC(:,4), ...
+allResENC(:,14) = cellfun(@(x,y) gausLat(x, tim, y,1), allResENC(:,2), allResENC(:,4), ...
     'uniformoutput', false );
 % %low frequency
 % allResENC(:,15) = cellfun(@(x,y) gausLat(x, tim, y), allResENC(:,9), allResENC(:,3), ...
@@ -170,12 +172,16 @@ allResENC(:,14) = cellfun(@(x,y) gausLat(x, tim, y), allResENC(:,2), allResENC(:
 %     'uniformoutput', false );
 % allResENC(:,18) = cellfun(@(x,y) gausLat(x, tim, y), allResENC(:,12), allResENC(:,4), ...
 %     'uniformoutput', false );
+allResENC(:,23) = cellfun(@(x,y) gausLat(x, tim, y,2), allResENC(:,1), allResENC(:,3), ...
+    'uniformoutput', false );
+allResENC(:,24) = cellfun(@(x,y) gausLat(x, tim, y,2), allResENC(:,2), allResENC(:,4), ...
+    'uniformoutput', false );
 
 
 tim = allResRET{1,6}; 
-allResRET(:,13) = cellfun(@(x,y) gausLat(x, tim, y), allResRET(:,1), allResRET(:,3), ...
+allResRET(:,13) = cellfun(@(x,y) gausLat(x, tim, y,1), allResRET(:,1), allResRET(:,3), ...
     'uniformoutput', false );
-allResRET(:,14) = cellfun(@(x,y) gausLat(x, tim, y), allResRET(:,2), allResRET(:,4), ...
+allResRET(:,14) = cellfun(@(x,y) gausLat(x, tim, y,1), allResRET(:,2), allResRET(:,4), ...
     'uniformoutput', false );
 %low frequency
 % allResRET(:,15) = cellfun(@(x,y) gausLat(x, tim, y), allResRET(:,9), allResRET(:,3), ...
@@ -187,6 +193,11 @@ allResRET(:,14) = cellfun(@(x,y) gausLat(x, tim, y), allResRET(:,2), allResRET(:
 %     'uniformoutput', false );
 % allResRET(:,18) = cellfun(@(x,y) gausLat(x, tim, y), allResRET(:,12), allResRET(:,4), ...
 %     'uniformoutput', false );
+allResRET(:,23) = cellfun(@(x,y) gausLat(x, tim, y,2), allResRET(:,1), allResRET(:,3), ...
+    'uniformoutput', false );
+allResRET(:,24) = cellfun(@(x,y) gausLat(x, tim, y,2), allResRET(:,2), allResRET(:,4), ...
+    'uniformoutput', false );
+
 
 %% get demographics 
 %in general this doesn't need to be run 
@@ -204,6 +215,7 @@ end
 
 
 %% making a .csv for export to R for overall latency
+
 %current version is only taking the HFB latency because there's the entire
 %frequency space available at lower frequency and it's unclear what
 %frequencies might be best to use when thinking about latency 
@@ -230,6 +242,8 @@ aovDat.hitMiss = repmat("askj", 75000,1);
 aovDat.reg = repmat("askj", 75000,1); 
 aovDat.RT = zeros(75000,1); 
 aovDat.adjTime = zeros(75000,1); 
+aovDat.peakHFB = zeros(75000,1); 
+
 
 aovi = 1; 
 
@@ -247,7 +261,11 @@ for ii = 1:length(allResENC)
     aovDat.reg(aovi:aovi+L-1) = allResENC{ii,5};
     aovDat.RT(aovi:aovi+L-1) = allResENC{ii,3};
 %     aovDat.adjTime(aovi:aovi+L-1) = aovDat.peakLat(aovi:aovi+L-1) ./ aovDat.RT(aovi:aovi+L-1);
-    %misses
+    aovDat.peakHFB(aovi:aovi+L-1) = allResENC{ii,23}; 
+
+
+
+%misses
     aovi = aovi + L; 
     L = length(allResENC{ii,14});
     aovDat.subID(aovi:aovi+L-1) = allResENC{ii,7};
@@ -260,7 +278,7 @@ for ii = 1:length(allResENC)
     aovDat.reg(aovi:aovi+L-1) = allResENC{ii,5};
     aovDat.RT(aovi:aovi+L-1) = allResENC{ii,4};
 %     aovDat.adjTime(aovi:aovi+L-1) = aovDat.peakLat(aovi:aovi+L-1) ./ aovDat.RT(aovi:aovi+L-1);
-
+    aovDat.peakHFB(aovi:aovi+L-1) = allResENC{ii,24};
     aovi = aovi + L; 
 
 end
@@ -280,7 +298,9 @@ for ii = 1:length(allResRET)
     aovDat.reg(aovi:aovi+L-1) = allResRET{ii,5};
     aovDat.RT(aovi:aovi+L-1) = allResRET{ii,3};
 %     aovDat.adjTime(aovi:aovi+L-1) = aovDat.peakLat(aovi:aovi+L-1) ./ aovDat.RT(aovi:aovi+L-1);
-    %misses retrieval
+    aovDat.peakHFB(aovi:aovi+L-1) = allResRET{ii,23}; 
+
+%misses retrieval
     aovi = aovi + L; 
     L = length(allResRET{ii,14});
     aovDat.subID(aovi:aovi+L-1) = allResRET{ii,7};
@@ -293,7 +313,7 @@ for ii = 1:length(allResRET)
     aovDat.reg(aovi:aovi+L-1) = allResRET{ii,5};
     aovDat.RT(aovi:aovi+L-1) = allResRET{ii,4};
 %     aovDat.adjTime(aovi:aovi+L-1) = aovDat.peakLat(aovi:aovi+L-1) ./ aovDat.RT(aovi:aovi+L-1);
-
+    aovDat.peakHFB(aovi:aovi+L-1) = allResRET{ii,24};
      aovi = aovi + L; 
 
 end
@@ -335,6 +355,7 @@ end
 %TFstatsSubmit.sh
 %TFsingleTrialWrapper.m
 %TFsingleTrialpipeline.m
+
 %phase resetting: 
 %TFphaseStatsSubmit.sh
 %TFphaseTrialWrapper.m
@@ -343,7 +364,8 @@ end
 % the outputs from stats are then integrated in this script: 
 %finalStatsIntegratePlot.m
 
-
+% publication grade figures are constructed in: 
+%publicationFigs.m
 
 
 

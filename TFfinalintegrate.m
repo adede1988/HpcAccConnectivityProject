@@ -1,6 +1,5 @@
-function [sigFreqs] = TFfinalintegrate(reg, headFiles, ...
-    outStatFiles, regions, phase, outStatFilesPhase, ...
-    sigFreqs)
+function [outDat] = TFfinalintegrate(reg, headFiles, ...
+    outStatFiles, regions, phase, outStatFilesPhase)
 
 
 %down select files to the current target region and phase of experiment
@@ -64,21 +63,70 @@ end
 
 [h, p2, clusterinfo] = cluster_test(perm2.tVals, nullTs); 
 
-if ~isempty(perm.eliminate)
-    [perm, perm2] = fixMissing(dat, perm, perm2);
-end
+%permutations on TF power took the mean, 
+% but I want channel level data back
+[perm, perm2] = fixMissing(dat, perm, perm2);
+
+% perm.hitVals = mean(perm.hitVals); 
+% perm.missVals = mean(perm.missVals);
+% perm2.hitVals = mean(perm2.hitVals);
+% perm2.missVals = mean(perm2.missVals); 
 
 % update significant frequencies
-pSum = sum(p<.05);
-pSumHFB = sum(p2<.05); 
-if strcmp(phase, 'sub')
-    sigFreqs(:,1,1,1) = sigFreqs(:,1,1,1) + pSum'; 
-    sigFreqs(:,1,2,1) = sigFreqs(:,1,2,1) + pSumHFB'; 
-else
-    sigFreqs(:,2,1,1) = sigFreqs(:,2,1,1) + pSum'; 
-    sigFreqs(:,2,2,1) = sigFreqs(:,2,2,1) + pSumHFB'; 
+% pSum = sum(p<.05);
+% pSumHFB = sum(p2<.05); 
+% if strcmp(phase, 'sub')
+%     sigFreqs(:,1,1,1) = sigFreqs(:,1,1,1) + pSum'; 
+%     sigFreqs(:,1,2,1) = sigFreqs(:,1,2,1) + pSumHFB'; 
+% else
+%     sigFreqs(:,2,1,1) = sigFreqs(:,2,1,1) + pSum'; 
+%     sigFreqs(:,2,2,1) = sigFreqs(:,2,2,1) + pSumHFB'; 
+% 
+% end
+ 
 
+
+
+scatterFig = figure('visible', true, 'position', [0,0,1000,1000]);
+
+outDat = cell(2,2,2); 
+if strcmp(phase, 'sub')
+    outi = 1; 
+else
+    outi = 2; 
 end
+
+set(0, 'currentfigure', scatterFig);
+subplot 441
+makeHFBImageScatter(perm,perm2, 1:23, 'power')
+title([regions{reg} ' ' phase ' freq: ' num2str(round(dat.frex(1),1)) ':'...
+       num2str(round(dat.frex(23),1)) 'Hz power'])
+
+subplot 442
+outDat(1,1,:) = makeHFBImageHist(perm, perm2, 1:23);
+
+subplot(4,4,5)
+makeHFBTimeScatter(dat, perm2, 1:23, 'power')
+
+subplot(4,4,6)
+makeIndexTimeScatter(dat, perm, perm2, 1:23)
+
+subplot(4,4,9)
+makeHFBImageScatter(perm,perm2, 23:38, 'power')
+title([regions{reg} ' ' phase ' freq: ' num2str(round(dat.frex(23),1)) ':'...
+       num2str(round(dat.frex(38),1)) 'Hz power'])
+
+subplot(4,4,10)
+outDat(2, 1,:) = makeHFBImageHist(perm, perm2, 23:38);
+
+subplot(4,4,13)
+makeHFBTimeScatter(dat, perm2, 23:38, 'power')
+
+subplot(4,4,14)
+makeIndexTimeScatter(dat, perm, perm2, 23:38)
+
+
+
 
 
 
@@ -87,7 +135,7 @@ figure('visible', false, 'position', [0,0,600, 1000])
 subplot(4, 2, 1)
 tim = dat.tim; 
 tim(tim<-450 | tim>3000) = []; 
-imagesc(squeeze(perm.hitVals)')
+imagesc(squeeze(mean(perm.hitVals))')
 set(gca, 'ydir', 'normal')
 caxis([-2, 2])
 colorbar
@@ -99,7 +147,7 @@ title([regions{reg} ' ' phase ' hit'])
 
 %miss Image plot
 subplot(4, 2, 3)
-imagesc(squeeze(perm.missVals)')
+imagesc(squeeze(mean(perm.missVals))')
 set(gca, 'ydir', 'normal')
 caxis([-2, 2])
 colorbar
@@ -113,8 +161,8 @@ title([regions{reg} ' ' phase ' miss'])
 
 %hit - miss Image plot
 subplot(4, 2, 5)
-imagesc(squeeze(perm.hitVals)' - ...
-        squeeze(perm.missVals)')
+imagesc(squeeze(mean(perm.hitVals))' - ...
+        squeeze(mean(perm.missVals))')
 addRedOutline(p, .05, 'red');
 set(gca, 'ydir', 'normal')
 caxis([-2, 2])
@@ -143,7 +191,7 @@ title([regions{reg} ' ' phase ' hit - miss tVals'])
 %hit HFB plot 
 subplot(4, 2, 2) 
 timCut = [-500:25:500]; 
-imagesc(squeeze(perm2.hitVals)')
+imagesc(squeeze(mean(perm2.hitVals))')
 set(gca, 'ydir', 'normal')
 caxis([-2, 10])
 colorbar
@@ -156,7 +204,7 @@ title([regions{reg} ' ' phase ' hit'])
 
 %miss Image plot
 subplot(4, 2, 4) 
-imagesc(squeeze(perm2.missVals)')
+imagesc(squeeze(mean(perm2.missVals))')
 set(gca, 'ydir', 'normal')
 caxis([-2, 10])
 colorbar
@@ -171,8 +219,8 @@ title([regions{reg} ' ' phase ' miss'])
 
 %hit - miss Image plot
 subplot(4, 2, 6)
-imagesc(squeeze(perm2.hitVals)' - ...
-        squeeze(perm2.missVals)')
+imagesc(squeeze(mean(perm2.hitVals))' - ...
+        squeeze(mean(perm2.missVals))')
 addRedOutline(p2, .05, 'red');
 set(gca, 'ydir', 'normal')
 caxis([-2, 2])
@@ -202,7 +250,7 @@ export_fig(['G:\My Drive\Johnson\MTL_PFC_networkFigs\TF_regional\wavelet'...
     '/' regions{reg} '_' phase '.jpg'], '-r300')
 
 
-figure('visible', false, 'position', [0,0,600,1000])
+
 
 
 perm = load([ImagepermsPhase(1).folder '/'...
@@ -240,19 +288,55 @@ if ~isempty(perm.eliminate)
 end
 
 
-% update significant frequencies
-pSum = sum(p<.05);
-pSumHFB = sum(p2<.05); 
-if strcmp(phase, 'sub')
-    sigFreqs(:,1,1,2) = sigFreqs(:,1,1,2) + pSum'; 
-    sigFreqs(:,1,2,2) = sigFreqs(:,1,2,2) + pSumHFB'; 
-else
-    sigFreqs(:,2,1,2) = sigFreqs(:,2,1,2) + pSum'; 
-    sigFreqs(:,2,2,2) = sigFreqs(:,2,2,2) + pSumHFB'; 
 
-end
+set(0, 'currentfigure', scatterFig);
+subplot 443
+makeHFBImageScatter(perm,perm2, 1:23, 'phase')
+title([regions{reg} ' ' phase ' freq: ' num2str(round(dat.frex(1),1)) ':'...
+       num2str(round(dat.frex(23),1)) 'Hz phase'])
+
+subplot 444
+outDat(1, 2,:) = makeHFBImageHist(perm, perm2, 1:23);
+
+subplot(4,4,7)
+makeHFBTimeScatter(dat, perm2, 1:23, 'phase')
+
+subplot(4,4,8)
+makeIndexTimeScatter(dat, perm, perm2, 1:23)
+
+subplot(4,4,11)
+makeHFBImageScatter(perm,perm2, 23:38, 'phase')
+title([regions{reg} ' ' phase ' freq: ' num2str(round(dat.frex(23),1)) ':'...
+       num2str(round(dat.frex(38),1)) 'Hz phase'])
+
+subplot(4,4,12)
+outDat(2, 2,:) = makeHFBImageHist(perm, perm2, 23:38);
+
+subplot(4,4,15)
+makeHFBTimeScatter(dat, perm2, 23:38, 'phase')
+
+subplot(4,4,16)
+makeIndexTimeScatter(dat, perm, perm2, 23:38)
 
 
+export_fig(['G:\My Drive\Johnson\MTL_PFC_networkFigs\TF_regional\wavelet'...
+    '/' regions{reg} '_' phase '_3.jpg'], '-r300')
+
+
+
+% % update significant frequencies
+% pSum = sum(p<.05);
+% pSumHFB = sum(p2<.05); 
+% if strcmp(phase, 'sub')
+%     sigFreqs(:,1,1,2) = sigFreqs(:,1,1,2) + pSum'; 
+%     sigFreqs(:,1,2,2) = sigFreqs(:,1,2,2) + pSumHFB'; 
+% else
+%     sigFreqs(:,2,1,2) = sigFreqs(:,2,1,2) + pSum'; 
+%     sigFreqs(:,2,2,2) = sigFreqs(:,2,2,2) + pSumHFB'; 
+% 
+% end
+
+figure('visible', false, 'position', [0,0,600,1000])
 
 subplot(4,2,1)
 hold off

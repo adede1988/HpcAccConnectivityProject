@@ -49,7 +49,9 @@ function [perm, perm2] = fixMissing(dat, perm, perm2)
     end
 
     missVals(eliminate,:,:) = [];
-    perm.missVals = mean(missVals); 
+    hitVals(eliminate,:, :) = [];
+    perm.missVals = missVals; 
+    perm.hitVals = hitVals; 
 
 
     %do it for the HFB locked values: 
@@ -112,7 +114,9 @@ function [perm, perm2] = fixMissing(dat, perm, perm2)
     end
 
     missVals(eliminate, :,:) = []; 
-    perm2.missVals = mean(missVals,1); 
+    hitVals(eliminate, :,:) = [];
+    perm2.missVals = missVals;
+    perm2.hitVals = hitVals; 
 
 
 end

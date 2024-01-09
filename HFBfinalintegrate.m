@@ -26,6 +26,7 @@ headFiles(~test) = [];
 
 %load in the main data
 dat = load([headFiles.folder '/' headFiles.name]).statInfo;
+%stats for Image locked
 perm = load([Imageperms(1).folder '/' Imageperms(1).name]).outDat;
 %aggregate the perms
 nullTs = zeros([size(perm.nulls, [1]), length(Imageperms)*50]);
@@ -35,8 +36,43 @@ for ii = 1:length(Imageperms)
 
 end
 
-[h, p, clusterinfo] = cluster_test(perm.tVals, nullTs); 
 
+[h, p, clusterinfo] = cluster_test(perm.tVals, nullTs);
+
+%for publication figures, I want to grab only the key data that I'm going
+%to plot, so I'm flagging what I know from the summary figures is significant: 
+
+outDat = struct; 
+tim = dat.tim; 
+outDat.reg = regions{reg}; 
+outDat.hits = dat.hits(tim>=-450 & tim<=3000,:); 
+outDat.misses = dat.misses(tim>=-450 & tim<=3000,:); 
+outDat.hitRT = dat.hitRT; 
+outDat.missRT = dat.missRT;
+outDat.hitLat = dat.hitLat; 
+outDat.missLat = dat.missLat; 
+outDat.phase = phase; 
+tim(tim<-450 | tim>3000) = []; 
+outDat.tim = tim; 
+save(['R:\MSS\Johnson_Lab\dtf8829\publicationFigureData/Figure1/' ...
+    '/HFB_singleTrial' ...
+    regions{reg} '_' phase '_image.mat'], "outDat")
+
+
+
+outDat = perm; 
+outDat.clusterinfo = clusterinfo; 
+outDat.h = h; 
+outDat.p = p; 
+outDat.tim = tim; 
+outDat.reg = regions{reg}; 
+outDat.phase = phase; 
+outDat.meanHitRT = mean(dat.hitRT); 
+outDat.meanMissRT = mean(dat.missRT); 
+save(['R:\MSS\Johnson_Lab\dtf8829\publicationFigureData/Figure1/HFB' ...
+    regions{reg} '_' phase '_image.mat'], "outDat")
+
+%repeat for HFB locked
 perm2 = load([HFBperms(1).folder '/' HFBperms(1).name]).outDat;
 %aggregate the perms
 nullTs = zeros([size(perm2.nulls, [1]), length(HFBperms)*50]);
@@ -57,13 +93,25 @@ if ~isempty(perm.eliminate)
     perm2.hitVals = perm2.hitVals(keep,:); 
 end
 
+
+outDat = perm2; 
+outDat.clusterinfo = clusterinfo; 
+outDat.h = h; 
+outDat.p = p2; 
+outDat.tim = [-500:25:500]; 
+outDat.reg = regions{reg}; 
+outDat.phase = phase; 
+outDat.meanHitRT = mean(dat.hitRT); 
+outDat.meanMissRT = mean(dat.missRT); 
+save(['R:\MSS\Johnson_Lab\dtf8829\publicationFigureData/Figure2/HFB' ...
+    regions{reg} '_' phase '_hfb.mat'], "outDat")
+
+
 figure('visible', false, 'position', [0,0,600, 1000])
 
 %hit miss Image aligned plot
 subplot(4, 2, 1)
 hold off
-tim = dat.tim; 
-tim(tim<-450 | tim>3000) = []; 
 %hits
 x = tim; 
 y = mean(perm.hitVals);
