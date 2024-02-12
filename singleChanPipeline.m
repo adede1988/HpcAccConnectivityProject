@@ -12,7 +12,7 @@ highstds = logspace(log10(10),log10(20),highnumfrex)./(2*pi*highfrex);
 %% load the data
 
 try %try loading the processed file
-    chanDat = load([chanFiles(idx).folder '/finishedNOPE/' chanFiles(idx).name]).chanDat; 
+    chanDat = load([chanFiles(idx).folder '/finished/' chanFiles(idx).name]).chanDat; 
 catch
     chanDat = load([chanFiles(idx).folder '/' chanFiles(idx).name]).chanDat; % go raw if it's not working!
 end

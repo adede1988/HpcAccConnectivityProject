@@ -39,6 +39,95 @@ chanFiles = chanFiles(test);
 %     end
 % end
 
+%% get location data for R21 grant figure
+HFBdat = load('R:\MSS\Johnson_Lab\dtf8829\QuestConnect\HFB_KEY_STATS\hip.mat').HFBdat; 
+regions = {HFBdat.aggTargs.lab}; 
+regions(2) = []; 
+locsMTL = cell(length(chanFiles), 1); 
+locsHIP = cell(length(chanFiles), 1); 
+parfor ii = 1:length(chanFiles)
+    try
+chanDat = load([chanFiles(ii).folder '/' chanFiles(ii).name]).chanDat; 
+lab = chanDat.labels{chanDat.chi,3}; 
+if strcmp('mtl', lab)
+    locsMTL{ii} = chanDat.chanpos(chanDat.chi, :);
+    disp(['reg: ' lab '  ii: ' num2str(ii)])
+end
+if strcmp('hip', lab)
+    locsHIP{ii} = chanDat.chanpos(chanDat.chi, :);
+    disp(['reg: ' lab '  ii: ' num2str(ii)])
+end
+    catch
+        disp('likely missing chanpos')
+    end
+
+end
+
+%eliminate the empties: 
+hipidx = cellfun(@(x) ~isempty(x), locsHIP); 
+locsHIP = locsHIP(hipidx); 
+mtlidx = cellfun(@(x) ~isempty(x), locsMTL); 
+locsMTL = locsMTL(mtlidx); 
+
+hipCol = '#87c7cd'; 
+mtlCol = '#a05824'; 
+figure
+test = reshape(cell2mat(locsHIP), [3, length(locsHIP)]);
+test = test'; 
+hippModel = stlread("R:\MSS\Johnson_Lab\dtf8829\GitHub\HpcAccConnectivityProject\bilatHippo.stl");
+paraModel = stlread("R:\MSS\Johnson_Lab\dtf8829\GitHub\HpcAccConnectivityProject\ParahippoCortex.stl");
+trimesh(hippModel, 'facecolor', 'none', 'facealpha', .00, 'edgecolor', ...
+    sscanf(hipCol(2:end),'%2x%2x%2x',[1 3])/255, 'linewidth', .01, 'linestyle', ':')
+hold on 
+% trimesh(paraModel, 'facecolor', 'none', 'facealpha', .00, 'edgecolor', ...
+%     'blue', 'linewidth', .01, 'linestyle', ':')
+scatter3(test(:,1), -test(:,2), test(:,3), 100, sscanf(hipCol(2:end),'%2x%2x%2x',[1 3])/255, 'filled')
+
+X = []; 
+Y = []; 
+Z = []; 
+
+for ii = 1:size(test,1)
+
+    [x,y,z] = sphere; 
+    x = x+test(ii,1); 
+    y = y-test(ii,2); 
+    z = z+test(ii,3); 
+    
+    X = [X, x]; 
+    Y = [Y, y]; 
+    Z = [Z, z]; 
+end
+
+surf2stl_elec('R:\MSS\Johnson_Lab\dtf8829\GitHub\HpcAccConnectivityProject\allhipelecs.stl', X,Y,Z);
+
+
+
+test = reshape(cell2mat(locsMTL), [3, length(locsMTL)]); 
+test = test'; 
+
+%test is channels X 3 MNI coordinates
+X = []; 
+Y = []; 
+Z = []; 
+
+for ii = 1:size(test,1)
+
+    [x,y,z] = sphere; 
+    x = x+test(ii,1); 
+    y = y-test(ii,2); 
+    z = z+test(ii,3); 
+    
+    X = [X, x]; 
+    Y = [Y, y]; 
+    Z = [Z, z]; 
+end
+
+scatter3(test(:,1), -test(:,2), test(:,3), 100, sscanf(mtlCol(2:end),'%2x%2x%2x',[1 3])/255, 'filled')
+surf2stl_elec('R:\MSS\Johnson_Lab\dtf8829\GitHub\HpcAccConnectivityProject\allparaelecs.stl', X,Y,Z);
+
+        
+
 
 %% loop over channels and get single trial level data for HFB and TF
 
@@ -75,7 +164,7 @@ regions(2) = [];
 %24: HFB peaks miss
 allResENC = cell(length(chanFiles), 22); 
 allResRET = allResENC; 
-parfor ii = 1:length(chanFiles)
+parfor ii = 1:50
 ii
 chanDat = load([chanFiles(ii).folder '/' chanFiles(ii).name]).chanDat; 
 lab = chanDat.labels{chanDat.chi,3}; 
@@ -329,10 +418,10 @@ writetable(aovDat, ...
 for reg = 1:9
 
 
-%     visualizeHFBsingleTrialDat(allResENC, reg, regions, 'sub');
-%     visualizeHFBsingleTrialDat(allResRET, reg, regions, 'ret');
-    getTFsingleTrialDat2(allResENC, reg, regions, 'sub');
-    getTFsingleTrialDat2(allResRET, reg, regions, 'ret');
+    visualizeHFBsingleTrialDat(allResENC, reg, regions, 'sub');
+    visualizeHFBsingleTrialDat(allResRET, reg, regions, 'ret');
+%     getTFsingleTrialDat2(allResENC, reg, regions, 'sub');
+%     getTFsingleTrialDat2(allResRET, reg, regions, 'ret');
     
 
     %visualizeTFsingleTrialDat relies on low frequencies being treated as
@@ -362,6 +451,8 @@ end
 %TFpahseTrialpipeline.m
 
 % the outputs from stats are then integrated in this script: 
+%overly detailed figures are made here as well
+%minimal plotting data are packaged here. 
 %finalStatsIntegratePlot.m
 
 % publication grade figures are constructed in: 

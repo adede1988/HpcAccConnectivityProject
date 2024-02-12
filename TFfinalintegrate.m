@@ -1,4 +1,4 @@
-function [outDat] = TFfinalintegrate(reg, headFiles, ...
+function [outDat2] = TFfinalintegrate(reg, headFiles, ...
     outStatFiles, regions, phase, outStatFilesPhase)
 
 
@@ -63,33 +63,67 @@ end
 
 [h, p2, clusterinfo] = cluster_test(perm2.tVals, nullTs); 
 
+
 %permutations on TF power took the mean, 
 % but I want channel level data back
 [perm, perm2] = fixMissing(dat, perm, perm2);
 
-% perm.hitVals = mean(perm.hitVals); 
-% perm.missVals = mean(perm.missVals);
-% perm2.hitVals = mean(perm2.hitVals);
-% perm2.missVals = mean(perm2.missVals); 
 
-% update significant frequencies
-% pSum = sum(p<.05);
-% pSumHFB = sum(p2<.05); 
-% if strcmp(phase, 'sub')
-%     sigFreqs(:,1,1,1) = sigFreqs(:,1,1,1) + pSum'; 
-%     sigFreqs(:,1,2,1) = sigFreqs(:,1,2,1) + pSumHFB'; 
-% else
-%     sigFreqs(:,2,1,1) = sigFreqs(:,2,1,1) + pSum'; 
-%     sigFreqs(:,2,2,1) = sigFreqs(:,2,2,1) + pSumHFB'; 
-% 
-% end
+%% create output structures for later publication plotting
+%power
+
+%image locked power 
+outDat = struct; 
+tim = dat.tim; 
+tim(tim<-450 | tim>3000) = []; 
+outDat.tim = tim; 
+outDat.reg = regions{reg}; 
+outDat.frex = dat.frex; 
+outDat.hits_image = perm.hitVals; 
+outDat.misses_image = perm.missVals;  
+outDat.p_image = p; 
+outDat.hitRT = dat.hitRT; 
+outDat.missRT = dat.missRT;
+outDat.hitLat = dat.hitLat; 
+outDat.missLat = dat.missLat; 
+outDat.hitChi = dat.hitChi; 
+outDat.missChi = dat.missChi; 
+outDat.hitSub = dat.hitSub; 
+outDat.missSub = dat.missSub; 
+outDat.phase = phase; 
+save(['R:\MSS\Johnson_Lab\dtf8829\publicationFigureData/Figure2/' ...
+    '/TF_' ...
+    regions{reg} '_' phase '_image.mat'], "outDat")
+
+
+%HFB locked power
+outDat = struct; 
+tim = [-500:25:500];
+outDat.tim = tim; 
+outDat.reg = regions{reg}; 
+outDat.frex = dat.frex; 
+outDat.hits_hfb = perm2.hitVals; 
+outDat.misses_hfb = perm2.missVals;  
+outDat.p_hfb = p2; 
+outDat.hitRT = dat.hitRT; 
+outDat.missRT = dat.missRT;
+outDat.hitLat = dat.hitLat; 
+outDat.missLat = dat.missLat; 
+outDat.hitChi = dat.hitChi; 
+outDat.missChi = dat.missChi; 
+outDat.hitSub = dat.hitSub; 
+outDat.missSub = dat.missSub; 
+outDat.phase = phase; 
+save(['R:\MSS\Johnson_Lab\dtf8829\publicationFigureData/Figure2/' ...
+    '/TF_' ...
+    regions{reg} '_' phase '_HFB.mat'], "outDat")
  
 
 
 
 scatterFig = figure('visible', true, 'position', [0,0,1000,1000]);
 
-outDat = cell(2,2,2); 
+outDat2 = cell(2,2,2); 
 if strcmp(phase, 'sub')
     outi = 1; 
 else
@@ -103,7 +137,7 @@ title([regions{reg} ' ' phase ' freq: ' num2str(round(dat.frex(1),1)) ':'...
        num2str(round(dat.frex(23),1)) 'Hz power'])
 
 subplot 442
-outDat(1,1,:) = makeHFBImageHist(perm, perm2, 1:23);
+outDat2(1,1,:) = makeHFBImageHist(perm, perm2, 1:23);
 
 subplot(4,4,5)
 makeHFBTimeScatter(dat, perm2, 1:23, 'power')
@@ -117,7 +151,7 @@ title([regions{reg} ' ' phase ' freq: ' num2str(round(dat.frex(23),1)) ':'...
        num2str(round(dat.frex(38),1)) 'Hz power'])
 
 subplot(4,4,10)
-outDat(2, 1,:) = makeHFBImageHist(perm, perm2, 23:38);
+outDat2(2, 1,:) = makeHFBImageHist(perm, perm2, 23:38);
 
 subplot(4,4,13)
 makeHFBTimeScatter(dat, perm2, 23:38, 'power')
@@ -130,7 +164,7 @@ makeIndexTimeScatter(dat, perm, perm2, 23:38)
 
 
 
-figure('visible', false, 'position', [0,0,600, 1000])
+figure('visible', true, 'position', [0,0,600, 1000])
 %hit Image plot
 subplot(4, 2, 1)
 tim = dat.tim; 
@@ -250,8 +284,7 @@ export_fig(['G:\My Drive\Johnson\MTL_PFC_networkFigs\TF_regional\wavelet'...
     '/' regions{reg} '_' phase '.jpg'], '-r300')
 
 
-
-
+%% repeat the process for the phase locking statistics 
 
 perm = load([ImagepermsPhase(1).folder '/'...
     ImagepermsPhase(1).name]).outDat;
@@ -287,6 +320,92 @@ if ~isempty(perm.eliminate)
     perm2.hitVals = perm2.hitVals(keep,:,:); 
 end
 
+%% create output structures for later publication plotting
+%phase
+
+%image locked phase 
+outDat = struct; 
+tim = dat.tim; 
+tim(tim<-450 | tim>3000) = []; 
+outDat.tim = tim; 
+outDat.reg = regions{reg}; 
+outDat.frex = dat.frex; 
+outDat.hits_image = perm.hitVals; 
+outDat.misses_image = perm.missVals;  
+outDat.p_image = p; 
+outDat.hitRT = dat.hitRT; 
+outDat.missRT = dat.missRT;
+outDat.hitLat = dat.hitLat; 
+outDat.missLat = dat.missLat; 
+outDat.hitChi = dat.hitChi; 
+outDat.missChi = dat.missChi; 
+outDat.hitSub = dat.hitSub; 
+outDat.missSub = dat.missSub; 
+outDat.phase = phase; 
+save(['R:\MSS\Johnson_Lab\dtf8829\publicationFigureData/Figure2/' ...
+    '/TFphase_' ...
+    regions{reg} '_' phase '_image.mat'], "outDat")
+
+
+%HFB locked phase
+outDat = struct; 
+tim = [-500:25:500];
+outDat.tim = tim; 
+outDat.reg = regions{reg}; 
+outDat.frex = dat.frex; 
+outDat.hits_hfb = perm2.hitVals; 
+
+%get the mean phase angle for each channel
+idx = arrayfun(@(x) find(dat.tim>=x,1), dat.hitLat); 
+hitAngles = arrayfun(@(x,y) squeeze(dat.hits_p(x,y,:)),...
+    idx', [1:length(idx)], 'uniformoutput', false);
+hitAngles =cat(2, hitAngles{:});
+hitrealID = arrayfun(@(x) [dat.hitSub{x} '_' num2str(dat.hitChi(x))], ...
+    [1:length(dat.hitChi)], 'uniformoutput', false); 
+uni_ID = unique(hitrealID); 
+meanAngles = []; 
+for ui = 1:length(uni_ID)
+    tmp = hitAngles(12, ismember(hitrealID, uni_ID{ui}));
+    meanAngles = [meanAngles, angle(mean(exp(1i * tmp)))];
+%     figure
+%     histogram(tmp, [-pi:pi/6:pi])
+end
+outDat.hit_angles = meanAngles; 
+outDat.misses_hfb = perm2.missVals;  
+%get the mean phase angle for each channel
+idx = arrayfun(@(x) find(dat.tim>=x,1), dat.missLat); 
+missAngles = arrayfun(@(x,y) squeeze(dat.misses_p(x,y,:)),...
+    idx', [1:length(idx)], 'uniformoutput', false);
+missAngles =cat(2, missAngles{:});
+missrealID = arrayfun(@(x) [dat.missSub{x} '_' num2str(dat.missChi(x))], ...
+    [1:length(dat.missChi)], 'uniformoutput', false); 
+uni_ID = unique(missrealID); 
+meanAngles = []; 
+for ui = 1:length(uni_ID)
+    tmp = missAngles(12, ismember(missrealID, uni_ID{ui}));
+    meanAngles = [meanAngles, angle(mean(exp(1i * tmp)))];
+%     figure
+%     histogram(tmp, [-pi:pi/6:pi])
+end
+outDat.miss_angles = meanAngles;
+outDat.p_hfb = p2; 
+outDat.hitRT = dat.hitRT; 
+outDat.missRT = dat.missRT;
+outDat.hitLat = dat.hitLat; 
+outDat.missLat = dat.missLat; 
+outDat.hitChi = dat.hitChi; 
+outDat.missChi = dat.missChi; 
+outDat.hitSub = dat.hitSub; 
+outDat.missSub = dat.missSub; 
+outDat.phase = phase; 
+save(['R:\MSS\Johnson_Lab\dtf8829\publicationFigureData/Figure2/' ...
+    '/TFphase_' ...
+    regions{reg} '_' phase '_HFB.mat'], "outDat")
+
+
+
+
+
 
 
 set(0, 'currentfigure', scatterFig);
@@ -296,7 +415,7 @@ title([regions{reg} ' ' phase ' freq: ' num2str(round(dat.frex(1),1)) ':'...
        num2str(round(dat.frex(23),1)) 'Hz phase'])
 
 subplot 444
-outDat(1, 2,:) = makeHFBImageHist(perm, perm2, 1:23);
+outDat2(1, 2,:) = makeHFBImageHist(perm, perm2, 1:23);
 
 subplot(4,4,7)
 makeHFBTimeScatter(dat, perm2, 1:23, 'phase')
@@ -310,7 +429,7 @@ title([regions{reg} ' ' phase ' freq: ' num2str(round(dat.frex(23),1)) ':'...
        num2str(round(dat.frex(38),1)) 'Hz phase'])
 
 subplot(4,4,12)
-outDat(2, 2,:) = makeHFBImageHist(perm, perm2, 23:38);
+outDat2(2, 2,:) = makeHFBImageHist(perm, perm2, 23:38);
 
 subplot(4,4,15)
 makeHFBTimeScatter(dat, perm2, 23:38, 'phase')
@@ -336,7 +455,7 @@ export_fig(['G:\My Drive\Johnson\MTL_PFC_networkFigs\TF_regional\wavelet'...
 % 
 % end
 
-figure('visible', false, 'position', [0,0,600,1000])
+figure('visible', true, 'position', [0,0,600,1000])
 
 subplot(4,2,1)
 hold off

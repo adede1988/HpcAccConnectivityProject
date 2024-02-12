@@ -56,14 +56,14 @@ HFBImageidx = cell(9, 2, 2, 2, 2);
 
 parfor reg = 1:length(regions)
     reg
-%     allOut = cell(2,2,2,2); 
-%     outDat = TFfinalintegrate(reg, headFiles, outStatFiles, regions, ...
-%         'sub', outStatFilesPhase);
-%     allOut( :, 1, :, :) = outDat; 
-%     outDat2 = TFfinalintegrate(reg, headFiles, outStatFiles, regions, ...
-%         'ret', outStatFilesPhase);
-%     allOut( :, 2, :, :) = outDat2; 
-%     HFBImageidx(reg, :, :, :, :) = allOut; 
+    allOut = cell(2,2,2,2); 
+    outDat = TFfinalintegrate(reg, headFiles, outStatFiles, regions, ...
+        'sub', outStatFilesPhase);
+    allOut( :, 1, :, :) = outDat; 
+    outDat2 = TFfinalintegrate(reg, headFiles, outStatFiles, regions, ...
+        'ret', outStatFilesPhase);
+    allOut( :, 2, :, :) = outDat2; 
+    HFBImageidx(reg, :, :, :, :) = allOut; 
  
     HFBfinalintegrate(reg, headFilesHFB, outStatFilesHFB, regions, 'sub')
     HFBfinalintegrate(reg, headFilesHFB, outStatFilesHFB, regions, 'ret')
