@@ -27,11 +27,6 @@ end
 %get sampling rate
 subDat.fsample = dat.fsample;
 
-%% set some general params for frequencies, ROI names
-% frex = logspace(log10(2),log10(80),100);
-% numfrex = length(frex); 
-% stds = linspace(2,5,numfrex);
-rois = {'dlPFC', 'hip', 'phg', 'acc'}; 
 
 
 %% quick stuff grabbing some behavior 

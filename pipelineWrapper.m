@@ -15,9 +15,12 @@ addpath(genpath('C:\Users\dtf8829\Documents\MATLAB\fieldtrip-20230118'))
 prefix = 'R:\';
 task = 'MemDev';
 datFolder = [prefix 'MSS\Johnson_Lab\DATA\'];
-masterSheet = readtable([prefix 'MSS\Johnson_Lab\dtf8829\memDevDat2.csv']);
+masterSheet = readtable([prefix ...
+    'MSS\Johnson_Lab\dtf8829\GitHub\HpcAccConnectivityProject\' ...
+    'memDevDat2.csv']);
 saveFolder = [prefix 'MSS\Johnson_Lab\dtf8829\SUMDAT\'];
-chanFolder = [prefix 'MSS\Johnson_Lab\dtf8829\QuestConnect\CHANDAT\CHANRAW'];
+chanFolder = [prefix 'MSS\Johnson_Lab\dtf8829\QuestConnect\'...
+    'CHANDAT\CHANRAW'];
 allData = getAllDataStruct(datFolder, masterSheet, task);
 
 clear masterSheet task 

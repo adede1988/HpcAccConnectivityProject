@@ -40,7 +40,7 @@ ft_defaults;
 
 
 % 
-datFolder = [datPre 'CHANDAT']; 
+datFolder = [datPre 'CHANDAT/CHANRAW']; 
 chanFiles = dir(datFolder);
 test = cellfun(@(x) length(x)>0, strfind({chanFiles.name}, '.mat'));
 chanFiles = chanFiles(test); 
@@ -127,12 +127,12 @@ test = cellfun(@(x) length(x)>0, strfind({subFiles.name}, subID));
 subFiles = subFiles(test);
 
 
-parfor start = 1:2415
+
 disp(['going for ' subID ' ' chanFiles(start).name] )
 
 singleChanPipeline(chanFiles, start, subFiles, codePre); 
 
-end
+
 
 %% put encoding behavioral data onto it
 % curSub = 'something'; 
