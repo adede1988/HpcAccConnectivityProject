@@ -1,6 +1,6 @@
 function [outDat2] = TFfinalintegrate(reg, headFiles, ...
     outStatFiles, regions, phase, outStatFilesPhase)
-
+try
 
 %down select files to the current target region and phase of experiment
 test = cellfun(@(x) length(x)>0, ...
@@ -82,6 +82,7 @@ outDat.frex = dat.frex;
 outDat.hits_image = perm.hitVals; 
 outDat.misses_image = perm.missVals;  
 outDat.p_image = p; 
+outDat.t_image = perm.tVals; 
 outDat.hitRT = dat.hitRT; 
 outDat.missRT = dat.missRT;
 outDat.hitLat = dat.hitLat; 
@@ -105,6 +106,7 @@ outDat.frex = dat.frex;
 outDat.hits_hfb = perm2.hitVals; 
 outDat.misses_hfb = perm2.missVals;  
 outDat.p_hfb = p2; 
+outDat.t_hfb = perm2.tVals; 
 outDat.hitRT = dat.hitRT; 
 outDat.missRT = dat.missRT;
 outDat.hitLat = dat.hitLat; 
@@ -333,6 +335,7 @@ outDat.frex = dat.frex;
 outDat.hits_image = perm.hitVals; 
 outDat.misses_image = perm.missVals;  
 outDat.p_image = p; 
+outDat.t_image = perm.tVals;
 outDat.hitRT = dat.hitRT; 
 outDat.missRT = dat.missRT;
 outDat.hitLat = dat.hitLat; 
@@ -342,6 +345,60 @@ outDat.missChi = dat.missChi;
 outDat.hitSub = dat.hitSub; 
 outDat.missSub = dat.missSub; 
 outDat.phase = phase; 
+
+%get the mean phase angle for each channel
+[~,idx] = max(sum(outDat.p_image<.05, 2)); %when is max significance
+maxTim = outDat.tim(idx); %need to translate to uncut tim
+outDat.maxTim = maxTim; 
+uncutIdx = find(dat.tim==maxTim);
+hitAngles = squeeze(dat.hits_p(uncutIdx, :, :)); 
+hitrealID = arrayfun(@(x) [dat.hitSub{x} '_' num2str(dat.hitChi(x))], ...
+    [1:length(dat.hitChi)], 'uniformoutput', false); 
+uni_ID = unique(hitrealID); 
+meanAngles = []; 
+for ui = 1:length(uni_ID)
+    %hard code of the 12th frequency which is 3 Hz
+    tmp = hitAngles(ismember(hitrealID, uni_ID{ui}), 12); 
+    meanAngles = [meanAngles, angle(mean(exp(1i * tmp)))];
+%     figure
+%     histogram(tmp, [-pi:pi/6:pi])
+end
+outDat.hit_angles = meanAngles; 
+
+meanAngles = []; 
+for ui = 1:length(uni_ID)
+    %hard code of the 33rd frequency which is 6.5 Hz
+    tmp = hitAngles(ismember(hitrealID, uni_ID{ui}), 33); 
+    meanAngles = [meanAngles, angle(mean(exp(1i * tmp)))];
+%     figure
+%     histogram(tmp, [-pi:pi/6:pi])
+end
+outDat.hit_angles_high = meanAngles; 
+%do it again for misses: 
+missAngles = squeeze(dat.misses_p(uncutIdx, :, :)); 
+missrealID = arrayfun(@(x) [dat.missSub{x} '_' num2str(dat.missChi(x))], ...
+    [1:length(dat.missChi)], 'uniformoutput', false); 
+uni_ID = unique(missrealID); 
+meanAngles = []; 
+for ui = 1:length(uni_ID)
+    %hard code of the 12th frequency which is 3 Hz
+    tmp = missAngles(ismember(missrealID, uni_ID{ui}), 12); 
+    meanAngles = [meanAngles, angle(mean(exp(1i * tmp)))];
+%     figure
+%     histogram(tmp, [-pi:pi/6:pi])
+end
+outDat.miss_angles = meanAngles; 
+
+meanAngles = []; 
+for ui = 1:length(uni_ID)
+    %hard code of the 33rd frequency which is 6.5 Hz
+    tmp = missAngles(ismember(missrealID, uni_ID{ui}), 33); 
+    meanAngles = [meanAngles, angle(mean(exp(1i * tmp)))];
+%     figure
+%     histogram(tmp, [-pi:pi/6:pi])
+end
+outDat.miss_angles_high = meanAngles; 
+
 save(['R:\MSS\Johnson_Lab\dtf8829\publicationFigureData/Figure2/' ...
     '/TFphase_' ...
     regions{reg} '_' phase '_image.mat'], "outDat")
@@ -365,12 +422,23 @@ hitrealID = arrayfun(@(x) [dat.hitSub{x} '_' num2str(dat.hitChi(x))], ...
 uni_ID = unique(hitrealID); 
 meanAngles = []; 
 for ui = 1:length(uni_ID)
-    tmp = hitAngles(12, ismember(hitrealID, uni_ID{ui}));
+    tmp = hitAngles(12, ismember(hitrealID, uni_ID{ui})); %hard code of the 12th frequency which is 3 Hz
     meanAngles = [meanAngles, angle(mean(exp(1i * tmp)))];
 %     figure
 %     histogram(tmp, [-pi:pi/6:pi])
 end
 outDat.hit_angles = meanAngles; 
+
+meanAngles = []; 
+for ui = 1:length(uni_ID)
+    %hard code of the 33rd frequency which is 6.5 Hz
+    tmp = hitAngles(33, ismember(hitrealID, uni_ID{ui})); 
+    meanAngles = [meanAngles, angle(mean(exp(1i * tmp)))];
+%     figure
+%     histogram(tmp, [-pi:pi/6:pi])
+end
+outDat.hit_angles_high = meanAngles; 
+
 outDat.misses_hfb = perm2.missVals;  
 %get the mean phase angle for each channel
 idx = arrayfun(@(x) find(dat.tim>=x,1), dat.missLat); 
@@ -382,12 +450,23 @@ missrealID = arrayfun(@(x) [dat.missSub{x} '_' num2str(dat.missChi(x))], ...
 uni_ID = unique(missrealID); 
 meanAngles = []; 
 for ui = 1:length(uni_ID)
-    tmp = missAngles(12, ismember(missrealID, uni_ID{ui}));
+    %hard code of the 12th frequency which is 3 Hz
+    tmp = missAngles(12, ismember(missrealID, uni_ID{ui})); 
     meanAngles = [meanAngles, angle(mean(exp(1i * tmp)))];
 %     figure
 %     histogram(tmp, [-pi:pi/6:pi])
 end
 outDat.miss_angles = meanAngles;
+
+meanAngles = []; 
+for ui = 1:length(uni_ID)
+    %hard code of the 33rd frequency which is 6.5 Hz
+    tmp = missAngles(33, ismember(missrealID, uni_ID{ui})); 
+    meanAngles = [meanAngles, angle(mean(exp(1i * tmp)))];
+%     figure
+%     histogram(tmp, [-pi:pi/6:pi])
+end
+outDat.miss_angles_high = meanAngles;
 outDat.p_hfb = p2; 
 outDat.hitRT = dat.hitRT; 
 outDat.missRT = dat.missRT;
@@ -800,7 +879,10 @@ export_fig(['G:\My Drive\Johnson\MTL_PFC_networkFigs\TF_regional\wavelet'...
 
 
 
+catch
 
+disp(['failure on: ' regions{reg} ' ' phase])
+end
 
 
 

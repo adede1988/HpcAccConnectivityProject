@@ -87,6 +87,8 @@ b2w2r = [[linspace(0,255,128)'; linspace(255,0,128)'], ...
 b2w2r(129:end, 1) = 1; 
 b2w2r(1:128, 3) = 1; 
 
+linWid = 5; 
+
 s = [12, 61, 74]; %sangria
 % s = [77, 0, 77]; 
 m = [171,189,154]; 
@@ -127,8 +129,8 @@ fig1Dat([fig1Dat.isdir]) = [];
 %to HFB-peak diffs
 %effect sizes stored as time X enc/ret X region
 %panel 1A
-imgDist = zeros(139, 2, 9); 
-for ii = 1:length(fig1Dat)
+% imgDist = zeros(139, 2, 9); 
+parfor ii = 1:length(fig1Dat)
     panelDat = load([fig1Dat(ii).folder '/' fig1Dat(ii).name]).outDat; 
 
     %quick cleaning for plotting purposes only, all data were used in stats
@@ -147,14 +149,14 @@ for ii = 1:length(fig1Dat)
     regi = find(cellfun(@(x) strcmp(x, panelDat.reg), regions)); 
     phasei = find(cellfun(@(x) strcmp(x, panelDat.phase), phaseVals)); 
 
-    imgDist(:,phasei, regi) = diffs; 
+%     imgDist(:,phasei, regi) = diffs; 
     figure('visible', false, 'position', [0,0,600,600])
     x = panelDat.tim; 
     x(panelDat.p>.05) = []; 
     if ~isempty(x) %check if we have any sig time points
     breakVals = [0, find(diff(x)> 25), length(x)];
-    for ii = 1:length(breakVals)-1
-        tmpX = x(breakVals(ii)+1:breakVals(ii+1));
+    for jj = 1:length(breakVals)-1
+        tmpX = x(breakVals(jj)+1:breakVals(jj+1));
         tmpY = ones(length(tmpX),1) * 10000; 
         tmpX = [tmpX, flip(tmpX)]; 
         tmpY = [tmpY', -tmpY'];
@@ -166,12 +168,12 @@ for ii = 1:length(fig1Dat)
     else
         hold on 
     end
-    yline(0, 'color', 'k', 'linewidth', 2)
-    xline(0, '--', 'linewidth', 2, 'color', 'k')
+    yline(0, 'color', 'k', 'linewidth', linWid)
+    xline(0, '--', 'linewidth', linWid, 'color', 'k')
     xline(panelDat.meanHitRT, 'color', hitCol, ...
-        'linewidth', 2, 'linestyle', '--')
+        'linewidth', linWid, 'linestyle', '--')
     xline(panelDat.meanMissRT, 'color', missCol, ...
-        'linewidth', 2, 'linestyle', '--')
+        'linewidth', linWid, 'linestyle', '--')
     y = movmean(mean(panelDat.hitVals), 3); 
     x = panelDat.tim; 
     plot(x, y, 'color', hitCol, 'linewidth', 4)
@@ -194,6 +196,7 @@ for ii = 1:length(fig1Dat)
     allMax = max([allMax, max(y)]); 
     allMin = min([allMin, min(y)]); 
     ylim([allMin*1.1, allMax*1.1])
+    ylim([-2, 6])
     set(gcf,'color','w');
     box off;
     ax=gca;ax.LineWidth=4;
@@ -217,11 +220,11 @@ end
     clim([-10,20])
     colorbar
     hold on 
-    xline(0, '--', 'linewidth', 2)
+    xline(0, '--', 'linewidth', linWid)
     scatter(panelDat.hitRT(order), [1:length(panelDat.hitRT)], ...
         20, 'white', 'filled')
 %     plot(sortedLat, [1:length(sortedLat)], 'color', regColors(9,:), ...
-%         'linestyle', '--', 'linewidth', 2)
+%         'linestyle', '--', 'linewidth', linWid)
     set(gcf,'color','w');
     box off;
     ax=gca;ax.LineWidth=4;
@@ -479,7 +482,7 @@ parfor ii = 1:length(TF_files_HFB)
 
     figure('visible', false, 'position', [0,0,600,600])
     x = 1:length(panelDat.frex); 
-%     yline(0, 'color', 'k', 'linewidth', 2)
+%     yline(0, 'color', 'k', 'linewidth', linWid)
     x(panelDat.p_hfb(21,:)>.05) = []; 
     if ~isempty(x) %check if we have any sig time points
     breakVals = [0, find(diff(x)> 25), length(x)];
@@ -490,7 +493,7 @@ parfor ii = 1:length(TF_files_HFB)
         tmpY = [tmpY', -tmpY'];
         fill(tmpX, tmpY, sigCol, 'facealpha', sigAlpha, 'edgealpha', 0)
         hold on 
-%         yline(0, 'color', 'k', 'linewidth', 2)
+%         yline(0, 'color', 'k', 'linewidth', linWid)
     
     end
     else
@@ -571,7 +574,7 @@ parfor ii = 1:length(TF_files_HFB)
     allMax = max([allMax, max(y)]); 
     allMin = min([allMin, min(y)]); 
     allMin = min([allMin, -2]); 
-    ylim([allMin*1.1, allMax*1.1])
+    ylim([-1, 18])
     xlim([1, 100])
     xticks([1:11:100])
     xticklabels(round(panelDat.frex([1:11:100])))
@@ -611,7 +614,7 @@ parfor ii = 1:length(TF_files_HFB)
 
     figure('visible', false, 'position', [0,0,600,600])
     x = 1:length(panelDat.frex); 
-    yline(0, 'color', 'k', 'linewidth', 2)
+    yline(0, 'color', 'k', 'linewidth', linWid)
    
     x(panelDat.p_hfb(21,:)>.05) = []; 
     if ~isempty(x) %check if we have any sig time points
@@ -624,26 +627,14 @@ parfor ii = 1:length(TF_files_HFB)
         fill(tmpX, tmpY, sigCol, 'facealpha', sigAlpha, 'edgealpha', 0)
         hold on 
         xline(12, 'color', 'k', 'linewidth',2, 'linestyle', '--')
+        xline(33, 'color', 'k', 'linewidth',2, 'linestyle', '--')
     
     end
     else
         hold on 
     end
 
-  
-%     hitSpect = arrayfun(@(x) find(panelDat.tim>=x, 1), panelDat.hitLat);
-%     hitSpect = arrayfun(@(x,y) squeeze(panelDat.hits(x,y,:)), ...
-%         hitSpect, [1:length(hitSpect)]', 'uniformoutput', false);
-%     hitSpect = cat(2, hitSpect{:});
-%     % need to take channel-wise means
-%     realID = arrayfun(@(x) [panelDat.hitSub{x} '_'...
-%         num2str(panelDat.hitChi(x))], 1:length(panelDat.hitChi), ...
-%         'UniformOutput', false);
-%     uniIDs = unique(realID); 
-%     hitSpect = cellfun(@(x) ...
-%         mean(hitSpect(:, ismember( realID,x)), 2), uniIDs, ...
-%         'uniformoutput', false);
-%     hitSpect = cat(2, hitSpect{:});
+
     hitSpect = squeeze(panelDat.hits_hfb(:,21,:)); 
 
 
@@ -651,14 +642,7 @@ parfor ii = 1:length(TF_files_HFB)
         hitSpect(8:10,:) = []; 
     end
     
-%     
-% 
-%     
-%     hitBase = permute(panelDat.hits, [3,1,2]); 
-%     hitBase = reshape(hitBase, [100, prod(size(hitBase, [2,3]))]);
-% 
-%     ybase = median(hitBase, 2); 
-% %     plot(ybase, 'color', hitCol, 'linewidth', 4,'linestyle', '--')
+
 
     y = mean(hitSpect); 
     plot( y, 'color', hitCol, 'linewidth', 4)
@@ -670,30 +654,14 @@ parfor ii = 1:length(TF_files_HFB)
     allMax = max(y); 
     allMin = min(y);  
     
-%     missSpect = arrayfun(@(x) find(panelDat.tim>=x, 1), panelDat.missLat);
-%     missSpect = arrayfun(@(x,y) squeeze(panelDat.misses(x,y,:)), ...
-%          missSpect, [1:length( missSpect)]', 'uniformoutput', false);
-%     missSpect = cat(2,  missSpect{:});
-% 
-%     realID = arrayfun(@(x) [panelDat.missSub{x} '_'...
-%         num2str(panelDat.missChi(x))], 1:length(panelDat.missChi), ...
-%         'UniformOutput', false);
-%     uniIDs = unique(realID); 
-%     missSpect = cellfun(@(x) ...
-%         mean(missSpect(:, ismember( realID,x)), 2), uniIDs, ...
-%         'uniformoutput', false);
-%     missSpect = cat(2, missSpect{:});
+
     missSpect = squeeze(panelDat.misses_hfb(:,21,:)); 
     %outliers in the hippocampus retrieval data, remove for plot
      if regi == 9 
         missSpect(8:10,:) = []; 
     end
 
-%     missBase = permute(panelDat.misses, [3,1,2]); 
-%     missBase = reshape(missBase, [100, prod(size(missBase, [2,3]))]);
-% 
-%     ybase = mean(missBase, 2); 
-%     plot(ybase, 'color', missCol, 'linewidth', 4,'linestyle', '--')
+
     y = mean(missSpect);  
     plot( y, 'color', missCol, 'linewidth', 4)
     se = std(missSpect) ./ sqrt(size(missSpect,1));  
@@ -704,7 +672,7 @@ parfor ii = 1:length(TF_files_HFB)
     allMax = max([allMax, max(y)]); 
     allMin = min([allMin, min(y)]); 
     allMin = min([allMin, 0]); 
-    ylim([allMin*1.1, allMax*1.1])
+    ylim([0, 10])
     xlim([1, 100])
     xticks([1:11:100])
     xticklabels(round(panelDat.frex([1:11:100])))
@@ -735,31 +703,325 @@ parfor ii = 1:length(TF_files_HFB)
     rlim([0, .2])
 
     stepSize = 8;
+    %3 Hz figure
     figure('visible', false, 'position', [0,0,600,600])
     hold off
     histogram(panelDat.hit_angles, [-pi:pi/stepSize:pi], ...
          'facecolor', hitCol, 'edgecolor', 'k',...
-         'Normalization', 'probability', 'facealpha', .4);
+         'Normalization', 'probability', 'facealpha', .4, ...
+         'linewidth', 1.2);
      hold on 
      histogram(panelDat.miss_angles, [-pi:pi/stepSize:pi], ...
          'facecolor', missCol, 'edgecolor', 'k',...
-         'Normalization', 'probability', 'facealpha', .4);
+         'Normalization', 'probability', 'facealpha', .4, ...
+         'linewidth', 1.2);
     set(gcf,'color','w');
         box off;
-    xticks([])
-    yticks([])
+    xticks([-pi:pi/2:pi])
+    ax=gca;ax.LineWidth=4;
+    yticks([0:1/(stepSize*2):(1/(stepSize))*2])
     ylim([0, .32])
     plot(-pi:pi/stepSize:pi, sin(-pi/2:pi/stepSize:3*pi/2) *.09 + .13,...
         'color', 'k', 'linewidth', 3)
+    yline(1/(stepSize*2), 'color', 'k', 'linewidth',2, 'linestyle', '--')
 
     export_fig([figDat 'pubFigs/' 'Fig2_' panelDat.reg '_' ...
         panelDat.phase  '_phase_circHist.png'], '-transparent', '-r300')
+
+    %6.5 Hz figure
+    figure('visible', false, 'position', [0,0,600,600])
+    hold off
+    histogram(panelDat.hit_angles_high, [-pi:pi/stepSize:pi], ...
+         'facecolor', hitCol, 'edgecolor', 'k',...
+         'Normalization', 'probability', 'facealpha', .4, ...
+         'linewidth', 1.2);
+     hold on 
+     histogram(panelDat.miss_angles_high, [-pi:pi/stepSize:pi], ...
+         'facecolor', missCol, 'edgecolor', 'k',...
+         'Normalization', 'probability', 'facealpha', .4, ...
+         'linewidth', 1.2);
+    set(gcf,'color','w');
+        box off;
+    xticks([-pi:pi/2:pi])
+    ax=gca;ax.LineWidth=4;
+    yticks([0:1/(stepSize*2):(1/(stepSize))*2])
+    ylim([0, .32])
+    plot(-pi:pi/stepSize:pi, sin(-pi/2:pi/stepSize:3*pi/2) *.09 + .13,...
+        'color', 'k', 'linewidth', 3)
+    yline(1/(stepSize*2), 'color', 'k', 'linewidth',2, 'linestyle', '--')
+
+    export_fig([figDat 'pubFigs/' 'Fig2_' panelDat.reg '_' ...
+        panelDat.phase  '_phase_circHist_high.png'], '-transparent', '-r300')
+
 
     catch
         ii
     end
 end
 
+%% power spectra at image lock
+
+test = cellfun(@(x) length(x)>0, ...
+    strfind({fig2Dat.name}, 'TF_'));
+TF_files = fig2Dat(test); 
+
+test = cellfun(@(x) length(x)>0, ...
+    strfind({TF_files.name}, '_image'));
+TF_files_image = TF_files(test); 
+
+
+%hit, miss, and difference heatmaps 
+%the hit and miss heatmaps go into supplemental figure 2
+%differences are in main text Figure 3
+
+
+parfor ii = 1:length(TF_files_image)
+   
+    panelDat = load([TF_files_image(ii).folder '/' ...
+        TF_files_image(ii).name]).outDat;
+ 
+
+    regi = find(cellfun(@(x) strcmp(x, panelDat.reg), regions)); 
+    phasei = find(cellfun(@(x) strcmp(x, panelDat.phase), phaseVals)); 
+
+    %hit plot
+    figure('visible', false, 'position', [0,0,600,600])
+    
+    imagesc(squeeze(mean(panelDat.hits_image))')
+    xline(find(panelDat.tim>=0,1), '--', 'linewidth', linWid, 'color', 'k')
+    set(gca, 'ydir', 'normal')
+    caxis([-2, 2])
+    addRedOutline(panelDat.p_image, .05, 'white'); 
+    ylim([0,50])
+    colorbar
+%     colormap(s2w2y)
+    xticks([19:20:139])
+    xticklabels(panelDat.tim([19:20:139]))
+    yticks([1:11:100])
+    yticklabels(round(panelDat.frex([1:11:100])))
+    set(gcf,'color','w');
+    box off;
+    ax=gca;ax.LineWidth=4;
+    export_fig([figDat 'pubFigs/' 'SupFig2_TFHit_' panelDat.reg '_' ...
+        panelDat.phase  '.jpg'], '-r300')
+
+    %miss plot
+    figure('visible', false, 'position', [0,0,600,600])
+    
+    imagesc(squeeze(mean(panelDat.misses_image))')
+    xline(find(panelDat.tim>=0,1), '--', 'linewidth', linWid, 'color', 'k')
+    set(gca, 'ydir', 'normal')
+    caxis([-2, 2])
+    addRedOutline(panelDat.p_image, .05, 'white'); 
+    ylim([0,50])
+    colorbar
+%     colormap(s2w2y)
+    xticks([19:20:139])
+    xticklabels(panelDat.tim([19:20:139]))
+    yticks([1:11:100])
+    yticklabels(round(panelDat.frex([1:11:100])))
+    set(gcf,'color','w');
+    box off;
+    ax=gca;ax.LineWidth=4;
+    export_fig([figDat 'pubFigs/' 'SupFig2_TFMiss_' panelDat.reg '_' ...
+        panelDat.phase  '.jpg'], '-r300')
+
+
+    %dif plot
+    figure('visible', false, 'position', [0,0,600,600])
+    
+    imagesc(squeeze(mean(panelDat.hits_image))' - ...
+        squeeze(mean(panelDat.misses_image))')
+    xline(find(panelDat.tim>=0,1), '--', 'linewidth', linWid, 'color', 'k')
+    set(gca, 'ydir', 'normal')
+    caxis([-2, 2])
+    addRedOutline(panelDat.p_image, .05, 'white'); 
+    ylim([0,50])
+    colorbar
+%     colormap(s2w2y)
+    xticks([19:20:139])
+    xticklabels(panelDat.tim([19:20:139]))
+    yticks([1:11:100])
+    yticklabels(round(panelDat.frex([1:11:100])))
+    set(gcf,'color','w');
+    box off;
+    ax=gca;ax.LineWidth=4;
+    export_fig([figDat 'pubFigs/' 'SupFig2_TFDif_' panelDat.reg '_' ...
+        panelDat.phase  '.jpg'], '-r300')
+
+    
+    
+
+end
+
+
+%% ITPC at image lock
+
+test = cellfun(@(x) length(x)>0, ...
+    strfind({fig2Dat.name}, 'TFphase_'));
+TF_files = fig2Dat(test); 
+
+test = cellfun(@(x) length(x)>0, ...
+    strfind({TF_files.name}, '_image'));
+TF_files_image = TF_files(test); 
+
+
+%hit, miss, and difference heatmaps 
+%the hit and miss heatmaps go into supplemental figure 2
+%differences are in main text Figure 3
+
+
+parfor ii = 1:length(TF_files_image)
+   
+    panelDat = load([TF_files_image(ii).folder '/' ...
+        TF_files_image(ii).name]).outDat;
+ 
+
+    regi = find(cellfun(@(x) strcmp(x, panelDat.reg), regions)); 
+    phasei = find(cellfun(@(x) strcmp(x, panelDat.phase), phaseVals)); 
+
+    %hit plot
+    figure('visible', false, 'position', [0,0,600,600])
+    hold off
+    imagesc(squeeze(mean(panelDat.hits_image))')
+    xline(find(panelDat.tim>=0,1), '--', 'linewidth', linWid, 'color', 'k')
+    set(gca, 'ydir', 'normal')
+    caxis([1, 5])
+    if ~ismember(regi, [2,5])
+    addRedOutline(panelDat.p_image, .05, 'white'); 
+    end
+    ylim([0,50])
+    colorbar
+%     colormap(s2w2y)
+    xticks([19:20:139])
+    xticklabels(panelDat.tim([19:20:139]))
+    yticks([1:11:100])
+    yticklabels(round(panelDat.frex([1:11:100])))
+    set(gcf,'color','w');
+    box off;
+    ax=gca;ax.LineWidth=4;
+    export_fig([figDat 'pubFigs/' 'SupFig2_TF_phase_Hit_' panelDat.reg '_' ...
+        panelDat.phase  '.jpg'], '-r300')
+
+    %miss plot
+    figure('visible', false, 'position', [0,0,600,600])
+    hold off
+    imagesc(squeeze(mean(panelDat.misses_image))')
+    xline(find(panelDat.tim>=0,1), '--', 'linewidth', linWid, 'color', 'k')
+    set(gca, 'ydir', 'normal')
+    caxis([1, 5])
+    if ~ismember(regi, [2,5])
+    addRedOutline(panelDat.p_image, .05, 'white'); 
+    end
+    ylim([0,50])
+    colorbar
+%     colormap(s2w2y)
+    xticks([19:20:139])
+    xticklabels(panelDat.tim([19:20:139]))
+    yticks([1:11:100])
+    yticklabels(round(panelDat.frex([1:11:100])))
+    set(gcf,'color','w');
+    box off;
+    ax=gca;ax.LineWidth=4;
+    export_fig([figDat 'pubFigs/' 'SupFig2_TF_phase_Miss_' panelDat.reg '_' ...
+        panelDat.phase  '.jpg'], '-r300')
+
+
+    %dif plot
+    figure('visible', false, 'position', [0,0,600,600])
+    hold off
+    imagesc(squeeze(mean(panelDat.hits_image))' - ...
+        squeeze(mean(panelDat.misses_image))')
+    xline(find(panelDat.tim>=0,1), '--', 'linewidth', linWid, 'color', 'k')
+    set(gca, 'ydir', 'normal')
+    caxis([-2, 2])
+    if ~ismember(regi, [2,5])
+    addRedOutline(panelDat.p_image, .05, 'white'); 
+    end
+    ylim([0,50])
+    colorbar
+%     colormap(s2w2y)
+    xticks([19:20:139])
+    xticklabels(panelDat.tim([19:20:139]))
+    yticks([1:11:100])
+    yticklabels(round(panelDat.frex([1:11:100])))
+    set(gcf,'color','w');
+    box off;
+    ax=gca;ax.LineWidth=4;
+    export_fig([figDat 'pubFigs/' 'SupFig2_TF_phase_Dif_' panelDat.reg '_' ...
+        panelDat.phase  '.jpg'], '-r300')
+
+    % make plots for the phase distribution! 
+      stepSize = 8;
+    %3 Hz figure
+    figure('visible', false, 'position', [0,0,600,600])
+    hold off
+    histogram(panelDat.hit_angles, [-pi:pi/stepSize:pi], ...
+         'facecolor', hitCol, 'edgecolor', 'k',...
+         'Normalization', 'probability', 'facealpha', .4, ...
+         'linewidth', 1.2);
+     hold on 
+     histogram(panelDat.miss_angles, [-pi:pi/stepSize:pi], ...
+         'facecolor', missCol, 'edgecolor', 'k',...
+         'Normalization', 'probability', 'facealpha', .4, ...
+         'linewidth', 1.2);
+    set(gcf,'color','w');
+        box off;
+    xticks([-pi:pi/2:pi])
+    ax=gca;ax.LineWidth=4;
+    yticks([0:1/(stepSize*2):(1/(stepSize))*2])
+    ylim([0, .32])
+    plot(-pi:pi/stepSize:pi, sin(-pi/2:pi/stepSize:3*pi/2) *.09 + .13,...
+        'color', 'k', 'linewidth', 3)
+    yline(1/(stepSize*2), 'color', 'k', 'linewidth',2, 'linestyle', '--')
+
+    export_fig([figDat 'pubFigs/' 'Fig2_Image_' panelDat.reg '_' ...
+        panelDat.phase  '_phase_circHist.png'], '-transparent', '-r300')
+
+    %6.5 Hz figure
+    figure('visible', false, 'position', [0,0,600,600])
+    hold off
+    histogram(panelDat.hit_angles_high, [-pi:pi/stepSize:pi], ...
+         'facecolor', hitCol, 'edgecolor', 'k',...
+         'Normalization', 'probability', 'facealpha', .4, ...
+         'linewidth', 1.2);
+     hold on 
+     histogram(panelDat.miss_angles_high, [-pi:pi/stepSize:pi], ...
+         'facecolor', missCol, 'edgecolor', 'k',...
+         'Normalization', 'probability', 'facealpha', .4, ...
+         'linewidth', 1.2);
+    set(gcf,'color','w');
+        box off;
+    xticks([-pi:pi/2:pi])
+    ax=gca;ax.LineWidth=4;
+    yticks([0:1/(stepSize*2):(1/(stepSize))*2])
+    ylim([0, .32])
+    plot(-pi:pi/stepSize:pi, sin(-pi/2:pi/stepSize:3*pi/2) *.09 + .13,...
+        'color', 'k', 'linewidth', 3)
+    yline(1/(stepSize*2), 'color', 'k', 'linewidth',2, 'linestyle', '--')
+
+    export_fig([figDat 'pubFigs/' 'Fig2_Image_' panelDat.reg '_' ...
+        panelDat.phase  '_phase_circHist_high.png'], '-transparent', '-r300')
+
+end
+
+
+%% figure for ratio between image and HFB locked ITPC 
+test = cellfun(@(x) length(x)>0, ...
+    strfind({fig2Dat.name}, 'TFphase_'));
+TF_files = fig2Dat(test); 
+
+parfor ii = 1:length(regions)
+
+    curFiles = cellfun(@(x) length(x)>0, ...
+        strfind({TF_files.name}, regions{ii})); 
+    curFiles = TF_files(curFiles); 
+    
+
+
+
+
+end
 
 
 
@@ -829,12 +1091,12 @@ for ii = 1:length(fig2Dat)
 %     else
 %         hold on 
 %     end
-%     yline(0, 'color', 'k', 'linewidth', 2)
-%     xline(0, '--', 'linewidth', 2, 'color', 'k')
+%     yline(0, 'color', 'k', 'linewidth', linWid)
+%     xline(0, '--', 'linewidth', linWid, 'color', 'k')
 %     xline(panelDat.meanHitRT, 'color', hitCol, ...
-%         'linewidth', 2, 'linestyle', '--')
+%         'linewidth', linWid, 'linestyle', '--')
 %     xline(panelDat.meanMissRT, 'color', missCol, ...
-%         'linewidth', 2, 'linestyle', '--')
+%         'linewidth', linWid, 'linestyle', '--')
 %     y = movmean(mean(panelDat.hitVals), 3); 
 %     x = panelDat.tim; 
 %     plot(x, y, 'color', hitCol, 'linewidth', 4)

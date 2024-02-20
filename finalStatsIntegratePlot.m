@@ -65,8 +65,8 @@ parfor reg = 1:length(regions)
     allOut( :, 2, :, :) = outDat2; 
     HFBImageidx(reg, :, :, :, :) = allOut; 
  
-    HFBfinalintegrate(reg, headFilesHFB, outStatFilesHFB, regions, 'sub')
-    HFBfinalintegrate(reg, headFilesHFB, outStatFilesHFB, regions, 'ret')
+%     HFBfinalintegrate(reg, headFilesHFB, outStatFilesHFB, regions, 'sub')
+%     HFBfinalintegrate(reg, headFilesHFB, outStatFilesHFB, regions, 'ret')
 
 
 
