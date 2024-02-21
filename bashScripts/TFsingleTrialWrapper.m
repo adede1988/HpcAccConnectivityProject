@@ -5,8 +5,6 @@
 %  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
 %  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
 % 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
-%Feb 20: 
-%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
 
 
 
@@ -37,12 +35,13 @@ addpath([codePre 'myFrequentUse/export_fig_repo'])
 
 %% initialize 
 
-datFolder = [datPre 'HFB_singleTrial']; 
+datFolder = [datPre 'TF_singleTrial']; 
 cndFiles = dir(datFolder);
-test = cellfun(@(x) length(x)>0, strfind({cndFiles.name}, '.mat'));
+test = cellfun(@(x) length(x)>0, strfind({cndFiles.name}, 'all.mat'));
 cndFiles = cndFiles(test); 
 
 test = readtable([codePre 'HpcAccConnectivityProject/TFstatMaster.csv']);
+
 
 %% run the pipeline
 
@@ -51,6 +50,6 @@ fileidx = test.filei(start);
 statType = test.stati(start); 
 permi = test.permi(start); 
 tic
-HFBsingleTrialpipeline(cndFiles, fileidx, statType, permi); 
+TFsingleTrialpipeline(cndFiles, fileidx, statType, permi); 
 toc
 
