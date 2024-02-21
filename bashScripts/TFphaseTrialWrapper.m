@@ -49,7 +49,16 @@ test = readtable([codePre 'HpcAccConnectivityProject/TFstatMaster.csv']);
 fileidx = test.filei(start); 
 statType = test.stati(start); 
 permi = test.permi(start); 
+
+
+if ~isfile([cndFiles(fileidx).folder '/out/NEWphase'...
+           'stat' num2str(statType) '_' num2str(permi) ...
+           '_' cndFiles(fileidx).name])
+
+
+
 tic
 TFphaseTrialpipeline(cndFiles, fileidx, statType, permi); 
 toc
 
+end
