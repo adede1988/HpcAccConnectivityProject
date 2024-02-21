@@ -316,13 +316,13 @@ writetable(aovDat, ...
 
 %% make stats packages ready for Quest analysis
 
-for reg = 1:9
+parfor reg = 1:9
+reg
 
-
-    visualizeHFBsingleTrialDat(allResENC, reg, regions, 'sub');
-    visualizeHFBsingleTrialDat(allResRET, reg, regions, 'ret');
-%     getTFsingleTrialDat2(allResENC, reg, regions, 'sub');
-%     getTFsingleTrialDat2(allResRET, reg, regions, 'ret');
+%     visualizeHFBsingleTrialDat(allResENC, reg, regions, 'sub');
+%     visualizeHFBsingleTrialDat(allResRET, reg, regions, 'ret');
+    getTFsingleTrialDat2(allResENC, reg, regions, 'sub');
+    getTFsingleTrialDat2(allResRET, reg, regions, 'ret');
     
 
     %visualizeTFsingleTrialDat relies on low frequencies being treated as
