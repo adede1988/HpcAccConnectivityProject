@@ -39,7 +39,7 @@ chanDat.retRtim = [-2000:500];
 %                          retRT   : -2000: -1600 ms
 
 if ~isfield(chanDat, 'reactiveRes')
-    HFB = getHFB(chanDat, highfrex, highstds); 
+    HFB = getHFB(chanDat, highfrex); 
 
     chanDat.HFB = HFB; 
     chanDat.reactiveRes = reactiveTest_100(chanDat.HFB);
