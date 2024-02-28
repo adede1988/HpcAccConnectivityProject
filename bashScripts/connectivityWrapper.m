@@ -62,6 +62,6 @@ idx = cellfun(@(x) length(x)>0, ...
 cndFiles(~idx) = []; 
 
 tic
-connectivitypipeline(cndFiles, reg1, reg2, encRet, statType, permi); 
+connectivitypipeline(cndFiles, reg1, reg2, encRet, statType, permi, datPre); 
 toc
 

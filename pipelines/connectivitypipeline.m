@@ -1,4 +1,5 @@
-function [] = connectivitypipeline(statFiles, reg1, reg2, encRet, statType, permi)
+function [] = connectivitypipeline(statFiles, reg1, reg2, encRet,...
+    statType, permi, datPre)
 
     perms = 50; 
     frex = logspace(log10(2), log10(25), 20);
@@ -20,7 +21,7 @@ function [] = connectivitypipeline(statFiles, reg1, reg2, encRet, statType, perm
         %check it's not the same channel to itself! 
         if ~strcmp(pairPaths.setName, pairPaths.pairName)
             %load the chanDat
-            setChan = load([pairPaths.setFolder '/' ...
+            setChan = load([datPre 'CHANDAT/finished/' ...
                 pairPaths.setName]).chanDat; 
 %                 pairChan = load([pairPaths.pairFolder '/' ...
 %                     pairPaths.pairName]).chanDat; 
