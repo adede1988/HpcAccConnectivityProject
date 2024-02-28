@@ -67,7 +67,7 @@ function [] = TFsingleTrialpipeline(statFiles, fileIdx, statType, permi)
 
         hmSort = [ones(length(chanUni),1); zeros(length(chanUni),1)]; 
 
-
+        disp('ready to calcualte observed values')
 
 
          %empty vector that is timepoints X frequency
@@ -75,6 +75,7 @@ function [] = TFsingleTrialpipeline(statFiles, fileIdx, statType, permi)
     
         %loop on timepoints
         for ti = 1:size(hitVals,2)
+            disp(['observed time: ' num2str(ti)])
             slice = tVals(ti,:); 
             for fi = 1:100
 
