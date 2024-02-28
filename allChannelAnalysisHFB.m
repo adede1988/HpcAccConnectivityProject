@@ -319,19 +319,11 @@ writetable(aovDat, ...
 parfor reg = 1:9
 reg
 
-%     visualizeHFBsingleTrialDat(allResENC, reg, regions, 'sub');
-%     visualizeHFBsingleTrialDat(allResRET, reg, regions, 'ret');
+    visualizeHFBsingleTrialDat(allResENC, reg, regions, 'sub');
+    visualizeHFBsingleTrialDat(allResRET, reg, regions, 'ret');
     getTFsingleTrialDat2(allResENC, reg, regions, 'sub');
     getTFsingleTrialDat2(allResRET, reg, regions, 'ret');
     
-
-    %visualizeTFsingleTrialDat relies on low frequencies being treated as
-    %one dimensional vectors rather than two d matrices with values over
-    %the whole frequency space. As such, these are kind of depricated now. 
-%     visualizeTFsingleTrialDat(allResENC, reg, regions, 'sub', 1); 
-%     visualizeTFsingleTrialDat(allResENC, reg, regions, 'sub', 2);
-%     visualizeTFsingleTrialDat(allResRET, reg, regions, 'ret', 1); 
-%     visualizeTFsingleTrialDat(allResRET, reg, regions, 'ret', 2);  
 
 end
 

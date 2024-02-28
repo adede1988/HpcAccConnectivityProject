@@ -6,7 +6,7 @@ datPre = 'R:\MSS\Johnson_Lab\dtf8829\QuestConnect\';
 
 %% set paths
 
-addpath([codePre 'HpcAccConnectivityProject'])
+addpath(genpath([codePre 'HpcAccConnectivityProject']))
 addpath([codePre 'myFrequentUse'])
 addpath([codePre 'subNetworkDynamics'])
 addpath([codePre 'myFrequentUse/export_fig_repo'])
