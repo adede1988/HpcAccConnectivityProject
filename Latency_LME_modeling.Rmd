@@ -36,7 +36,7 @@ options(decorate.contr.Sum="",decorate.contrasts=c("[","]"))
 ```{r load data}
 
 # load in main data frame
-df <- read.csv("R:\\MSS\\Johnson_Lab\\dtf8829\\GitHub\\HpcAccConnectivityProject\\trialLatDatNEW.csv", header = T)
+df <- read.csv("R:\\MSS\\Johnson_Lab\\dtf8829\\GitHub\\HpcAccConnectivityProject\\trialLatDat_RTfix.csv", header = T)
 setwd('G:\\My Drive\\Johnson\\MTL_PFC_networkFigs\\Rfigs')
 # factorise variables
 
@@ -269,11 +269,11 @@ for(reg1 in 1:length(regions)){
           geom_text(x = -1000, y = .10, label = reg1Leads, 
                     color = 'black', size = 20) +
           geom_text(x = 1000, y = .10, label = reg2Leads, 
-                    color = 'black', size = 20) +
-          geom_text(x = -750, y = 0.01, label = paste('ks:', round(stats[[1]],2)),
-                    color = 'black', size = 15) + 
-           geom_text(x = 450, y = 0.01, label = paste('p:', round(stats[[2]],2)),
-                     color = 'black', size = 15)
+                    color = 'black', size = 20) #+
+          # geom_text(x = -750, y = 0.01, label = paste('ks:', round(stats[[1]],2)),
+          #           color = 'black', size = 15) + 
+          #  geom_text(x = 450, y = 0.01, label = paste('p:', round(stats[[2]],2)),
+          #            color = 'black', size = 15)
          
 
         
@@ -760,7 +760,7 @@ for(hm in 1:2){
                                      labels=reg_order) +
                   #scale_color_manual(values=c("turquoise4", "black")) +
                   ylab("Peak Latency [proportion]") +
-                  ylim(c(500, 1500)) +
+                  ylim(c(250, 1250)) +
                   geom_hline(yintercept = c(1000), linewidth = 2, linetype = 'dashed')+
                   geom_hline(yintercept = seq(500,1500, 250), linewidth = .75, linetype = 'dotted')+
                   geom_point(aes(hitMiss, avg, colour = factor(reg, level = reg_order)), 
@@ -857,7 +857,7 @@ for(hm in 1:2){
                                      labels=reg_order) +
                   #scale_color_manual(values=c("turquoise4", "black")) +
                   ylab("Peak Latency [proportion]") +
-                  ylim(c(500, 1500)) +
+                  ylim(c(250, 1250)) +
                   geom_hline(yintercept = c(1000), linewidth = 2, linetype = 'dashed')+
                   geom_hline(yintercept = seq(500,1500, 250), linewidth = .75, linetype = 'dotted')+
                   geom_point(aes(hitMiss, avg, colour = factor(reg, level = reg_order)), 

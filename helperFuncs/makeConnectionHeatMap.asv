@@ -1,0 +1,41 @@
+function [] = makeConnectionHeatMap(plotMat, pMat, regions, keyRegIdx,...
+    topt, imgopt)
+
+if ~topt
+    plotMat(plotMat<0) = 0; 
+    plotMat = sqrt(plotMat); 
+end
+plotMat = plotMat([1,2,5,3,4], [1,2,5,3,4]);
+if imgopt
+    plotMat = triu(plotMat); 
+end
+figure('visible', false, 'position', [0,0,600,600])
+imagesc(plotMat)
+xticks([1:5])
+yticks([1:5])
+xticklabels(regions(keyRegIdx([1,2,5,3,4])))
+yticklabels(regions(keyRegIdx([1,2,5,3,4])))
+set(gcf,'color','w');
+box off;
+ax=gca;ax.LineWidth=4;
+axis square
+if topt
+    caxis([-2, 2])
+else
+    caxis([.02, .2])
+end
+hold on 
+
+pMat = pMat([1,2,5,3,4], [1,2,5,3,4]);
+if imgopt
+    pMat = triu(ones(size(pMat))) + pMat; 
+end
+for rowi = 1:5
+    for coli = 1:5
+        if(pMat(rowi, coli)<.05)
+            scatter(rowi, coli, 600, 'red', 'filled')
+        end
+    end
+end
+
+end

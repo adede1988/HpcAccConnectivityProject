@@ -33,7 +33,8 @@ chanFiles = chanFiles(test);
 
 %% loop over channels and get single trial level data for HFB and TF
 
-regions = {'acc', 'dlPFC', 'hip', 'lTemp', 'iTemp', 'mtl', 'pcc', 'pPFC', 'vis'}; 
+regions = {'acc', 'dlPFC', 'hip', ...
+    'lTemp', 'iTemp', 'mtl', 'pcc', 'pPFC', 'vis'}; 
 
 % highfrex = linspace(70, 150, 81); 
 % highnumfrex = length(highfrex);
