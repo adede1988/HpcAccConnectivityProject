@@ -13,7 +13,8 @@
 %simulated HPC looping input from shell script
 
 %start = 1;
-%targLen = 'SHORT'
+%targLen = 'XL'
+%targType = 'image'
 
 disp(['attempting file: ' num2str(start)])
 
@@ -37,6 +38,7 @@ addpath([codePre 'myFrequentUse/export_fig_repo'])
 % addpath(genpath([codePre 'fieldtrip-20230118']))
 
 %% initialize 
+%get the connection files 
 regions = {'acc', 'dlPFC', 'hip', 'lTemp', 'iTemp', 'mtl', ...
     'pcc', 'pPFC', 'vis'}; 
 keyRegIdx = [1,2,3,6,8]; 
@@ -45,18 +47,36 @@ connectionFiles = dir(datFolder);
 test = cellfun(@(x) length(x)>0, strfind({connectionFiles.name}, '.mat'));
 connectionFiles = connectionFiles(test); 
 
-%make region columns 
-splitNames = cellfun(@(x) split(x, '_'), ...
+%cut down to the set appropriate for this resource request: 
+if strcmp(targType, 'image') 
+    %going for image locked connections which can be done much faster by
+    %grabbing precomputed values, so there's no split into short, med, and
+    %long
+    splitNames = cellfun(@(x) split(x, '_'), ...
     {connectionFiles.name}, 'uniformOutput', false);
-reg1 = cellfun(@(x) x{2}, splitNames, 'UniformOutput',false); 
-reg2 = cellfun(@(x) x{3}, splitNames, 'UniformOutput',false); 
-lenVal = cellfun(@(x) x{1}, splitNames, 'UniformOutput',false); 
-test = cellfun(@(x) ismember( x,regions(keyRegIdx)), reg1); 
-test2 =cellfun(@(x) ismember( x,regions(keyRegIdx)), reg2); 
-test3 = cellfun(@(x) strcmp(x, targLen), lenVal); 
-%cut to the key regions! 
-connectionFiles = connectionFiles(test & test2 & test3); 
+    reg1 = cellfun(@(x) x{2}, splitNames, 'UniformOutput',false); 
+    reg2 = cellfun(@(x) x{3}, splitNames, 'UniformOutput',false); 
+    type = cellfun(@(x) x{5}, splitNames, 'UniformOutput',false); 
+    test = cellfun(@(x) ismember( x,regions(keyRegIdx)), reg1); 
+    test2 =cellfun(@(x) ismember( x,regions(keyRegIdx)), reg2); 
+    test3 =cellfun(@(x) strcmp(x, targType), type); 
+    connectionFiles = connectionFiles(test & test2 & test3);
+else
+    %make region columns 
+    splitNames = cellfun(@(x) split(x, '_'), ...
+        {connectionFiles.name}, 'uniformOutput', false);
+    reg1 = cellfun(@(x) x{2}, splitNames, 'UniformOutput',false); 
+    reg2 = cellfun(@(x) x{3}, splitNames, 'UniformOutput',false); 
+    lenVal = cellfun(@(x) x{1}, splitNames, 'UniformOutput',false); 
+    type = cellfun(@(x) x{5}, splitNames, 'UniformOutput',false); 
+    test = cellfun(@(x) ismember( x,regions(keyRegIdx)), reg1); 
+    test2 =cellfun(@(x) ismember( x,regions(keyRegIdx)), reg2); 
+    test3 = cellfun(@(x) strcmp(x, targLen), lenVal); 
+    test4 =cellfun(@(x) strcmp(x, targType), type); 
+    %cut to the key regions! 
+    connectionFiles = connectionFiles(test & test2 & test3 & test4); 
 
+end
 targLen
 
 

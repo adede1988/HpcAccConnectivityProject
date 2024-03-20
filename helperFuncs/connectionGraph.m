@@ -201,7 +201,9 @@ outDat.time = tim(ti); % time in ms
 outDat.freq = meanFrex; % mean frequency (HFB uses 120)
 outDat.hitMat = hitMat; 
 outDat.missMat = missMat; 
-
+disp('saving: ')
+disp([datPre 'graphAnalysis/out/' regions{reg1} '_' regions{reg2} '_'...
+    phase '_' stat '_' num2str(cc) '_' num2str(pp) '.mat'])
 save([datPre 'graphAnalysis/out/' regions{reg1} '_' regions{reg2} '_'...
     phase '_' stat '_' num2str(cc) '_' num2str(pp) '.mat'], 'outDat')
 
