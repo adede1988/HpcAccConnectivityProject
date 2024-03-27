@@ -100,6 +100,16 @@ s2w2y = [[linspace(s(1),m(1),128)'; linspace(m(1),e(1),128)'], ...
          [linspace(s(3),m(3),128)'; linspace(m(3),e(3),128)'], ...
          ] / 255;
 
+s = [85,25,86];
+m = [186,21,77]; 
+e = [249,205,15]; 
+
+purpleYellow = [[linspace(s(1),m(1),128)'; linspace(m(1),e(1),128)'], ...
+         [linspace(s(2),m(2),128)'; linspace(m(2),e(2),128)'], ...
+         [linspace(s(3),m(3),128)'; linspace(m(3),e(3),128)'], ...
+         ] / 255;
+
+
 phaseVals = {'sub', 'ret'}; 
 
 figure
@@ -109,6 +119,108 @@ for ii = 1:9
     text(ii, 2.5, regions{ii})
 
 end
+
+%% methods figure, what is HFB reactive? 
+postFigPath = 'G:\My Drive\Johnson\CNS2024/';
+test = load([headFilesHFB(12).folder '/' headFilesHFB(12).name]).statInfo;
+
+reactChan = load([datPre 'CHANDAT\finished\chanDat_IR84_034.mat']).chanDat; 
+testSub = test.hitChi(cellfun(@(x) strcmp(x, 'IR84'), test.hitSub));
+nonReact = load([datPre 'CHANDAT\finished\chanDat_IR84_035.mat']).chanDat;
+
+figure('position', [0,0,600,1200])
+allTrials = [reactChan.HFB.subHit, reactChan.HFB.subMiss]; 
+imagesc(reactChan.HFB.encMulTim, [], allTrials')
+colormap(s2w2y)
+clim([0,10])
+colorbar
+hold on 
+xline(0, '--', 'linewidth', linWid, 'color', 'white')
+set(gcf,'color','w');
+box off;
+ax=gca;ax.LineWidth=4;
+yticks([])
+xlim([-450, 3000])
+export_fig([postFigPath 'reactiveMethod_yes_heat' '.jpg'], '-r300')
+
+figure('position', [0,0,600,400])
+plot(reactChan.HFB.encMulTim, mean(allTrials,2), 'linewidth', linWid)
+xline(0, '--', 'linewidth', linWid)
+set(gcf,'color','w');
+box off;
+ax=gca;ax.LineWidth=4;
+ylim([-5, 5])
+yline(1.96, '--', 'linewidth', linWid, 'color', 'red')
+yline(-1.96, '--', 'linewidth', linWid, 'color', 'red')
+xlim([-450, 3000])
+export_fig([postFigPath 'reactiveMethod_yes_mean' '.jpg'], '-r300')
+
+figure('position', [0,0,1000,400])
+hold on 
+spread = 35;
+tim = reactChan.HFB.encMulTim; 
+for ii = 9:13
+    hitIdx = find(reactChan.hits & reactChan.use); 
+    RT = reactChan.encInfo(hitIdx(ii),4);
+    plot(tim, allTrials(:,ii)+ii*spread, ...
+        'color', purpleYellow((ii-9)*60+1,:), 'linewidth', 2)
+    scatter(repmat(RT,[50,1]), ii*linspace(spread-1.25,spread+1.25,50), 10, ...
+        'k', 'filled')
+    trial = allTrials(:,ii);            
+    test = gausswin(11);
+    test = test ./ sum(test); 
+    trial = [zeros(5,1); trial; zeros(5,1)];
+    smoothT = conv(trial, test, 'valid'); 
+    coli = 14-ii;
+    plot(tim, smoothT+ii*spread, ...
+        'color', purpleYellow((coli-1)*60+1,:), 'linewidth', 2)
+    [maxVal, idx] = max(smoothT(find(tim==0):find(tim>=RT,1))); 
+    testTim = tim(find(tim==0):find(tim>=RT,1));
+    scatter(testTim(idx), smoothT(tim==testTim(idx))+ii*spread,...
+            140,'k', 'filled' )
+    scatter(testTim(idx), smoothT(tim==testTim(idx))+ii*spread,...
+            100,[126, 165, 21]./255, 'filled' )
+
+end
+xline(0, '--', 'linewidth', linWid)
+set(gcf,'color','w');
+box off;
+ax=gca; ax.LineWidth=4;
+xlim([-450, 3000])
+export_fig([postFigPath 'HFBpeakDetection' '.jpg'], '-r300')
+
+
+figure('position', [0,0,600,1200])
+allTrials = [nonReact.HFB.subHit, nonReact.HFB.subMiss]; 
+imagesc(nonReact.HFB.encMulTim, [], allTrials')
+colormap(s2w2y)
+clim([0,10])
+colorbar
+hold on 
+xline(0, '--', 'linewidth', linWid, 'color', 'white')
+set(gcf,'color','w');
+box off;
+ax=gca;ax.LineWidth=4;
+yticks([])
+xlim([-450, 3000])
+export_fig([postFigPath 'reactiveMethod_non_heat' '.jpg'], '-r300')
+
+figure('position', [0,0,600,400])
+plot(nonReact.HFB.encMulTim, mean(allTrials,2), 'linewidth', linWid)
+xline(0, '--', 'linewidth', linWid)
+set(gcf,'color','w');
+box off;
+ax=gca;ax.LineWidth=4;
+ylim([-5, 5])
+yline(1.96, '--', 'linewidth', linWid, 'color', 'red')
+yline(-1.96, '--', 'linewidth', linWid, 'color', 'red')
+xlim([-450, 3000])
+export_fig([postFigPath 'reactiveMethod_non_mean' '.jpg'], '-r300')
+    
+
+
+
+
 %% Figure 1: 
 %the amplitude of the HFB response was compared between subsequent hit and
 %miss trials during encoding and between hit and miss trials during
@@ -1421,6 +1533,76 @@ plotMat = squeeze(allConnections2(keyRegIdx, keyRegIdx,...
                        tim>=200 & tim<=500, :, :, 2));
 plotConnectionSchematic(plotMat, curDat.frex, "tVal", ...
     regions, keyRegIdx, 'reg', regColors, false, [fn 'ret3.jpg'], fn2, fn3)
+
+
+
+%% Fig 4
+%graph based connectivity metrics
+
+graphDat = dir([datPre 'graphAnalysis/out']);
+graphDat(1:2) = [];
+ii = 1;
+cur = load([graphDat(ii).folder '/' graphDat(ii).name]).outDat;
+graphDat(ii).reg1 = cur.reg1; 
+graphDat(ii).reg2 = cur.reg2; 
+graphDat(ii).timeSet = cur.HFB_Image;
+graphDat(ii).time = cur.time; 
+graphDat(ii).freq = cur.freq; 
+graphDat(ii).encRet = cur.encRet; 
+graphDat(ii).hitBC = cur.hitBC(cur.chi); 
+graphDat(ii).missBC = cur.missBC(cur.chi); 
+graphDat(ii).hitST = cur.hitST(cur.chi); 
+graphDat(ii).missST = cur.missST(cur.chi); 
+parfor ii = 1:length(graphDat)
+    
+    cur = load([graphDat(ii).folder '/' graphDat(ii).name]).outDat;
+
+    cur.hitSparce = cur.hitMat; 
+    cur.missSparce = cur.missMat; 
+    cur.hitSparce(cur.hitMat<.1) = 0; 
+    cur.missSparce(cur.missMat<.1) = 0; 
+    cur.hitSparce(cur.hitSparce>0) = 1; 
+    cur.missSparce(cur.missSparce>0) = 1; 
+
+    hitPos = cur.hitMat; 
+    hitPos(hitPos<0) = 0; 
+    missPos = cur.missMat; 
+    missPos(missPos<0) = 0; 
+
+
+    graphDat(ii).reg1 = cur.reg1; 
+    graphDat(ii).reg2 = cur.reg2; 
+    graphDat(ii).subID = cur.subID; 
+    graphDat(ii).chi = cur.chi; 
+    graphDat(ii).chi2 = cur.chi2; 
+    graphDat(ii).timeSet = cur.HFB_Image;
+    graphDat(ii).time = cur.time; 
+    graphDat(ii).freq = cur.freq; 
+    graphDat(ii).encRet = cur.encRet; 
+    graphDat(ii).hitBC = cur.hitBC(cur.chi); 
+    graphDat(ii).missBC = cur.missBC(cur.chi); 
+    graphDat(ii).hitST = cur.hitST(cur.chi); 
+    graphDat(ii).missST = cur.missST(cur.chi); 
+    graphDat(ii).hitSaturation = sum(cur.hitMat(cur.chi,:)>.1) / ...
+                                    size(cur.hitMat,1); 
+    graphDat(ii).missSaturation = sum(cur.missMat(cur.chi,:)>.1) / ...
+                                    size(cur.hitMat,1);
+    graphDat(ii).hitEff = efficiency_bin(cur.hitSparce); 
+    graphDat(ii).missEff = efficiency_bin(cur.missSparce); 
+    graphDat(ii).hitChar = charpath(distance_wei(1./hitPos)); 
+    graphDat(ii).missChar = charpath(distance_wei(1./missPos)); 
+
+end
+
+t = struct2table(graphDat);
+
+% Save the table as a CSV file
+writetable(t, [figDat 'graphDat.csv']);
+
+
+
+
+
 
 
 %% fig 4 

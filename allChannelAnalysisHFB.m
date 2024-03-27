@@ -36,6 +36,8 @@ chanFiles = chanFiles(test);
 regions = {'acc', 'dlPFC', 'hip', ...
     'lTemp', 'iTemp', 'mtl', 'pcc', 'pPFC', 'vis'}; 
 
+regCounts = zeros(length(regions), length(chanFiles)); 
+
 % highfrex = linspace(70, 150, 81); 
 % highnumfrex = length(highfrex);
 %get the key information out for all channels, but leave empty if it's not
@@ -87,6 +89,7 @@ d = norminv(Hr) - norminv(Fr);
 
 if acc>0 && chanDat.age > 13 %memory and age 
 
+regCounts(:,ii) = cellfun(@(x) strcmp(x, lab), regions);
 
 
 if sum(cellfun(@(x) strcmp(x, lab), regions)) == 1  &&...
@@ -353,21 +356,44 @@ end
 %publicationFigs.m
 
 %% get location data for R21 grant figure
-HFBdat = load('R:\MSS\Johnson_Lab\dtf8829\QuestConnect\HFB_KEY_STATS\hip.mat').HFBdat; 
-regions = {HFBdat.aggTargs.lab}; 
-regions(2) = []; 
+
 locsMTL = cell(length(chanFiles), 1); 
 locsHIP = cell(length(chanFiles), 1); 
+locsACC = cell(length(chanFiles), 1); 
+locsdlPFC = cell(length(chanFiles), 1); 
+locspPFC = cell(length(chanFiles), 1); 
+reactMTL = nan(length(chanFiles),1); 
+reactHIP = nan(length(chanFiles),1); 
+reactACC = nan(length(chanFiles),1); 
+reactdlPFC = nan(length(chanFiles),1); 
+reactpPFC = nan(length(chanFiles),1); 
 parfor ii = 1:length(chanFiles)
     try
 chanDat = load([chanFiles(ii).folder '/' chanFiles(ii).name]).chanDat; 
 lab = chanDat.labels{chanDat.chi,3}; 
 if strcmp('mtl', lab)
     locsMTL{ii} = chanDat.chanpos(chanDat.chi, :);
+    reactMTL(ii) = sum(chanDat.reactiveRes==1)>0 
     disp(['reg: ' lab '  ii: ' num2str(ii)])
 end
 if strcmp('hip', lab)
     locsHIP{ii} = chanDat.chanpos(chanDat.chi, :);
+    reactHIP(ii) = sum(chanDat.reactiveRes==1)>0 
+    disp(['reg: ' lab '  ii: ' num2str(ii)])
+end
+if strcmp('acc', lab)
+    locsACC{ii} = chanDat.chanpos(chanDat.chi, :);
+    reactACC(ii) = sum(chanDat.reactiveRes==1)>0 
+    disp(['reg: ' lab '  ii: ' num2str(ii)])
+end
+if strcmp('dlPFC', lab)
+    locsdlPFC{ii} = chanDat.chanpos(chanDat.chi, :);
+    reactdlPFC(ii) = sum(chanDat.reactiveRes==1)>0 
+    disp(['reg: ' lab '  ii: ' num2str(ii)])
+end
+if strcmp('pPFC', lab)
+    locspPFC{ii} = chanDat.chanpos(chanDat.chi, :);
+    reactpPFC(ii) = sum(chanDat.reactiveRes==1)>0 
     disp(['reg: ' lab '  ii: ' num2str(ii)])
 end
     catch
