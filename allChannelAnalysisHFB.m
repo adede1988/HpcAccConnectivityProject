@@ -404,23 +404,46 @@ end
 
 %eliminate the empties: 
 hipidx = cellfun(@(x) ~isempty(x), locsHIP); 
+reactHIP(~hipidx) = []; 
 locsHIP = locsHIP(hipidx); 
 mtlidx = cellfun(@(x) ~isempty(x), locsMTL); 
+reactMTL(~mtlidx) = []; 
 locsMTL = locsMTL(mtlidx); 
+accidx = cellfun(@(x) ~isempty(x), locsACC); 
+reactACC(~accidx) = []; 
+locsACC = locsACC(accidx); 
+dlPFCidx = cellfun(@(x) ~isempty(x), locsdlPFC); 
+reactdlPFC(~dlPFCidx) = []; 
+locsdlPFC = locsdlPFC(dlPFCidx); 
+pPFCidx = cellfun(@(x) ~isempty(x), locspPFC); 
+reactpPFC(~pPFCidx) = []; 
+locspPFC = locspPFC(pPFCidx); 
 
-hipCol = '#87c7cd'; 
-mtlCol = '#a05824'; 
-figure
-test = reshape(cell2mat(locsHIP), [3, length(locsHIP)]);
-test = test'; 
-hippModel = stlread("R:\MSS\Johnson_Lab\dtf8829\GitHub\HpcAccConnectivityProject\bilatHippo.stl");
-paraModel = stlread("R:\MSS\Johnson_Lab\dtf8829\GitHub\HpcAccConnectivityProject\ParahippoCortex.stl");
-trimesh(hippModel, 'facecolor', 'none', 'facealpha', .00, 'edgecolor', ...
-    sscanf(hipCol(2:end),'%2x%2x%2x',[1 3])/255, 'linewidth', .01, 'linestyle', ':')
-hold on 
-% trimesh(paraModel, 'facecolor', 'none', 'facealpha', .00, 'edgecolor', ...
-%     'blue', 'linewidth', .01, 'linestyle', ':')
-scatter3(test(:,1), -test(:,2), test(:,3), 100, sscanf(hipCol(2:end),'%2x%2x%2x',[1 3])/255, 'filled')
+radiusVal = 3; 
+faces = 200; 
+%reactive hip electrode .stl file: 
+test = cell2mat(locsHIP(reactHIP==1));
+ 
+X = []; 
+Y = []; 
+Z = []; 
+
+for ii = 1:size(test,1)
+
+    [x,y,z] = sphere(faces); 
+    x = x*radiusVal+test(ii,1); 
+    y = y*radiusVal-test(ii,2); 
+    z = z*radiusVal+test(ii,3); 
+    
+    X = [X, x]; 
+    Y = [Y, y]; 
+    Z = [Z, z]; 
+end
+
+surf2stl_elec('R:\MSS\Johnson_Lab\dtf8829\GitHub\HpcAccConnectivityProject\reacthipelecs.stl', X,Y,Z);
+
+%non-reactive hip electrode .stl file: 
+test = cell2mat(locsHIP(reactHIP==0));
 
 X = []; 
 Y = []; 
@@ -428,42 +451,181 @@ Z = [];
 
 for ii = 1:size(test,1)
 
-    [x,y,z] = sphere; 
-    x = x+test(ii,1); 
-    y = y-test(ii,2); 
-    z = z+test(ii,3); 
+    [x,y,z] = sphere(faces); 
+    x = x*radiusVal+test(ii,1); 
+    y = y*radiusVal-test(ii,2); 
+    z = z*radiusVal+test(ii,3); 
     
     X = [X, x]; 
     Y = [Y, y]; 
     Z = [Z, z]; 
 end
 
-surf2stl_elec('R:\MSS\Johnson_Lab\dtf8829\GitHub\HpcAccConnectivityProject\allhipelecs.stl', X,Y,Z);
+surf2stl_elec('R:\MSS\Johnson_Lab\dtf8829\GitHub\HpcAccConnectivityProject\nonhipelecs.stl', X,Y,Z);
 
-
-
-test = reshape(cell2mat(locsMTL), [3, length(locsMTL)]); 
-test = test'; 
-
-%test is channels X 3 MNI coordinates
+%reactive MTL electrode .stl file: 
+test = cell2mat(locsMTL(reactMTL==1));
 X = []; 
 Y = []; 
 Z = []; 
 
 for ii = 1:size(test,1)
 
-    [x,y,z] = sphere; 
-    x = x+test(ii,1); 
-    y = y-test(ii,2); 
-    z = z+test(ii,3); 
+    [x,y,z] = sphere(faces); 
+    x = x*radiusVal+test(ii,1); 
+    y = y*radiusVal-test(ii,2); 
+    z = z*radiusVal+test(ii,3); 
     
     X = [X, x]; 
     Y = [Y, y]; 
     Z = [Z, z]; 
 end
 
-scatter3(test(:,1), -test(:,2), test(:,3), 100, sscanf(mtlCol(2:end),'%2x%2x%2x',[1 3])/255, 'filled')
-surf2stl_elec('R:\MSS\Johnson_Lab\dtf8829\GitHub\HpcAccConnectivityProject\allparaelecs.stl', X,Y,Z);
+surf2stl_elec('R:\MSS\Johnson_Lab\dtf8829\GitHub\HpcAccConnectivityProject\reactMTLelecs.stl', X,Y,Z);
+
+%non-reactive MTL electrode .stl file: 
+test = cell2mat(locsMTL(reactMTL==0));
+X = []; 
+Y = []; 
+Z = []; 
+
+for ii = 1:size(test,1)
+
+    [x,y,z] = sphere(faces); 
+    x = x*radiusVal+test(ii,1); 
+    y = y*radiusVal-test(ii,2); 
+    z = z*radiusVal+test(ii,3); 
+    
+    X = [X, x]; 
+    Y = [Y, y]; 
+    Z = [Z, z]; 
+end
+
+surf2stl_elec('R:\MSS\Johnson_Lab\dtf8829\GitHub\HpcAccConnectivityProject\nonMTLelecs.stl', X,Y,Z);
+
+
+%reactive ACC electrode .stl file: 
+test = cell2mat(locsACC(reactACC==1));
+X = []; 
+Y = []; 
+Z = []; 
+
+for ii = 1:size(test,1)
+
+    [x,y,z] = sphere(faces); 
+    x = x*radiusVal+test(ii,1); 
+    y = y*radiusVal-test(ii,2); 
+    z = z*radiusVal+test(ii,3); 
+    
+    X = [X, x]; 
+    Y = [Y, y]; 
+    Z = [Z, z]; 
+end
+
+surf2stl_elec('R:\MSS\Johnson_Lab\dtf8829\GitHub\HpcAccConnectivityProject\reactACCelecs.stl', X,Y,Z);
+
+%non-reactive ACC electrode .stl file: 
+test = cell2mat(locsACC(reactACC==0));
+X = []; 
+Y = []; 
+Z = []; 
+
+for ii = 1:size(test,1)
+
+    [x,y,z] = sphere(faces); 
+    x = x*radiusVal+test(ii,1); 
+    y = y*radiusVal-test(ii,2); 
+    z = z*radiusVal+test(ii,3); 
+    
+    X = [X, x]; 
+    Y = [Y, y]; 
+    Z = [Z, z]; 
+end
+
+surf2stl_elec('R:\MSS\Johnson_Lab\dtf8829\GitHub\HpcAccConnectivityProject\nonACCelecs.stl', X,Y,Z);
+
+
+%reactive dlPFC electrode .stl file: 
+test = cell2mat(locsdlPFC(reactdlPFC==1));
+X = []; 
+Y = []; 
+Z = []; 
+
+for ii = 1:size(test,1)
+
+    [x,y,z] = sphere(faces); 
+    x = x*radiusVal+test(ii,1); 
+    y = y*radiusVal-test(ii,2); 
+    z = z*radiusVal+test(ii,3); 
+    
+    X = [X, x]; 
+    Y = [Y, y]; 
+    Z = [Z, z]; 
+end
+
+surf2stl_elec('R:\MSS\Johnson_Lab\dtf8829\GitHub\HpcAccConnectivityProject\reactdlPFCelecs.stl', X,Y,Z);
+
+%non-reactive dlPFC electrode .stl file: 
+test = cell2mat(locsdlPFC(reactdlPFC==0)); 
+X = []; 
+Y = []; 
+Z = []; 
+
+for ii = 1:size(test,1)
+
+    [x,y,z] = sphere(faces); 
+    x = x*radiusVal+test(ii,1); 
+    y = y*radiusVal-test(ii,2); 
+    z = z*radiusVal+test(ii,3); 
+    
+    X = [X, x]; 
+    Y = [Y, y]; 
+    Z = [Z, z]; 
+end
+
+surf2stl_elec('R:\MSS\Johnson_Lab\dtf8829\GitHub\HpcAccConnectivityProject\nondlPFCelecs.stl', X,Y,Z);
+
+
+%reactive pPFC electrode .stl file: 
+test = cell2mat(locspPFC(reactpPFC==1));
+X = []; 
+Y = []; 
+Z = []; 
+
+for ii = 1:size(test,1)
+
+    [x,y,z] = sphere(faces); 
+    x = x*radiusVal+test(ii,1); 
+    y = y*radiusVal-test(ii,2); 
+    z = z*radiusVal+test(ii,3); 
+    
+    X = [X, x]; 
+    Y = [Y, y]; 
+    Z = [Z, z]; 
+end
+
+surf2stl_elec('R:\MSS\Johnson_Lab\dtf8829\GitHub\HpcAccConnectivityProject\reactpPFCelecs.stl', X,Y,Z);
+
+%non-reactive pPFC electrode .stl file: 
+test =cell2mat(locspPFC(reactpPFC==0));
+X = []; 
+Y = []; 
+Z = []; 
+
+for ii = 1:size(test,1)
+
+    [x,y,z] = sphere(faces); 
+    x = x*radiusVal+test(ii,1); 
+    y = y*radiusVal-test(ii,2); 
+    z = z*radiusVal+test(ii,3); 
+    
+    X = [X, x]; 
+    Y = [Y, y]; 
+    Z = [Z, z]; 
+end
+
+surf2stl_elec('R:\MSS\Johnson_Lab\dtf8829\GitHub\HpcAccConnectivityProject\nonpPFCelecs.stl', X,Y,Z);
+
 
         
 

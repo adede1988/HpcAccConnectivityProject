@@ -1,5 +1,5 @@
 function [ispc] = getChanISPC(trialDat, trialDat2, frex, numfrex, stds, ...
-                                srate, di, trials, HFBlats, tim)
+                                srate, di, trials, HFBlats, tim, HFBflag)
 
 %trialDat:            timepoints X trials data points
 %trialDat2:            timepoints X trials data points
@@ -82,37 +82,37 @@ fftDat2 = fft(reshape(padDat2,1,numel(padDat2)),n_conv_pow2);
                     1:N-1, 'uniformoutput', false)),...
                 2);
 
+        if HFBflag
+            HFBidx = arrayfun(@(x) find(tim >= x, 1), HFBlats); 
+            HFBidx(HFBidx<21) = 21; 
+            HFBidx(HFBidx>length(tim)-20) = length(tim)- 20;
+            %get the +- 20 points around the HFB peaks
+            fDat = arrayfun(@(x, y) fDat(x-20:x+20, y), HFBidx', ...
+                1:length(HFBidx), 'UniformOutput',false );
+            fDat = cat(2, fDat{:});
+            fDat2 = arrayfun(@(x, y) fDat2(x-20:x+20, y), HFBidx', ...
+                1:length(HFBidx), 'UniformOutput',false );
+            fDat2 = cat(2, fDat2{:});
+    
+            
+             ispc(1:41,fi,3) = size(fDat,2)*arrayfun(@(x) ...
+                abs(sum(exp(1i * (fDat(x,:) - fDat2(x,:))))./size(fDat,2)) ,...
+                1:size(fDat,1) ).^2;
+           
+    
+            %implementing pairwise phase consistency from Vink et al., 2010 
+            difs = fDat - fDat2; 
+            N = size(difs,2); 
+            %equation 14
+            ispc(1:41,fi,4) = mean(...
+                        cell2mat(arrayfun(@(j) ...
+                            cell2mat(arrayfun(@(k) ...
+                                cos(difs(:,j)).*cos(difs(:,k)) + sin(difs(:,j)).*sin(difs(:,k)), ...
+                            j+1:N, 'uniformoutput', false)), ...
+                        1:N-1, 'uniformoutput', false)),...
+                    2);
        
-        HFBidx = arrayfun(@(x) find(tim >= x, 1), HFBlats); 
-        HFBidx(HFBidx<21) = 21; 
-        HFBidx(HFBidx>length(tim)-20) = length(tim)- 20;
-        %get the +- 20 points around the HFB peaks
-        fDat = arrayfun(@(x, y) fDat(x-20:x+20, y), HFBidx', ...
-            1:length(HFBidx), 'UniformOutput',false );
-        fDat = cat(2, fDat{:});
-        fDat2 = arrayfun(@(x, y) fDat2(x-20:x+20, y), HFBidx', ...
-            1:length(HFBidx), 'UniformOutput',false );
-        fDat2 = cat(2, fDat2{:});
-
-        
-         ispc(1:41,fi,3) = size(fDat,2)*arrayfun(@(x) ...
-            abs(sum(exp(1i * (fDat(x,:) - fDat2(x,:))))./size(fDat,2)) ,...
-            1:size(fDat,1) ).^2;
-       
-
-        %implementing pairwise phase consistency from Vink et al., 2010 
-        difs = fDat - fDat2; 
-        N = size(difs,2); 
-        %equation 14
-        ispc(1:41,fi,4) = mean(...
-                    cell2mat(arrayfun(@(j) ...
-                        cell2mat(arrayfun(@(k) ...
-                            cos(difs(:,j)).*cos(difs(:,k)) + sin(difs(:,j)).*sin(difs(:,k)), ...
-                        j+1:N, 'uniformoutput', false)), ...
-                    1:N-1, 'uniformoutput', false)),...
-                2);
-       
-
+       end
 
     end
 

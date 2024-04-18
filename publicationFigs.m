@@ -324,11 +324,16 @@ parfor ii = 1:length(fig1Dat)
     
 end
 
+
+
+
+
+
 %% single trial heatmap figures
 % for ii = 1:length(singleFig1Dat)
 %hard code for hippocampus at encoding hits only
 %panel 1B
-    ii = 6;
+    ii = 18;
     panelDat = load([singleFig1Dat(ii).folder '/'...
         singleFig1Dat(ii).name]).outDat; 
     
@@ -574,6 +579,95 @@ ylabel('Values');
 
 fig2Dat = dir([figDat 'Figure2']); 
 fig2Dat(1:2) = []; 
+
+
+%% basic image locked HFB time courses LOCKED TO HFB PEAK! 
+
+
+test = cellfun(@(x) length(x)>0, ...
+    strfind({fig2Dat.name}, 'HFB.'));
+test2 = cellfun(@(x) length(x)>0, ...
+    strfind({fig2Dat.name}, 'HFB'));
+HFBfiles = fig2Dat(~test & test2); 
+
+
+%while looping, grab the distribution of effect sizes for later comparison
+%to HFB-peak diffs
+%effect sizes stored as time X enc/ret X region
+%panel 1A
+% imgDist = zeros(139, 2, 9); 
+
+parfor ii = 1:length(HFBfiles)
+    panelDat = load([HFBfiles(ii).folder '/' HFBfiles(ii).name]).outDat; 
+
+    %quick cleaning for plotting purposes only, all data were used in stats
+    panelDat.hitVals(panelDat.eliminate,:) = []; 
+    panelDat.missVals(panelDat.eliminate,:) = []; 
+
+    panelDat.hitVals(isnan(panelDat.hitVals)) = 0; 
+    panelDat.missVals(isnan(panelDat.missVals)) = 0; 
+
+    %get effect sizes
+    diffs = panelDat.hitVals - panelDat.missVals; 
+    diffs = mean(diffs) ./ std(diffs); 
+    regi = find(cellfun(@(x) strcmp(x, panelDat.reg), regions)); 
+    phasei = find(cellfun(@(x) strcmp(x, panelDat.phase), phaseVals)); 
+
+%     imgDist(:,phasei, regi) = diffs; 
+    figure('visible', false, 'position', [0,0,600,600])
+    x = panelDat.tim; 
+    x(panelDat.p>.05) = []; 
+    if ~isempty(x) %check if we have any sig time points
+    breakVals = [0, find(diff(x)> 25), length(x)];
+    for jj = 1:length(breakVals)-1
+        tmpX = x(breakVals(jj)+1:breakVals(jj+1));
+        tmpY = ones(length(tmpX),1) * 10000; 
+        tmpX = [tmpX, flip(tmpX)]; 
+        tmpY = [tmpY', -tmpY'];
+        fill(tmpX, tmpY, sigCol, 'facealpha', sigAlpha, 'edgealpha', 0)
+        hold on 
+    
+    
+    end
+    else
+        hold on 
+    end
+    yline(0, 'color', 'k', 'linewidth', linWid)
+    xline(0, '--', 'linewidth', linWid, 'color', 'k')
+   
+
+    y = movmean(mean(panelDat.hitVals), 3); 
+    x = panelDat.tim; 
+    plot(x, y, 'color', hitCol, 'linewidth', 4)
+    se = std(panelDat.hitVals) ./ sqrt(size(panelDat.hitVals,1)); 
+    y = [y + se, flip(y) - flip(se)]; 
+    x = [x, flip(x)]; 
+    hold on 
+    fill(x, y, hitCol, 'facealpha', errAlpha, 'edgealpha', 0)
+    allMax = max(y); 
+    allMin = min(y); 
+    
+    y = movmean(mean(panelDat.missVals), 3); 
+    x = panelDat.tim; 
+    plot(x, y, 'color', missCol, 'linewidth', 4)
+    se = std(panelDat.missVals) ./ sqrt(size(panelDat.missVals,1)); 
+    y = [y + se, flip(y) - flip(se)]; 
+    x = [x, flip(x)]; 
+    hold on 
+    fill(x, y, missCol, 'facealpha', errAlpha, 'edgealpha', 0)
+    allMax = max([allMax, max(y)]); 
+    allMin = min([allMin, min(y)]); 
+    ylim([allMin*1.1, allMax*1.1])
+    ylim([-5, 25])
+    set(gcf,'color','w');
+    box off;
+    ax=gca;ax.LineWidth=4;
+   
+    export_fig([figDat 'pubFigs/' 'Fig1_HFBlocked_' panelDat.reg '_' panelDat.phase  '.jpg'], '-r300')
+    
+end
+
+
 
 
 %% power spectra at HFB peak

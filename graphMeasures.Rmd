@@ -44,6 +44,8 @@ df <- df %>%
   distinct(realID, .keep_all = TRUE)
 df$realID = paste(df$subID, '_', df$chi, sep = '')
 
+df <- df %>% filter(reg1 != 'acc')
+
 df <- df %>%
   mutate(subID= as.factor(subID),
          encRet = as.factor(encRet),
@@ -51,8 +53,7 @@ df <- df %>%
          reg2 = as.factor(reg2),
          chi = as.factor(chi))
 
-df <- df %>% 
-  mutate(freqBin = freq>4.2)
+
 
 long_df <- pivot_longer(
   df,
@@ -71,9 +72,9 @@ df$charDif = df$hitChar - df$missChar
 
 ```
 
-##plotting scratch 
+## encoding characteristic mean vector length
 
-```{r plot scratch}
+```{r char encode}
 
 reg_order <- c("hip", "mtl", "acc", "dlPFC", "pPFC")
 # Color data frame in R
@@ -89,108 +90,84 @@ regColors <- data.frame(
   Hip = rgb(61, 187, 218, maxColorValue = 255)           # dusky blue
 )
 
-filter(long_df, encRet == "ret") -> test
-
-test.lm = lmer(Char ~ hitMiss*timeSet*reg1 + (1|realID), 
-                data = test) 
-summary(test.lm)
+long_df$reg1 = factor(long_df$reg1, reg_order)
 
 
-long_df %>% filter(encRet == 'enc') %>%
-  ggplot(aes(x = reg1, fill = timeSet, y = Saturation)) + 
-    geom_boxplot(outlier.shape = NA, alpha = .75, position = position_dodge(.85)) +
-  facet_grid(~hitMiss)
+#region by region? hip: 
+charModel <- lmer(Char ~  reg1 * timeSet * hitMiss + (1|realID), 
+                     data = filter(long_df, encRet == 'enc'), 
+            control = lmerControl(optimizer = "bobyqa"))
+summary(charModel)
+Anova(charModel)
 
-long_df %>% filter(encRet == 'enc') %>%
-  ggplot(aes(x = reg1, fill = timeSet, y = ST)) + 
-    geom_boxplot(outlier.shape = NA, alpha = .75, position = position_dodge(.85)) +
-  facet_grid(~hitMiss) + 
-  ylim(c(-.02, .05))
+charModel <- lmer(Char ~  reg1 * timeSet + (1|realID), 
+                     data = filter(long_df, encRet == 'enc', hitMiss == 'hit'), 
+            control = lmerControl(optimizer = "bobyqa"))
+summary(charModel)
+Anova(charModel)
 
-long_df %>% filter(encRet == 'enc') %>%
-  ggplot(aes(x = reg1, fill = timeSet, y = Char)) + 
-    geom_boxplot(outlier.shape = NA, alpha = .75, position = position_dodge(.85)) +
-  facet_grid(~hitMiss)
+emmeans(charModel, pairwise ~ reg1 * timeSet , type="response", adjust = "holm")
 
-long_df %>% filter(encRet == 'ret') %>%
-  ggplot(aes(x = reg1, fill = timeSet, y = Char)) + 
-    geom_boxplot(outlier.shape = NA, alpha = .75, position = position_dodge(.85)) +
-  facet_grid(~hitMiss)
+charModel <- lmer(Char ~  reg1 * timeSet + (1|realID), 
+                     data = filter(long_df, encRet == 'enc', hitMiss == 'miss'), 
+            control = lmerControl(optimizer = "bobyqa"))
+summary(charModel)
+Anova(charModel)
 
-+ #width = .6, coef = 0
-    geom_jitter(show.legend = F, shape = 21, size = 4,
-                position = position_jitterdodge(dodge.width = .85, jitter.width = .4),
-                alpha = .2) +
-    geom_boxplot(outlier.shape = NA, alpha = 0, position = position_dodge(.85)) +
-  facet_grid(hitMiss~timeSet) + 
-  scale_fill_manual(values=c( regColors$Hip,
-                               regColors$parahip,
-                     regColors$ACC, 
-                     regColors$dlPFC,
-                     regColors$polarPFC),
-                     labels=reg_order)
+emmeans(charModel, pairwise ~ reg1 * timeSet , type="response", adjust = "holm")
 
-,
-                family = binomial, 
-                control = glmerControl(optimizer="bobyqa", calc.derivs = TRUE))
-
-df %>% ggplot(aes(x = encRet, fill = factor(reg1, level = reg_order), y = charDif)) + 
-  geom_boxplot(outlier.shape = NA, alpha = .75, position = position_dodge(.85)) + #width = .6, coef = 0
-    geom_jitter(show.legend = F, shape = 21, size = 4,
-                position = position_jitterdodge(dodge.width = .85, jitter.width = .4),
-                alpha = .2) +
-  facet_grid(~timeSet) + 
-  scale_fill_manual(values=c( regColors$Hip,
-                               regColors$parahip,
-                     regColors$ACC, 
-                     regColors$dlPFC,
-                     regColors$polarPFC),
-                     labels=reg_order) +
-  ylim(c(0, .05))
-
-long_df %>%
-  ggplot(aes(x = encRet, fill = factor(reg1, level = reg_order), y = Char)) + 
-    geom_boxplot(outlier.shape = NA, alpha = .75, position = position_dodge(.85)) + #width = .6, coef = 0
-    geom_jitter(show.legend = F, shape = 21, size = 4,
-                position = position_jitterdodge(dodge.width = .85, jitter.width = .4),
-                alpha = .2) +
-    geom_boxplot(outlier.shape = NA, alpha = 0, position = position_dodge(.85)) +
-  facet_grid(hitMiss~timeSet) + 
-  scale_fill_manual(values=c( regColors$Hip,
-                               regColors$parahip,
-                     regColors$ACC, 
-                     regColors$dlPFC,
-                     regColors$polarPFC),
-                     labels=reg_order) + 
-  ylim(c(0, .05))
+write.csv(filter(long_df, encRet == 'enc', hitMiss == 'hit'), 'testDat.csv')
 
 
+long_df %>% filter(encRet == 'enc', hitMiss == 'hit') %>%
+  ggplot(aes( fill = timeSet, color = timeSet, y = Char, x = reg1)) + 
+    geom_boxplot(outlier.shape = NA, alpha = .75, 
+                 position = position_dodge(.85)) +
+    geom_jitter(show.legend = F, shape = 21, size = 4, 
+                position = position_jitterdodge(dodge.width = .85, 
+                                                jitter.width = .2)) + 
+    scale_fill_manual(values=c( "#E1C271", "#3BACDD"),
+                      labels=c(  'HFB', 'Image')) +  
+    scale_color_manual(values=c( "#E1C271", "#3BACDD"),
+                      labels=c(  'HFB', 'Image')) +  
+  theme_classic() +
+  ylim(c(0,50)) + 
+    theme(axis.line = element_line(color = 'black', linewidth = 3),
+          axis.ticks = element_line(colour = "black", linewidth = 2),
+          axis.ticks.length=unit(-.25, "cm"),
+          text = element_text(size = 20),
+          legend.position = 'none',
+          axis.text.x = element_text(margin = margin(t = 10)),
+          axis.text.y = element_text(margin = margin(r = 10))) 
 
+
+  
+long_df %>% filter(encRet == 'enc', hitMiss == 'miss') %>%
+  ggplot(aes( fill = timeSet, color = timeSet, y = Char, x = reg1)) + 
+    geom_boxplot(outlier.shape = NA, alpha = .75, 
+                 position = position_dodge(.85)) +
+    geom_jitter(show.legend = F, shape = 21, size = 4, 
+                position = position_jitterdodge(dodge.width = .85, 
+                                                jitter.width = .2)) + 
+    scale_fill_manual(values=c( "#E1C271", "#3BACDD"),
+                      labels=c(  'HFB', 'Image')) +  
+    scale_color_manual(values=c( "#E1C271", "#3BACDD"),
+                      labels=c(  'HFB', 'Image')) +  
+  theme_classic() +
+  ylim(c(0,50)) + 
+    theme(axis.line = element_line(color = 'black', linewidth = 3),
+          axis.ticks = element_line(colour = "black", linewidth = 2),
+          axis.ticks.length=unit(-.25, "cm"),
+          text = element_text(size = 20),
+          legend.position = 'none',
+          axis.text.x = element_text(margin = margin(t = 10)),
+          axis.text.y = element_text(margin = margin(r = 10))) 
 
 ```
+## characteristic mean vector length retrieval 
 
-
-
-## Run generalised linear mixed-effects regression on full data set with adjTime as the dependent variable
-
-```{r mixed model}
-
-test <- filter(long_df, hitMiss == 'hit', encRet == 'enc', reg1 != 'acc')
-encLM_char = lmer(Char ~ timeSet*reg1 + (1|realID), 
-                data = test) 
-summary(encLM_char)
-
-
-
-# use emmeans contrast for post-hoc testing
-em_encLM_char <- emmeans(encLM_char,  ~ timeSet*reg1,
-                           type="response", adjust = "holm")
-em_encLM_char
-plot(em_encLM_char)
-em_encLM_char = as.data.frame(em_encLM_char)
-
-
-
+```{r char retrieve}
+reg_order <- c("hip", "mtl", "acc", "dlPFC", "pPFC")
 # Color data frame in R
 regColors <- data.frame(
   parahip = rgb(214, 77, 97, maxColorValue = 255),       # dark pink
@@ -204,255 +181,86 @@ regColors <- data.frame(
   Hip = rgb(61, 187, 218, maxColorValue = 255)           # dusky blue
 )
 
+long_df$reg1 = factor(long_df$reg1, reg_order)
 
 
-# function for calculating standard error values  
-my_fun <- function(x, num_var){
-  num_var <- enquo(num_var)
+#region by region? hip: 
+charModel <- lmer(Char ~  reg1 * timeSet * hitMiss + (1|realID), 
+                     data = filter(long_df, encRet == 'ret'), 
+            control = lmerControl(optimizer = "bobyqa"))
+summary(charModel)
+Anova(charModel)
+
+charModel <- lmer(Char ~  reg1 * timeSet + (1|realID), 
+                     data = filter(long_df, encRet == 'ret', hitMiss == 'hit'), 
+            control = lmerControl(optimizer = "bobyqa"))
+summary(charModel)
+Anova(charModel)
+
+emmeans(charModel, pairwise ~ reg1 * timeSet , type="response", adjust = "holm")
+
+charModel <- lmer(Char ~  reg1 * timeSet + (1|realID), 
+                     data = filter(long_df, encRet == 'ret', hitMiss == 'miss'), 
+            control = lmerControl(optimizer = "bobyqa"))
+summary(charModel)
+Anova(charModel)
+
+emmeans(charModel, pairwise ~ reg1 * timeSet , type="response", adjust = "holm")
+
+
+
+long_df %>% filter(encRet == 'ret', hitMiss == 'hit') %>%
+  ggplot(aes( fill = timeSet, color = timeSet, y = Char, x = reg1)) + 
+    geom_boxplot(outlier.shape = NA, alpha = .75, 
+                 position = position_dodge(.85)) +
+    geom_jitter(show.legend = F, shape = 21, size = 4, 
+                position = position_jitterdodge(dodge.width = .85, 
+                                                jitter.width = .2)) + 
+    scale_fill_manual(values=c( "#E1C271", "#3BACDD"),
+                      labels=c(  'HFB', 'Image')) +  
+    scale_color_manual(values=c( "#E1C271", "#3BACDD"),
+                      labels=c(  'HFB', 'Image')) +  
+  theme_classic() +
+  ylim(c(0,50)) + 
+    theme(axis.line = element_line(color = 'black', linewidth = 3),
+          axis.ticks = element_line(colour = "black", linewidth = 2),
+          axis.ticks.length=unit(-.25, "cm"),
+          text = element_text(size = 20),
+          legend.position = 'none',
+          axis.text.x = element_text(margin = margin(t = 10)),
+          axis.text.y = element_text(margin = margin(r = 10))) 
+
+
   
-  x %>%
-    summarise(avg = mean(!!num_var), n = n(),
-              sd = sd(!!num_var), se = sd/sqrt(n))
-}
-
-# apply function to data frame to get averages
-glmer_summary <- test %>%
-  select(subID, chi, realID, timeSet, reg1, Char) %>%
-  group_by(subID, chi, realID, timeSet, reg1) %>%
-  my_fun(Char) %>%
-  mutate(lower = avg - se) %>%
-  mutate(upper = avg + se)
-
-# set the parameters for the jitter in the plot below
-pd <- position_dodge(width = .25)
-pd_2 <- position_dodge(width = .75)
-jitter <- position_jitter(width = 0.1, height = 0.1)
-
-# extract predicted model estimates
-m1..eff <- Effect(c("timeSet","reg1"),encLM_char, confidence.level=.83)
-m1..eff.df <- as.data.frame(m1..eff)
-
-# re-order regions
-reg_order <- c("hip", "mtl",  "dlPFC", "pPFC")
-
-# New facet label names for encoding/retrieval variable
-mem.labs <- c("Encoding", "Retrieval")
-names(mem.labs) <- c("Enc", "Ret")
-
-tsVals = c("HFB", "image")
-for(hm in 1:2){
-    tmpMod = filter(m1..eff.df, timeSet == tsVals[hm])
-    tmpPnts = filter(glmer_summary, timeSet == tsVals[hm])
-    
-  outPlot <- ggplot(tmpMod, aes(x=reg1,y=fit,ymin=lower,ymax=upper)) + 
-                  geom_point(aes(colour = factor(reg1, level = reg_order)), 
-                             position = pd_2) + 
-                  geom_errorbar(aes(colour = factor(reg1, level = reg_order), 
-                                    ymin = lower, ymax = upper), 
-                                    width = 0.6, alpha = 1, linewidth = 3, 
-                                    position = pd_2) + 
-                  labs(colour = "Region") +
-                  scale_x_discrete(expand = c(0, 0)) +
-                  scale_color_manual(values=c( regColors$Hip,
-                                               regColors$parahip,
-                                     regColors$dlPFC,
-                                     regColors$polarPFC),
-                                     labels=reg_order) +
-                  #scale_color_manual(values=c("turquoise4", "black")) +
-                  ylab("characteristic path length") +
-                  # ylim(c(.25, .75)) +
-                  # geom_hline(yintercept = c(.5), linewidth = 2, linetype = 'dashed')+
-                  # geom_hline(yintercept = seq(.3,.7, .05), linewidth = .75, linetype = 'dotted')+
-                  geom_point(aes(reg1, avg, colour = factor(reg1, level = reg_order)), 
-                            alpha = 0.3, size = 8, data = tmpPnts, 
-                            position = position_jitterdodge()) +
-                  xlab("") +
-                  theme_classic() +
-                  theme(legend.position="none",
-                        panel.border = element_blank(),
-                        panel.grid.major = element_blank(),
-                        panel.grid.minor = element_blank(),
-                        axis.line = element_blank(),
-                        axis.ticks.length = unit(-0.4, "cm"),
-                        axis.ticks.x = element_blank(),
-                        axis.text.x = element_blank(),
-                        axis.line.x = element_line(size = 2),  
-                        axis.line.y = element_line(size = 2),
-                        axis.ticks = element_line(size = 2),
-                        axis.text.y = element_text(size = 12, face = "bold", 
-                                               margin = margin(r = 10)),
-                        plot.margin = margin(l = 30)  
-                  
-                  )
-    
-  png(paste( "R:\\MSS\\Johnson_Lab\\dtf8829\\publicationFigureData\\pubFigs\\" ,
-                'latencyBox','_',hmVals[hm],'_', erVals[er], '.png', 
-                sep = ''),         # File name
-      width=600, height=600)
-  print(outPlot)
-  dev.off()
-  
-  }
-  
-}
-
-
-
-
+long_df %>% filter(encRet == 'ret', hitMiss == 'miss') %>%
+  ggplot(aes( fill = timeSet, color = timeSet, y = Char, x = reg1)) + 
+    geom_boxplot(outlier.shape = NA, alpha = .75, 
+                 position = position_dodge(.85)) +
+    geom_jitter(show.legend = F, shape = 21, size = 4, 
+                position = position_jitterdodge(dodge.width = .85, 
+                                                jitter.width = .2)) + 
+    scale_fill_manual(values=c( "#E1C271", "#3BACDD"),
+                      labels=c(  'HFB', 'Image')) +  
+    scale_color_manual(values=c( "#E1C271", "#3BACDD"),
+                      labels=c(  'HFB', 'Image')) +  
+  theme_classic() +
+  ylim(c(0,50)) + 
+    theme(axis.line = element_line(color = 'black', linewidth = 3),
+          axis.ticks = element_line(colour = "black", linewidth = 2),
+          axis.ticks.length=unit(-.25, "cm"),
+          text = element_text(size = 20),
+          legend.position = 'none',
+          axis.text.x = element_text(margin = margin(t = 10)),
+          axis.text.y = element_text(margin = margin(r = 10))) 
 
 
 ```
-## Run generalised linear mixed-effects regression on full data set with original time as the dependent variable
 
-```{r mixed model}
+## encoding strength mean vector length
 
-# run generalized mixed-effects model
+```{r strength encode}
 
-glm_test_all_og <- lmer(peakLatHFB ~ hitMiss * encRet * reg + (1|realID), 
-                  data = all_data)
-# get stats
-summary(glm_test_all_og)
-
-# use emmeans contrast for post-hoc testing
-em_dat_all_og <- emmeans(glm_test_all_og, pairwise ~ hitMiss * encRet | hitMiss * reg | 
-                    encRet * reg, type="response", adjust = "holm")
-em_dat_all_og
-plot(em_dat_all_og)
-em_dat_all_og = as.data.frame(em_dat_all_og)
-
-```
-## Create RT matched subsample 
-
-```{r mixed model}
-
-matchedSet = all_data
-matchedSet$allIdx = seq(1,length(matchedSet$subID),1)
-matchedSet$used = rep(0,length(matchedSet$subID))
-matchedSet$trialMatch = rep(0,length(matchedSet$subID))
-#figure out the area and phase with the lowest hit count
-my_fun <- function(x, num_var){
-  num_var <- enquo(num_var)
-  
-  x %>%
-    summarise(avg = mean(!!num_var), n = n(),
-              sd = sd(!!num_var), se = sd/sqrt(n))
-}
-
-# apply function to data frame to get averages
-trialCounts <- all_data %>%
-  select( encRet, reg,hitMiss, RT) %>%
-  group_by( encRet, reg,hitMiss) %>%
-  my_fun(RT)
-
-# which region has the lowest count
-idx = which(trialCounts$n == min(trialCounts$n))
-targSet = matchedSet %>% filter(encRet == trialCounts$encRet[idx],
-                                reg == trialCounts$reg[idx],
-                                hitMiss == trialCounts$hitMiss[idx])
-#loop over trials in the target set, and for each find the best match trial in 
-#each group no repeated trials
 reg_order <- c("hip", "mtl", "acc", "dlPFC", "pPFC")
-hmVals = c("Hit", "Miss")
-erVals = c("Enc", "Ret")
-# uniqueRTs = unique(targSet$RT)
-for(tt in 1:length(targSet$subID)){
-  curRT = targSet$RT[tt]
-  
-  for(creg in reg_order){
-    for(hm in hmVals){
-      for(er in erVals){
-        if(hm==trialCounts$hitMiss[idx] &
-           er==trialCounts$encRet[idx] &
-           creg==trialCounts$reg[idx] ){
-          print('skip')
-        } else {
-          curGroup = matchedSet %>% 
-                      filter(encRet == er, hitMiss == hm, reg == creg, 
-                             used == 0)
-          diffVals = curGroup$RT - curRT
-          print(paste(tt, ':', min(abs(diffVals))))
-          if(min(abs(diffVals)) < 50){
-            candidates = which(abs(diffVals) ==min(abs(diffVals)))
-            if(length(candidates) == 1){
-              idxVal = curGroup$allIdx[candidates]
-            }else{
-              idxVal = curGroup$allIdx[sample(candidates,size = 1)]
-            }
-            matchedSet$used[idxVal] = 1
-            matchedSet$trialMatch[idxVal] = tt
-          }
-        }
-      }
-    }
-  }
-  #check that a good match was found for all four regions
-  slice = matchedSet %>% filter(trialMatch == tt)
-  if(length(slice$subID)<19){
-    matchedSet$used[slice$allIdx] = 0
-  } else {
-    matchedSet$used[targSet$allIdx[tt]] = 1
-  }
-  
-}
-
-testSet = matchedSet %>% filter(used==1)
-trialCounts <- testSet %>%
-  select( encRet, reg,hitMiss, RT) %>%
-  group_by( encRet, reg,hitMiss) %>%
-  my_fun(RT)
-
-
-```
-
-## Run generalised linear mixed-effects regression with RT matched subsample on adjusted time
-
-```{r mixed model}
-
-
-
-# run generalized mixed-effects model
-glm_test_sub_adj <- glmer(adjTime ~ hitMiss * encRet * reg + (1|realID), 
-                  data = testSet, family = binomial, 
-                  control = glmerControl(optimizer="bobyqa", calc.derivs = TRUE))
-
-# get stats
-summary(glm_test_sub_adj)
-
-# use emmeans contrast for post-hoc testing
-em_dat_sub_adj <- emmeans(glm_test_sub_adj, pairwise ~ hitMiss * encRet | hitMiss * reg | 
-                    encRet * reg, type="response", adjust = "holm")
-em_dat_sub_adj
-plot(em_dat_sub_adj)
-em_dat_sub_adj = as.data.frame(em_dat_sub_adj)
-
-```
-## Run generalised linear mixed-effects regression with RT matched subsample on original time
-
-```{r mixed model}
-
-
-
-# run generalized mixed-effects model
-
-glm_test_sub_og <- lmer(peakLatHFB ~ hitMiss * encRet * reg +  (1|realID), 
-                  data = testSet)
-# get stats
-summary(glm_test_sub_og)
-
-# use emmeans contrast for post-hoc testing
-em_dat_sub_adj <- emmeans(glm_test_sub_og, pairwise ~ hitMiss * encRet | hitMiss * reg | 
-                    encRet * reg, type="response", adjust = "holm")
-em_dat_sub_adj
-plot(em_dat_sub_adj)
-em_dat_sub_adj = as.data.frame(em_dat_sub_adj)
-
-```
-## Generate plot to show both the predicted and raw effects with adjTime in the full dataset! 
-
-```{r plot glmer}
-
-#THIS IS PANEL D in Figure 1
-
 # Color data frame in R
 regColors <- data.frame(
   parahip = rgb(214, 77, 97, maxColorValue = 255),       # dark pink
@@ -466,114 +274,84 @@ regColors <- data.frame(
   Hip = rgb(61, 187, 218, maxColorValue = 255)           # dusky blue
 )
 
+long_df$reg1 = factor(long_df$reg1, reg_order)
 
 
-# function for calculating standard error values  
-my_fun <- function(x, num_var){
-  num_var <- enquo(num_var)
+#region by region? hip: 
+charModel <- lmer(ST ~  reg1 * timeSet * hitMiss + (1|realID), 
+                     data = filter(long_df, encRet == 'enc'), 
+            control = lmerControl(optimizer = "bobyqa"))
+summary(charModel)
+Anova(charModel)
+
+charModel <- lmer(ST ~  reg1 * timeSet + (1|realID), 
+                     data = filter(long_df, encRet == 'enc', hitMiss == 'hit'), 
+            control = lmerControl(optimizer = "bobyqa"))
+summary(charModel)
+Anova(charModel)
+
+emmeans(charModel, pairwise ~ reg1 * timeSet , type="response", adjust = "holm")
+
+charModel <- lmer(ST ~  reg1 * timeSet + (1|realID), 
+                     data = filter(long_df, encRet == 'enc', hitMiss == 'miss'), 
+            control = lmerControl(optimizer = "bobyqa"))
+summary(charModel)
+Anova(charModel)
+
+emmeans(charModel, pairwise ~ reg1 * timeSet , type="response", adjust = "holm")
+
+
+
+
+long_df %>% filter(encRet == 'enc', hitMiss == 'hit') %>%
+  ggplot(aes( fill = timeSet, color = timeSet, y = ST, x = reg1)) + 
+    geom_boxplot(outlier.shape = NA, alpha = .75, 
+                 position = position_dodge(.85)) +
+    geom_jitter(show.legend = F, shape = 21, size = 4, 
+                position = position_jitterdodge(dodge.width = .85, 
+                                                jitter.width = .2)) + 
+    scale_fill_manual(values=c( "#E1C271", "#3BACDD"),
+                      labels=c(  'HFB', 'Image')) +  
+    scale_color_manual(values=c( "#E1C271", "#3BACDD"),
+                      labels=c(  'HFB', 'Image')) +  
+  theme_classic() +
+  ylim(c(0,.2)) + 
+    theme(axis.line = element_line(color = 'black', linewidth = 3),
+          axis.ticks = element_line(colour = "black", linewidth = 2),
+          axis.ticks.length=unit(-.25, "cm"),
+          text = element_text(size = 20),
+          legend.position = 'none',
+          axis.text.x = element_text(margin = margin(t = 10)),
+          axis.text.y = element_text(margin = margin(r = 10))) 
+
+
   
-  x %>%
-    summarise(avg = mean(!!num_var), n = n(),
-              sd = sd(!!num_var), se = sd/sqrt(n))
-}
-
-# apply function to data frame to get averages
-glmer_summary <- all_data %>%
-  select(subID, chi, realID, encRet, hitMiss, reg, adjTime) %>%
-  group_by(subID, chi, realID, encRet, hitMiss, reg) %>%
-  my_fun(adjTime) %>%
-  mutate(lower = avg - se) %>%
-  mutate(upper = avg + se)
-
-# set the parameters for the jitter in the plot below
-pd <- position_dodge(width = .25)
-pd_2 <- position_dodge(width = .75)
-jitter <- position_jitter(width = 0.1, height = 0.1)
-
-# extract predicted model estimates
-m1..eff <- Effect(c("encRet","hitMiss","reg"),glm_test_all_adj, confidence.level=.83)
-m1..eff.df <- as.data.frame(m1..eff)
-
-# re-order regions
-reg_order <- c("hip", "mtl", "acc", "dlPFC", "pPFC")
-
-# New facet label names for encoding/retrieval variable
-mem.labs <- c("Encoding", "Retrieval")
-names(mem.labs) <- c("Enc", "Ret")
-
-hmVals = c("Hit", "Miss")
-erVals = c("Enc", "Ret")
-for(hm in 1:2){
-  for(er in 1:2){
-    tmpMod = filter(m1..eff.df, encRet == erVals[er], hitMiss == hmVals[hm])
-    tmpPnts = filter(glmer_summary, encRet == erVals[er], hitMiss == hmVals[hm])
-    
-  outPlot <- ggplot(tmpMod, aes(x=hitMiss,y=fit,ymin=lower,ymax=upper)) + 
-                  geom_point(aes(colour = factor(reg, level = reg_order)), 
-                             position = pd_2) + 
-                  geom_errorbar(aes(colour = factor(reg, level = reg_order), 
-                                    ymin = lower, ymax = upper), 
-                                    width = 0.6, alpha = 1, linewidth = 3, 
-                                    position = pd_2) + 
-                  labs(colour = "Region") +
-                  scale_x_discrete(expand = c(0, 0)) +
-                  scale_color_manual(values=c( regColors$Hip,
-                                               regColors$parahip,
-                                     regColors$ACC, 
-                                     regColors$dlPFC,
-                                     regColors$polarPFC),
-                                     labels=reg_order) +
-                  #scale_color_manual(values=c("turquoise4", "black")) +
-                  ylab("Peak Latency [proportion]") +
-                  ylim(c(.25, .75)) +
-                  geom_hline(yintercept = c(.5), linewidth = 2, linetype = 'dashed')+
-                  geom_hline(yintercept = seq(.3,.7, .05), linewidth = .75, linetype = 'dotted')+
-                  geom_point(aes(hitMiss, avg, colour = factor(reg, level = reg_order)), 
-                            alpha = 0.3, size = 8, data = tmpPnts, 
-                            position = position_jitterdodge()) +
-                  xlab("") +
-                  theme_classic() +
-                  theme(legend.position="none",
-                        panel.border = element_blank(),
-                        panel.grid.major = element_blank(),
-                        panel.grid.minor = element_blank(),
-                        axis.line = element_blank(),
-                        axis.ticks.length = unit(-0.4, "cm"),
-                        axis.ticks.x = element_blank(),
-                        axis.text.x = element_blank(),
-                        axis.line.x = element_line(size = 2),  
-                        axis.line.y = element_line(size = 2),
-                        axis.ticks = element_line(size = 2),
-                        axis.text.y = element_text(size = 12, face = "bold", 
-                                               margin = margin(r = 10)),
-                        plot.margin = margin(l = 30)  
-                  
-                  )
-    
-  png(paste( "R:\\MSS\\Johnson_Lab\\dtf8829\\publicationFigureData\\pubFigs\\" ,
-                'latencyBox','_',hmVals[hm],'_', erVals[er], '.png', 
-                sep = ''),         # File name
-      width=600, height=600)
-  print(outPlot)
-  dev.off()
-  
-  }
-  
-}
-
-# estMeans <- as.data.frame(emmeans(glm_test, pairwise ~ hitMiss * encRet | hitMiss * reg | 
-#                     encRet * reg, transform="response")) 
-
-## Generate plot to show both the predicted and raw effects with adjTime! 
+long_df %>% filter(encRet == 'enc', hitMiss == 'miss') %>%
+  ggplot(aes( fill = timeSet, color = timeSet, y = ST, x = reg1)) + 
+    geom_boxplot(outlier.shape = NA, alpha = .75, 
+                 position = position_dodge(.85)) +
+    geom_jitter(show.legend = F, shape = 21, size = 4, 
+                position = position_jitterdodge(dodge.width = .85, 
+                                                jitter.width = .2)) + 
+    scale_fill_manual(values=c( "#E1C271", "#3BACDD"),
+                      labels=c(  'HFB', 'Image')) +  
+    scale_color_manual(values=c( "#E1C271", "#3BACDD"),
+                      labels=c(  'HFB', 'Image')) +  
+  theme_classic() +
+  ylim(c(0,.2)) + 
+    theme(axis.line = element_line(color = 'black', linewidth = 3),
+          axis.ticks = element_line(colour = "black", linewidth = 2),
+          axis.ticks.length=unit(-.25, "cm"),
+          text = element_text(size = 20),
+          legend.position = 'none',
+          axis.text.x = element_text(margin = margin(t = 10)),
+          axis.text.y = element_text(margin = margin(r = 10))) 
 
 ```
+## characteristic mean vector length retrieval 
 
-## Generate plot to show both the predicted and raw effects with adjTime in the subset dataset! 
-
-```{r plot glmer}
-
-#Figure S1, panel 1D
-
+```{r char retrieve}
+reg_order <- c("hip", "mtl", "acc", "dlPFC", "pPFC")
 # Color data frame in R
 regColors <- data.frame(
   parahip = rgb(214, 77, 97, maxColorValue = 255),       # dark pink
@@ -587,953 +365,80 @@ regColors <- data.frame(
   Hip = rgb(61, 187, 218, maxColorValue = 255)           # dusky blue
 )
 
+long_df$reg1 = factor(long_df$reg1, reg_order)
 
 
-# function for calculating standard error values  
-my_fun <- function(x, num_var){
-  num_var <- enquo(num_var)
+#region by region? hip: 
+charModel <- lmer(Char ~  reg1 * timeSet * hitMiss + (1|realID), 
+                     data = filter(long_df, encRet == 'ret'), 
+            control = lmerControl(optimizer = "bobyqa"))
+summary(charModel)
+Anova(charModel)
+
+charModel <- lmer(Char ~  reg1 * timeSet + (1|realID), 
+                     data = filter(long_df, encRet == 'ret', hitMiss == 'hit'), 
+            control = lmerControl(optimizer = "bobyqa"))
+summary(charModel)
+Anova(charModel)
+
+emmeans(charModel, pairwise ~ reg1 * timeSet , type="response", adjust = "holm")
+
+charModel <- lmer(Char ~  reg1 * timeSet + (1|realID), 
+                     data = filter(long_df, encRet == 'ret', hitMiss == 'miss'), 
+            control = lmerControl(optimizer = "bobyqa"))
+summary(charModel)
+Anova(charModel)
+
+emmeans(charModel, pairwise ~ reg1 * timeSet , type="response", adjust = "holm")
+
+
+
+long_df %>% filter(encRet == 'ret', hitMiss == 'hit') %>%
+  ggplot(aes( fill = timeSet, color = timeSet, y = Char, x = reg1)) + 
+    geom_boxplot(outlier.shape = NA, alpha = .75, 
+                 position = position_dodge(.85)) +
+    geom_jitter(show.legend = F, shape = 21, size = 4, 
+                position = position_jitterdodge(dodge.width = .85, 
+                                                jitter.width = .2)) + 
+    scale_fill_manual(values=c( "#E1C271", "#3BACDD"),
+                      labels=c(  'HFB', 'Image')) +  
+    scale_color_manual(values=c( "#E1C271", "#3BACDD"),
+                      labels=c(  'HFB', 'Image')) +  
+  theme_classic() +
+  ylim(c(0,50)) + 
+    theme(axis.line = element_line(color = 'black', linewidth = 3),
+          axis.ticks = element_line(colour = "black", linewidth = 2),
+          axis.ticks.length=unit(-.25, "cm"),
+          text = element_text(size = 20),
+          legend.position = 'none',
+          axis.text.x = element_text(margin = margin(t = 10)),
+          axis.text.y = element_text(margin = margin(r = 10))) 
+
+
   
-  x %>%
-    summarise(avg = mean(!!num_var), n = n(),
-              sd = sd(!!num_var), se = sd/sqrt(n))
-}
+long_df %>% filter(encRet == 'ret', hitMiss == 'miss') %>%
+  ggplot(aes( fill = timeSet, color = timeSet, y = Char, x = reg1)) + 
+    geom_boxplot(outlier.shape = NA, alpha = .75, 
+                 position = position_dodge(.85)) +
+    geom_jitter(show.legend = F, shape = 21, size = 4, 
+                position = position_jitterdodge(dodge.width = .85, 
+                                                jitter.width = .2)) + 
+    scale_fill_manual(values=c( "#E1C271", "#3BACDD"),
+                      labels=c(  'HFB', 'Image')) +  
+    scale_color_manual(values=c( "#E1C271", "#3BACDD"),
+                      labels=c(  'HFB', 'Image')) +  
+  theme_classic() +
+  ylim(c(0,50)) + 
+    theme(axis.line = element_line(color = 'black', linewidth = 3),
+          axis.ticks = element_line(colour = "black", linewidth = 2),
+          axis.ticks.length=unit(-.25, "cm"),
+          text = element_text(size = 20),
+          legend.position = 'none',
+          axis.text.x = element_text(margin = margin(t = 10)),
+          axis.text.y = element_text(margin = margin(r = 10))) 
 
-# apply function to data frame to get averages
-glmer_summary <- testSet %>%
-  select(subID, chi, realID, encRet, hitMiss, reg, adjTime) %>%
-  group_by(subID, chi, realID, encRet, hitMiss, reg) %>%
-  my_fun(adjTime) %>%
-  mutate(lower = avg - se) %>%
-  mutate(upper = avg + se)
-
-# set the parameters for the jitter in the plot below
-pd <- position_dodge(width = .25)
-pd_2 <- position_dodge(width = .75)
-jitter <- position_jitter(width = 0.1, height = 0.1)
-
-# extract predicted model estimates
-m1..eff <- Effect(c("encRet","hitMiss","reg"),glm_test_sub_adj, confidence.level=.83)
-m1..eff.df <- as.data.frame(m1..eff)
-
-# re-order regions
-reg_order <- c("hip", "mtl", "acc", "dlPFC", "pPFC")
-
-# New facet label names for encoding/retrieval variable
-mem.labs <- c("Encoding", "Retrieval")
-names(mem.labs) <- c("Enc", "Ret")
-
-hmVals = c("Hit", "Miss")
-erVals = c("Enc", "Ret")
-for(hm in 1:2){
-  for(er in 1:2){
-    tmpMod = filter(m1..eff.df, encRet == erVals[er], hitMiss == hmVals[hm])
-    tmpPnts = filter(glmer_summary, encRet == erVals[er], hitMiss == hmVals[hm])
-    
-  outPlot <- ggplot(tmpMod, aes(x=hitMiss,y=fit,ymin=lower,ymax=upper)) + 
-                  geom_point(aes(colour = factor(reg, level = reg_order)), 
-                             position = pd_2) + 
-                  geom_errorbar(aes(colour = factor(reg, level = reg_order), 
-                                    ymin = lower, ymax = upper), 
-                                    width = 0.6, alpha = 1, linewidth = 3, 
-                                    position = pd_2) + 
-                  labs(colour = "Region") +
-                  scale_x_discrete(expand = c(0, 0)) +
-                  scale_color_manual(values=c( regColors$Hip,
-                                               regColors$parahip,
-                                     regColors$ACC, 
-                                     regColors$dlPFC,
-                                     regColors$polarPFC),
-                                     labels=reg_order) +
-                  #scale_color_manual(values=c("turquoise4", "black")) +
-                  ylab("Peak Latency [proportion]") +
-                  ylim(c(.20, .75)) +
-                  geom_hline(yintercept = c(.5), linewidth = 2, linetype = 'dashed')+
-                  geom_hline(yintercept = seq(.3,.7, .05), linewidth = .75, linetype = 'dotted')+
-                  geom_point(aes(hitMiss, avg, colour = factor(reg, level = reg_order)), 
-                            alpha = 0.3, size = 8, data = tmpPnts, 
-                            position = position_jitterdodge()) +
-                  xlab("") +
-                  theme_classic() +
-                  theme(legend.position="none",
-                        panel.border = element_blank(),
-                        panel.grid.major = element_blank(),
-                        panel.grid.minor = element_blank(),
-                        axis.line = element_blank(),
-                        axis.ticks.length = unit(-0.4, "cm"),
-                        axis.ticks.x = element_blank(),
-                        axis.text.x = element_blank(),
-                        axis.line.x = element_line(size = 2),  
-                        axis.line.y = element_line(size = 2),
-                        axis.ticks = element_line(size = 2),
-                        axis.text.y = element_text(size = 12, face = "bold", 
-                                               margin = margin(r = 10)),
-                        plot.margin = margin(l = 30)  
-                  
-                  )
-    
-  png(paste( "R:\\MSS\\Johnson_Lab\\dtf8829\\publicationFigureData\\pubFigs\\" ,
-                'latencyBox_sub_adj_','_',hmVals[hm],'_', erVals[er], '.png', 
-                sep = ''),         # File name
-      width=600, height=600)
-  print(outPlot)
-  dev.off()
-  
-  }
-  
-}
-
-# estMeans <- as.data.frame(emmeans(glm_test, pairwise ~ hitMiss * encRet | hitMiss * reg | 
-#                     encRet * reg, transform="response")) 
-
-## Generate plot to show both the predicted and raw effects with adjTime! 
-
-```
-
-## Generate plot to show both the predicted and raw effects with ORIGINAL time in the full dataset! 
-
-```{r plot glmer}
-
-#supplemental figure 1 panel B
-
-# apply function to data frame to get averages
-glmer_summary <- all_data %>%
-  select(subID, chi, realID, encRet, hitMiss, reg, peakLatHFB) %>%
-  group_by(subID, chi, realID, encRet, hitMiss, reg) %>%
-  my_fun(peakLatHFB) %>%
-  mutate(lower = avg - se) %>%
-  mutate(upper = avg + se)
-
-# set the parameters for the jitter in the plot below
-pd <- position_dodge(width = .25)
-pd_2 <- position_dodge(width = .75)
-jitter <- position_jitter(width = 0.1, height = 0.1)
-
-# extract predicted model estimates
-m1..eff <- Effect(c("encRet","hitMiss","reg"),glm_test_all_og, confidence.level=.83)
-m1..eff.df <- as.data.frame(m1..eff)
-
-# re-order regions
-reg_order <- c("hip", "mtl", "acc", "dlPFC", "pPFC")
-
-# New facet label names for encoding/retrieval variable
-mem.labs <- c("Encoding", "Retrieval")
-names(mem.labs) <- c("Enc", "Ret")
-
-hmVals = c("Hit", "Miss")
-erVals = c("Enc", "Ret")
-for(hm in 1:2){
-  for(er in 1:2){
-    tmpMod = filter(m1..eff.df, encRet == erVals[er], hitMiss == hmVals[hm])
-    tmpPnts = filter(glmer_summary, encRet == erVals[er], hitMiss == hmVals[hm])
-    
-  outPlot <- ggplot(tmpMod, aes(x=hitMiss,y=fit,ymin=lower,ymax=upper)) + 
-                  geom_point(aes(colour = factor(reg, level = reg_order)), 
-                             position = pd_2) + 
-                  geom_errorbar(aes(colour = factor(reg, level = reg_order), 
-                                    ymin = lower, ymax = upper), 
-                                    width = 0.6, alpha = 1, linewidth = 3, 
-                                    position = pd_2) + 
-                  labs(colour = "Region") +
-                  scale_x_discrete(expand = c(0, 0)) +
-                  scale_color_manual(values=c( regColors$Hip,
-                                               regColors$parahip,
-                                     regColors$ACC, 
-                                     regColors$dlPFC,
-                                     regColors$polarPFC),
-                                     labels=reg_order) +
-                  #scale_color_manual(values=c("turquoise4", "black")) +
-                  ylab("Peak Latency [proportion]") +
-                  ylim(c(250, 1250)) +
-                  geom_hline(yintercept = c(1000), linewidth = 2, linetype = 'dashed')+
-                  geom_hline(yintercept = seq(500,1500, 250), linewidth = .75, linetype = 'dotted')+
-                  geom_point(aes(hitMiss, avg, colour = factor(reg, level = reg_order)), 
-                            alpha = 0.3, size = 8, data = tmpPnts, 
-                            position = position_jitterdodge()) +
-                  xlab("") +
-                  theme_classic() +
-                  theme(legend.position="none",
-                        panel.border = element_blank(),
-                        panel.grid.major = element_blank(),
-                        panel.grid.minor = element_blank(),
-                        axis.line = element_blank(),
-                        axis.ticks.length = unit(-0.4, "cm"),
-                        axis.ticks.x = element_blank(),
-                        axis.text.x = element_blank(),
-                        axis.line.x = element_line(size = 2),  
-                        axis.line.y = element_line(size = 2),
-                        axis.ticks = element_line(size = 2),
-                        axis.text.y = element_text(size = 12, face = "bold", 
-                                               margin = margin(r = 10)),
-                        plot.margin = margin(l = 30)  
-                  
-                  )
-    
-  png(paste( "R:\\MSS\\Johnson_Lab\\dtf8829\\publicationFigureData\\pubFigs\\" ,
-                'latencyBox_ogTim_','_',hmVals[hm],'_', erVals[er], '.png', 
-                sep = ''),         # File name
-      width=600, height=600)
-  print(outPlot)
-  dev.off()
-  
-  }
-  
-}
-
-# estMeans <- as.data.frame(emmeans(glm_test, pairwise ~ hitMiss * encRet | hitMiss * reg | 
-#                     encRet * reg, transform="response")) 
-
-## Generate plot to show both the predicted and raw effects with adjTime! 
-
-```
-
-## Generate plot to show both the predicted and raw effects with ORIGINAL time in the sub sample dataset! 
-
-```{r plot glmer}
-
-#supplemental Figure 1, panel C
-
-# apply function to data frame to get averages
-glmer_summary <- testSet %>%
-  select(subID, chi, realID, encRet, hitMiss, reg, peakLatHFB) %>%
-  group_by(subID, chi, realID, encRet, hitMiss, reg) %>%
-  my_fun(peakLatHFB) %>%
-  mutate(lower = avg - se) %>%
-  mutate(upper = avg + se)
-
-# set the parameters for the jitter in the plot below
-pd <- position_dodge(width = .25)
-pd_2 <- position_dodge(width = .75)
-jitter <- position_jitter(width = 0.1, height = 0.1)
-
-# extract predicted model estimates
-m1..eff <- Effect(c("encRet","hitMiss","reg"),glm_test_sub_og, confidence.level=.83)
-m1..eff.df <- as.data.frame(m1..eff)
-
-# re-order regions
-reg_order <- c("hip", "mtl", "acc", "dlPFC", "pPFC")
-
-# New facet label names for encoding/retrieval variable
-mem.labs <- c("Encoding", "Retrieval")
-names(mem.labs) <- c("Enc", "Ret")
-
-hmVals = c("Hit", "Miss")
-erVals = c("Enc", "Ret")
-for(hm in 1:2){
-  for(er in 1:2){
-    tmpMod = filter(m1..eff.df, encRet == erVals[er], hitMiss == hmVals[hm])
-    tmpPnts = filter(glmer_summary, encRet == erVals[er], hitMiss == hmVals[hm])
-    
-  outPlot <- ggplot(tmpMod, aes(x=hitMiss,y=fit,ymin=lower,ymax=upper)) + 
-                  geom_point(aes(colour = factor(reg, level = reg_order)), 
-                             position = pd_2) + 
-                  geom_errorbar(aes(colour = factor(reg, level = reg_order), 
-                                    ymin = lower, ymax = upper), 
-                                    width = 0.6, alpha = 1, linewidth = 3, 
-                                    position = pd_2) + 
-                  labs(colour = "Region") +
-                  scale_x_discrete(expand = c(0, 0)) +
-                  scale_color_manual(values=c( regColors$Hip,
-                                               regColors$parahip,
-                                     regColors$ACC, 
-                                     regColors$dlPFC,
-                                     regColors$polarPFC),
-                                     labels=reg_order) +
-                  #scale_color_manual(values=c("turquoise4", "black")) +
-                  ylab("Peak Latency [proportion]") +
-                  ylim(c(250, 1250)) +
-                  geom_hline(yintercept = c(1000), linewidth = 2, linetype = 'dashed')+
-                  geom_hline(yintercept = seq(500,1500, 250), linewidth = .75, linetype = 'dotted')+
-                  geom_point(aes(hitMiss, avg, colour = factor(reg, level = reg_order)), 
-                            alpha = 0.3, size = 8, data = tmpPnts, 
-                            position = position_jitterdodge()) +
-                  xlab("") +
-                  theme_classic() +
-                  theme(legend.position="none",
-                        panel.border = element_blank(),
-                        panel.grid.major = element_blank(),
-                        panel.grid.minor = element_blank(),
-                        axis.line = element_blank(),
-                        axis.ticks.length = unit(-0.4, "cm"),
-                        axis.ticks.x = element_blank(),
-                        axis.text.x = element_blank(),
-                        axis.line.x = element_line(size = 2),  
-                        axis.line.y = element_line(size = 2),
-                        axis.ticks = element_line(size = 2),
-                        axis.text.y = element_text(size = 12, face = "bold", 
-                                               margin = margin(r = 10)),
-                        plot.margin = margin(l = 30)  
-                  
-                  )
-    
-  png(paste( "R:\\MSS\\Johnson_Lab\\dtf8829\\publicationFigureData\\pubFigs\\" ,
-                'latencyBox_ogTim_sub_','_',hmVals[hm],'_', erVals[er], '.png', 
-                sep = ''),         # File name
-      width=600, height=600)
-  print(outPlot)
-  dev.off()
-  
-  }
-  
-}
-
-# estMeans <- as.data.frame(emmeans(glm_test, pairwise ~ hitMiss * encRet | hitMiss * reg | 
-#                     encRet * reg, transform="response")) 
-
-## Generate plot to show both the predicted and raw effects with adjTime! 
-
-```
-
-## Run generalised linear mixed-effects regression on full data set with peakHFB as the dependent variable
-
-```{r mixed model}
-
-# run generalized mixed-effects model
-glm_peak <- lmer(peakHFB ~ hitMiss * encRet * reg +(1|realID), 
-                  data = all_data) 
-
-# get stats
-summary(glm_peak)
-
-# use emmeans contrast for post-hoc testing
-em_dat_all_adj <- emmeans(glm_peak, pairwise ~ hitMiss * encRet | hitMiss * reg | 
-                    encRet * reg, type="response", adjust = "holm")
-em_dat_all_adj
-plot(em_dat_all_adj)
-em_dat_all_adj = as.data.frame(em_dat_all_adj)
-
-```
-## Generate plot to show both the predicted and raw effects with peakHFB 
-
-```{r plot glmer}
-
-#Figure 2 panel A 
-
-# Color data frame in R
-regColors <- data.frame(
-  parahip = rgb(214, 77, 97, maxColorValue = 255),       # dark pink
-  dlPFC = rgb(145, 162, 80, maxColorValue = 255),        # light forest green
-  iTemp = rgb(145, 162, 80, maxColorValue = 255),        # light forest green
-  lTemp = rgb(145, 162, 80, maxColorValue = 255),        # light forest green
-  polarPFC = rgb(51, 102, 153, maxColorValue = 255),     # lilac
-  visual = rgb(132, 125, 212, maxColorValue = 255),      # lilac
-  ACC = rgb(204, 153, 204, maxColorValue = 255),         # dark red
-  PCC = rgb(184, 78, 83, maxColorValue = 255),          # dark red
-  Hip = rgb(61, 187, 218, maxColorValue = 255)           # dusky blue
-)
-
-
-
-# function for calculating standard error values  
-my_fun <- function(x, num_var){
-  num_var <- enquo(num_var)
-  
-  x %>%
-    summarise(avg = mean(!!num_var), n = n(),
-              sd = sd(!!num_var), se = sd/sqrt(n))
-}
-
-# apply function to data frame to get averages
-glmer_summary <- all_data %>%
-  select(subID, chi, realID, encRet, hitMiss, reg, peakHFB) %>%
-  group_by(subID, chi, realID, encRet, hitMiss, reg) %>%
-  my_fun(peakHFB) %>%
-  mutate(lower = avg - se) %>%
-  mutate(upper = avg + se)
-
-# set the parameters for the jitter in the plot below
-pd <- position_dodge(width = .25)
-pd_2 <- position_dodge(width = .75)
-jitter <- position_jitter(width = 0.1, height = 0.1)
-
-# extract predicted model estimates
-m1..eff <- Effect(c("encRet","hitMiss","reg"),glm_peak, confidence.level=.83)
-m1..eff.df <- as.data.frame(m1..eff)
-
-# re-order regions
-reg_order <- c("hip", "mtl", "acc", "dlPFC", "pPFC")
-
-# New facet label names for encoding/retrieval variable
-mem.labs <- c("Encoding", "Retrieval")
-names(mem.labs) <- c("Enc", "Ret")
-
-hmVals = c("Hit", "Miss")
-erVals = c("Enc", "Ret")
-for(hm in 1:2){
-  for(er in 1:2){
-    tmpMod = filter(m1..eff.df, encRet == erVals[er], hitMiss == hmVals[hm])
-    tmpPnts = filter(glmer_summary, encRet == erVals[er], hitMiss == hmVals[hm])
-    
-  outPlot <- ggplot(tmpMod, aes(x=hitMiss,y=fit,ymin=lower,ymax=upper)) + 
-                  geom_point(aes(colour = factor(reg, level = reg_order)), 
-                             position = pd_2) + 
-                  geom_errorbar(aes(colour = factor(reg, level = reg_order), 
-                                    ymin = lower, ymax = upper), 
-                                    width = 0.6, alpha = 1, linewidth = 3, 
-                                    position = pd_2) + 
-                  labs(colour = "Region") +
-                  scale_x_discrete(expand = c(0, 0)) +
-                  scale_color_manual(values=c( regColors$Hip,
-                                               regColors$parahip,
-                                     regColors$ACC, 
-                                     regColors$dlPFC,
-                                     regColors$polarPFC),
-                                     labels=reg_order) +
-                  #scale_color_manual(values=c("turquoise4", "black")) +
-                  ylab("Peak HFB [z-score]") +
-                  ylim(c(0, 30)) +
-                  geom_hline(yintercept = c(15), linewidth = 2, linetype = 'dashed')+
-                  geom_hline(yintercept = seq(5,25, 5), linewidth = .75, linetype = 'dotted')+
-                  geom_point(aes(hitMiss, avg, colour = factor(reg, level = reg_order)), 
-                            alpha = 0.3, size = 8, data = tmpPnts, 
-                            position = position_jitterdodge()) +
-                  xlab("") +
-                  theme_classic() +
-                  theme(legend.position="none",
-                        panel.border = element_blank(),
-                        panel.grid.major = element_blank(),
-                        panel.grid.minor = element_blank(),
-                        axis.line = element_blank(),
-                        axis.ticks.length = unit(-0.4, "cm"),
-                        axis.ticks.x = element_blank(),
-                        axis.text.x = element_blank(),
-                        axis.line.x = element_line(size = 2),  
-                        axis.line.y = element_line(size = 2),
-                        axis.ticks = element_line(size = 2),
-                        axis.text.y = element_text(size = 12, face = "bold", 
-                                               margin = margin(r = 10)),
-                        plot.margin = margin(l = 30)  
-                  
-                  )
-    
-  png(paste( "R:\\MSS\\Johnson_Lab\\dtf8829\\publicationFigureData\\pubFigs\\" ,
-                'Fig2_HFBpeak','_',hmVals[hm],'_', erVals[er], '.png', 
-                sep = ''),         # File name
-      width=600, height=600)
-  print(outPlot)
-  dev.off()
-  
-  }
-  
-}
-
-# estMeans <- as.data.frame(emmeans(glm_test, pairwise ~ hitMiss * encRet | hitMiss * reg | 
-#                     encRet * reg, transform="response")) 
-
-## Generate plot to show both the predicted and raw effects with adjTime! 
-
-```
-
-## scratch plot stuff
-
-```{r plot glmer}
-
-
-#I'm going to make difference plots for hit - miss difference within each phase
-hmVals = c("Hit", "Miss")
-erVals = c("Enc", "Ret")
-  for(er in 1:2){
-    targContrast = paste("Hit ", erVals[er], ' - ', "Miss ", erVals[er], 
-                         sep = '')
-    tmpMod = filter(em_dat, contrast == targContrast)
-    tmpPnts = filter(glmer_summary, encRet == erVals[er])
-    
-    # negative values mean that hit is before miss
-    diff_df <- aggregate(avg ~ realID, tmpPnts, function(x) -diff(x)[1])
-    metaDat = tmpPnts %>% filter(hitMiss == "Hit")
-    tmpPnts = merge(metaDat, diff_df, by = "realID", all.x = FALSE)
-    
-    tmpMod <- aggregate(avg.y ~ reg, tmpPnts, function(x) mean(x))
-    tmpModSE <- aggregate(avg.y ~ reg, tmpPnts, 
-                          function(x) sd(x) / sqrt(length(x)))
-    tmpMod = merge(tmpMod, tmpModSE, by = "reg")
-    tmpMod$emmean = tmpMod$avg.y.x
-    tmpMod$SE = tmpMod$avg.y.y
-    
-    
-    tmpMod$lower = tmpMod$emmean - tmpMod$SE
-    tmpMod$upper = tmpMod$emmean + tmpMod$SE
-    tmpMod$hitMiss = "Hit"
-    
-    
-  outPlot <- ggplot(tmpMod, aes(x=hitMiss,y=emmean,ymin=lower,ymax=upper)) + 
-                  geom_point(aes(colour = factor(reg, level = reg_order)), 
-                             position = pd_2) + 
-                  geom_errorbar(aes(colour = factor(reg, level = reg_order), 
-                                    ymin = lower, ymax = upper), 
-                                    width = 0.6, alpha = 1, linewidth = 3, 
-                                    position = pd_2) + 
-                  labs(colour = "Region") +
-                  scale_x_discrete(expand = c(0, 0)) +
-                  scale_color_manual(values=c( regColors$Hip,
-                                               regColors$parahip,
-                                     regColors$ACC, 
-                                     regColors$dlPFC,
-                                     regColors$polarPFC),
-                                     labels=reg_order) +
-                  geom_hline(yintercept = 0, linetype = "dashed", 
-                             color = "black", size = 2) +
-                  #scale_color_manual(values=c("turquoise4", "black")) +
-                  ylab("Peak Latency [proportion]") +
-                  ylim(c(-500, 500)) +
-                  geom_point(aes(hitMiss, avg.y, colour = factor(reg, level = reg_order)), 
-                            alpha = 0.3, size = 5, data = tmpPnts, 
-                            position = position_jitterdodge()) +
-                  xlab("") +
-                  theme_classic() +
-                  theme(legend.position="none",
-                        panel.border = element_blank(),
-                        panel.grid.major = element_blank(),
-                        panel.grid.minor = element_blank(),
-                        axis.line = element_blank(),
-                        axis.ticks.length = unit(-0.4, "cm"),
-                        axis.ticks.x = element_blank(),
-                        axis.text.x = element_blank(),
-                        axis.line.x = element_line(size = 2),  
-                        axis.line.y = element_line(size = 2),
-                        axis.ticks = element_line(size = 2),
-                        axis.text.y = element_text(size = 12, face = "bold", 
-                                               margin = margin(r = 10)),
-                        plot.margin = margin(l = 30)  
-                  
-                  )
-    
-  png(paste( "R:\\MSS\\Johnson_Lab\\dtf8829\\publicationFigureData\\pubFigs\\" ,
-                'latencyBox','_','hmDif','_', erVals[er], '.png', 
-                sep = ''),         # File name
-      width=600, height=600)
-  print(outPlot)
-  dev.off()
-  
-  }
-
-#plots for the enc - ret difference wtihin hits and within misses
-hmVals = c("Hit", "Miss")
-erVals = c("Enc", "Ret")
-  for(hm in 1:2){
-        targContrast = paste(hmVals[hm],  ' Enc', ' - ', hmVals[hm], ' Ret', 
-                         sep = '')
-    tmpMod = filter(em_dat, contrast == targContrast)
-    tmpPnts = filter(glmer_summary, hitMiss == hmVals[hm])
-    
-    # negative values mean that hit is before miss
-    diff_df <- aggregate(avg ~ realID, tmpPnts, function(x) -diff(x)[1])
-    metaDat = tmpPnts %>% filter(hitMiss == hmVals[hm])
-    tmpPnts = merge(metaDat, diff_df, by = "realID", all.x = FALSE)
-    
-    tmpMod <- aggregate(avg.y ~ reg, tmpPnts, function(x) mean(x))
-    tmpModSE <- aggregate(avg.y ~ reg, tmpPnts, 
-                          function(x) sd(x) / sqrt(length(x)))
-    tmpMod = merge(tmpMod, tmpModSE, by = "reg")
-    tmpMod$emmean = tmpMod$avg.y.x
-    tmpMod$SE = tmpMod$avg.y.y
-    
-    
-    tmpMod$lower = tmpMod$emmean - tmpMod$SE
-    tmpMod$upper = tmpMod$emmean + tmpMod$SE
-    tmpMod$hitMiss =  hmVals[hm]
-    
-    
-  outPlot <- ggplot(tmpMod, aes(x=hitMiss,y=emmean,ymin=lower,ymax=upper)) + 
-                  geom_point(aes(colour = factor(reg, level = reg_order)), 
-                             position = pd_2) + 
-                  geom_errorbar(aes(colour = factor(reg, level = reg_order), 
-                                    ymin = lower, ymax = upper), 
-                                    width = 0.6, alpha = 1, linewidth = 3, 
-                                    position = pd_2) + 
-                  labs(colour = "Region") +
-                  scale_x_discrete(expand = c(0, 0)) +
-                  scale_color_manual(values=c( regColors$Hip,
-                                               regColors$parahip,
-                                     regColors$ACC, 
-                                     regColors$dlPFC,
-                                     regColors$polarPFC),
-                                     labels=reg_order) +
-                  geom_hline(yintercept = 0, linetype = "dashed", 
-                             color = "black", size = 2) +
-                  #scale_color_manual(values=c("turquoise4", "black")) +
-                  ylab("Peak Latency [proportion]") +
-                  ylim(c(-500, 500)) +
-                  geom_point(aes(hitMiss, avg.y, colour = factor(reg, level = reg_order)), 
-                            alpha = 0.3, size = 5, data = tmpPnts, 
-                            position = position_jitterdodge()) +
-                  xlab("") +
-                  theme_classic() +
-                  theme(legend.position="none",
-                        panel.border = element_blank(),
-                        panel.grid.major = element_blank(),
-                        panel.grid.minor = element_blank(),
-                        axis.line = element_blank(),
-                        axis.ticks.length = unit(-0.4, "cm"),
-                        axis.ticks.x = element_blank(),
-                        axis.text.x = element_blank(),
-                        axis.line.x = element_line(size = 2),  
-                        axis.line.y = element_line(size = 2),
-                        axis.ticks = element_line(size = 2),
-                        axis.text.y = element_text(size = 12, face = "bold", 
-                                               margin = margin(r = 10)),
-                        plot.margin = margin(l = 30)  
-                  
-                  )
-    
-  png(paste( "R:\\MSS\\Johnson_Lab\\dtf8829\\publicationFigureData\\pubFigs\\" ,
-                'latencyBox','_','erDif','_', hmVals[hm], '.png', 
-                sep = ''),         # File name
-      width=600, height=600)
-  print(outPlot)
-  dev.off()
-  
-  }
-
-
-
-
-# plot the modeled effects with raw data
-ggplot(m1..eff.df, aes(x=hitMiss,y=fit,ymin=lower,ymax=upper)) + 
-  geom_point(aes(colour = factor(reg, level = reg_order)), position = pd_2) + 
-  geom_errorbar(aes(colour = factor(reg, level = reg_order), ymin = lower, 
-                    ymax = upper), width = 0.6, alpha = 1, linewidth = 3, 
-                position = pd_2) + 
-  labs(colour = "Region") +
-  scale_color_manual(values=c( regColors$parahip, 
-                               regColors$Hip,
-                               regColors$dlPFC,
-                               regColors$ACC,
-                               regColors$polarPFC),
-                         labels=reg_order) +
-  #scale_color_manual(values=c("turquoise4", "black")) +
-  ylab("Peak Latency [proportion]") +
-  ylim(c(0.25, 0.75)) +
-  geom_point(aes(hitMiss, avg, colour = factor(reg, level = reg_order)), 
-             alpha = 0.3, size = 2, data = glmer_summary, position = position_jitterdodge()) +
-  xlab("") +
-  theme_light() +
-  theme(legend.position="right",
-        legend.text = element_text(size = 10, colour = "black"),
-        legend.title = element_text(size = 12, colour = "black"),
-        panel.border = element_rect(color="black", fill=NA, size = 1), 
-        strip.background = element_rect(fill="gray", color="black"), 
-        strip.text.x = element_text(size = 12, colour = "black"),
-        strip.text.y = element_text(size = 12, colour = "black"),
-        axis.text = element_text(size = 12),
-        plot.title = element_text(size = 16, face = "bold"),
-        axis.title = element_text(size = 16)) +
-  facet_grid(~encRet, labeller = labeller(encRet = mem.labs))
 
 ```
 
 
 
-## Generate plot to show both the predicted and raw effects
-
-```{r plot glmer}
-
-
-# Color data frame in R
-regColors <- data.frame(
-  parahip = rgb(214, 77, 97, maxColorValue = 255),       # dark pink
-  dlPFC = rgb(145, 162, 80, maxColorValue = 255),        # light forest green
-  iTemp = rgb(145, 162, 80, maxColorValue = 255),        # light forest green
-  lTemp = rgb(145, 162, 80, maxColorValue = 255),        # light forest green
-  polarPFC = rgb(51, 102, 153, maxColorValue = 255),     # lilac
-  visual = rgb(132, 125, 212, maxColorValue = 255),      # lilac
-  ACC = rgb(204, 153, 204, maxColorValue = 255),         # dark red
-  PCC = rgb(184, 78, 83, maxColorValue = 255),          # dark red
-  Hip = rgb(61, 187, 218, maxColorValue = 255)           # dusky blue
-)
-
-
-
-# function for calculating standard error values  
-my_fun <- function(x, num_var){
-  num_var <- enquo(num_var)
-  
-  x %>%
-    summarise(avg = mean(!!num_var), n = n(),
-              sd = sd(!!num_var), se = sd/sqrt(n))
-}
-
-# apply function to data frame to get averages
-glmer_summary <- all_data %>%
-  select(subID, chi, realID, encRet, hitMiss, reg, adjTime) %>%
-  group_by(subID, chi, realID, encRet, hitMiss, reg) %>%
-  my_fun(adjTime) %>%
-  mutate(lower = avg - se) %>%
-  mutate(upper = avg + se)
-
-# set the parameters for the jitter in the plot below
-pd <- position_dodge(width = .25)
-pd_2 <- position_dodge(width = .75)
-jitter <- position_jitter(width = 0.1, height = 0.1)
-
-# extract predicted model estimates
-m1..eff <- Effect(c("encRet","hitMiss","reg"),glm_test, confidence.level=.83)
-m1..eff.df <- as.data.frame(m1..eff)
-
-# re-order regions
-reg_order <- c("hip", "mtl", "acc", "dlPFC", "pPFC")
-
-# New facet label names for encoding/retrieval variable
-mem.labs <- c("Encoding", "Retrieval")
-names(mem.labs) <- c("Enc", "Ret")
-
-hmVals = c("Hit", "Miss")
-erVals = c("Enc", "Ret")
-for(hm in 1:2){
-  for(er in 1:2){
-    tmpMod = filter(m1..eff.df, encRet == erVals[er], hitMiss == hmVals[hm])
-    tmpPnts = filter(glmer_summary, encRet == erVals[er], hitMiss == hmVals[hm])
-    
-  outPlot <- ggplot(tmpMod, aes(x=hitMiss,y=fit,ymin=lower,ymax=upper)) + 
-                  geom_point(aes(colour = factor(reg, level = reg_order)), 
-                             position = pd_2) + 
-                  geom_errorbar(aes(colour = factor(reg, level = reg_order), 
-                                    ymin = lower, ymax = upper), 
-                                    width = 0.6, alpha = 1, linewidth = 3, 
-                                    position = pd_2) + 
-                  labs(colour = "Region") +
-                  scale_x_discrete(expand = c(0, 0)) +
-                  scale_color_manual(values=c( regColors$Hip,
-                                               regColors$parahip,
-                                     regColors$ACC, 
-                                     regColors$dlPFC,
-                                     regColors$polarPFC),
-                                     labels=reg_order) +
-                  #scale_color_manual(values=c("turquoise4", "black")) +
-                  ylab("Peak Latency [proportion]") +
-                  ylim(c(0.25, 0.75)) +
-                  geom_point(aes(hitMiss, avg, colour = factor(reg, level = reg_order)), 
-                            alpha = 0.3, size = 8, data = tmpPnts, 
-                            position = position_jitterdodge()) +
-                  xlab("") +
-                  theme_classic() +
-                  theme(legend.position="none",
-                        panel.border = element_blank(),
-                        panel.grid.major = element_blank(),
-                        panel.grid.minor = element_blank(),
-                        axis.line = element_blank(),
-                        axis.ticks.length = unit(-0.4, "cm"),
-                        axis.ticks.x = element_blank(),
-                        axis.text.x = element_blank(),
-                        axis.line.x = element_line(size = 2),  
-                        axis.line.y = element_line(size = 2),
-                        axis.ticks = element_line(size = 2),
-                        axis.text.y = element_text(size = 12, face = "bold", 
-                                               margin = margin(r = 10)),
-                        plot.margin = margin(l = 30)  
-                  
-                  )
-    
-  png(paste( "R:\\MSS\\Johnson_Lab\\dtf8829\\publicationFigureData\\pubFigs\\" ,
-                'latencyBox','_',hmVals[hm],'_', erVals[er], '.png', 
-                sep = ''),         # File name
-      width=600, height=600)
-  print(outPlot)
-  dev.off()
-  
-  }
-  
-}
-
-estMeans <- as.data.frame(emmeans(glm_test, pairwise ~ hitMiss * encRet | hitMiss * reg | 
-                    encRet * reg, transform="response")) 
-
-#I'm going to make difference plots for hit - miss difference within each phase
-hmVals = c("Hit", "Miss")
-erVals = c("Enc", "Ret")
-  for(er in 1:2){
-    targContrast = paste("Hit ", erVals[er], ' - ', "Miss ", erVals[er], 
-                         sep = '')
-    tmpMod = filter(estMeans, contrast == targContrast)
-    tmpPnts = filter(glmer_summary, encRet == erVals[er])
-    
-    # negative values mean that hit is before miss
-    diff_df <- aggregate(avg ~ realID, tmpPnts, function(x) -diff(x)[1])
-    metaDat = tmpPnts %>% filter(hitMiss == "Hit")
-    tmpPnts = merge(metaDat, diff_df, by = "realID", all.x = FALSE)
-    
-    tmpMod <- aggregate(avg.y ~ reg, tmpPnts, function(x) mean(x))
-    tmpModSE <- aggregate(avg.y ~ reg, tmpPnts, 
-                          function(x) sd(x) / sqrt(length(x)))
-    tmpMod = merge(tmpMod, tmpModSE, by = "reg")
-    tmpMod$emmean = tmpMod$avg.y.x
-    tmpMod$SE = tmpMod$avg.y.y
-    
-    
-    tmpMod$lower = tmpMod$emmean - tmpMod$SE
-    tmpMod$upper = tmpMod$emmean + tmpMod$SE
-    tmpMod$hitMiss = "Hit"
-    
-    
-  outPlot <- ggplot(tmpMod, aes(x=hitMiss,y=emmean,ymin=lower,ymax=upper)) + 
-                  geom_point(aes(colour = factor(reg, level = reg_order)), 
-                             position = pd_2) + 
-                  geom_errorbar(aes(colour = factor(reg, level = reg_order), 
-                                    ymin = lower, ymax = upper), 
-                                    width = 0.6, alpha = 1, linewidth = 3, 
-                                    position = pd_2) + 
-                  labs(colour = "Region") +
-                  scale_x_discrete(expand = c(0, 0)) +
-                  scale_color_manual(values=c( regColors$Hip,
-                                               regColors$parahip,
-                                     regColors$ACC, 
-                                     regColors$dlPFC,
-                                     regColors$polarPFC),
-                                     labels=reg_order) +
-                  geom_hline(yintercept = 0, linetype = "dashed", 
-                             color = "black", size = 2) +
-                  #scale_color_manual(values=c("turquoise4", "black")) +
-                  ylab("Peak Latency [proportion]") +
-                  ylim(c(-.25, 0.25)) +
-                  geom_point(aes(hitMiss, avg.y, colour = factor(reg, level = reg_order)), 
-                            alpha = 0.3, size = 5, data = tmpPnts, 
-                            position = position_jitterdodge()) +
-                  xlab("") +
-                  theme_classic() +
-                  theme(legend.position="none",
-                        panel.border = element_blank(),
-                        panel.grid.major = element_blank(),
-                        panel.grid.minor = element_blank(),
-                        axis.line = element_blank(),
-                        axis.ticks.length = unit(-0.4, "cm"),
-                        axis.ticks.x = element_blank(),
-                        axis.text.x = element_blank(),
-                        axis.line.x = element_line(size = 2),  
-                        axis.line.y = element_line(size = 2),
-                        axis.ticks = element_line(size = 2),
-                        axis.text.y = element_text(size = 12, face = "bold", 
-                                               margin = margin(r = 10)),
-                        plot.margin = margin(l = 30)  
-                  
-                  )
-    
-  png(paste( "R:\\MSS\\Johnson_Lab\\dtf8829\\publicationFigureData\\pubFigs\\" ,
-                'latencyBox','_','hmDif','_', erVals[er], '.png', 
-                sep = ''),         # File name
-      width=600, height=600)
-  print(outPlot)
-  dev.off()
-  
-  }
-
-#plots for the enc - ret difference wtihin hits and within misses
-hmVals = c("Hit", "Miss")
-erVals = c("Enc", "Ret")
-  for(hm in 1:2){
-        targContrast = paste(hmVals[hm],  ' Enc', ' - ', hmVals[hm], ' Ret', 
-                         sep = '')
-    tmpMod = filter(estMeans, contrast == targContrast)
-    tmpPnts = filter(glmer_summary, hitMiss == hmVals[hm])
-    
-    # negative values mean that hit is before miss
-    diff_df <- aggregate(avg ~ realID, tmpPnts, function(x) -diff(x)[1])
-    metaDat = tmpPnts %>% filter(hitMiss == hmVals[hm])
-    tmpPnts = merge(metaDat, diff_df, by = "realID", all.x = FALSE)
-    
-    tmpMod <- aggregate(avg.y ~ reg, tmpPnts, function(x) mean(x))
-    tmpModSE <- aggregate(avg.y ~ reg, tmpPnts, 
-                          function(x) sd(x) / sqrt(length(x)))
-    tmpMod = merge(tmpMod, tmpModSE, by = "reg")
-    tmpMod$emmean = tmpMod$avg.y.x
-    tmpMod$SE = tmpMod$avg.y.y
-    
-    
-    tmpMod$lower = tmpMod$emmean - tmpMod$SE
-    tmpMod$upper = tmpMod$emmean + tmpMod$SE
-    tmpMod$hitMiss =  hmVals[hm]
-    
-    
-  outPlot <- ggplot(tmpMod, aes(x=hitMiss,y=emmean,ymin=lower,ymax=upper)) + 
-                  geom_point(aes(colour = factor(reg, level = reg_order)), 
-                             position = pd_2) + 
-                  geom_errorbar(aes(colour = factor(reg, level = reg_order), 
-                                    ymin = lower, ymax = upper), 
-                                    width = 0.6, alpha = 1, linewidth = 3, 
-                                    position = pd_2) + 
-                  labs(colour = "Region") +
-                  scale_x_discrete(expand = c(0, 0)) +
-                  scale_color_manual(values=c( regColors$Hip,
-                                               regColors$parahip,
-                                     regColors$ACC, 
-                                     regColors$dlPFC,
-                                     regColors$polarPFC),
-                                     labels=reg_order) +
-                  geom_hline(yintercept = 0, linetype = "dashed", 
-                             color = "black", size = 2) +
-                  #scale_color_manual(values=c("turquoise4", "black")) +
-                  ylab("Peak Latency [proportion]") +
-                  ylim(c(-.25, 0.25)) +
-                  geom_point(aes(hitMiss, avg.y, colour = factor(reg, level = reg_order)), 
-                            alpha = 0.3, size = 5, data = tmpPnts, 
-                            position = position_jitterdodge()) +
-                  xlab("") +
-                  theme_classic() +
-                  theme(legend.position="none",
-                        panel.border = element_blank(),
-                        panel.grid.major = element_blank(),
-                        panel.grid.minor = element_blank(),
-                        axis.line = element_blank(),
-                        axis.ticks.length = unit(-0.4, "cm"),
-                        axis.ticks.x = element_blank(),
-                        axis.text.x = element_blank(),
-                        axis.line.x = element_line(size = 2),  
-                        axis.line.y = element_line(size = 2),
-                        axis.ticks = element_line(size = 2),
-                        axis.text.y = element_text(size = 12, face = "bold", 
-                                               margin = margin(r = 10)),
-                        plot.margin = margin(l = 30)  
-                  
-                  )
-    
-  png(paste( "R:\\MSS\\Johnson_Lab\\dtf8829\\publicationFigureData\\pubFigs\\" ,
-                'latencyBox','_','erDif','_', hmVals[hm], '.png', 
-                sep = ''),         # File name
-      width=600, height=600)
-  print(outPlot)
-  dev.off()
-  
-  }
-
-
-
-
-# plot the modeled effects with raw data
-ggplot(m1..eff.df, aes(x=hitMiss,y=fit,ymin=lower,ymax=upper)) + 
-  geom_point(aes(colour = factor(reg, level = reg_order)), position = pd_2) + 
-  geom_errorbar(aes(colour = factor(reg, level = reg_order), ymin = lower, 
-                    ymax = upper), width = 0.6, alpha = 1, linewidth = 3, 
-                position = pd_2) + 
-  labs(colour = "Region") +
-  scale_color_manual(values=c( regColors$parahip, 
-                               regColors$Hip,
-                               regColors$dlPFC,
-                               regColors$ACC,
-                               regColors$polarPFC),
-                         labels=reg_order) +
-  #scale_color_manual(values=c("turquoise4", "black")) +
-  ylab("Peak Latency [proportion]") +
-  ylim(c(0.25, 0.75)) +
-  geom_point(aes(hitMiss, avg, colour = factor(reg, level = reg_order)), 
-             alpha = 0.3, size = 2, data = glmer_summary, position = position_jitterdodge()) +
-  xlab("") +
-  theme_light() +
-  theme(legend.position="right",
-        legend.text = element_text(size = 10, colour = "black"),
-        legend.title = element_text(size = 12, colour = "black"),
-        panel.border = element_rect(color="black", fill=NA, size = 1), 
-        strip.background = element_rect(fill="gray", color="black"), 
-        strip.text.x = element_text(size = 12, colour = "black"),
-        strip.text.y = element_text(size = 12, colour = "black"),
-        axis.text = element_text(size = 12),
-        plot.title = element_text(size = 16, face = "bold"),
-        axis.title = element_text(size = 16)) +
-  facet_grid(~encRet, labeller = labeller(encRet = mem.labs))
-
-```
-
-
-## Get session information
-
-```{r session info}
-# session info
-pander::pander(sessionInfo(), compact = FALSE)
-```

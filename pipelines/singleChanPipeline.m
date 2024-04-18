@@ -73,7 +73,7 @@ end
 
 %% get the HFB latencies and save them in order to reference other variables to them
 
-if ~isfield(chanDat, 'HFB_lat')
+if ~isfield(chanDat, 'gjfds')
     HFB_lat = struct; 
    
 
@@ -97,6 +97,18 @@ if ~isfield(chanDat, 'HFB_lat')
 
     triali = chanDat.retInfo(:,1)==2;
     HFB_lat.retMiss = gausLat(chanDat.HFB.miss_on, ...
+        chanDat.HFB.onMulTim, ...
+        chanDat.retInfo(triali, 3), ...
+        1);
+    
+    triali = chanDat.retInfo(:,1)==3;
+    HFB_lat.retCR = gausLat(chanDat.HFB.cr_on, ...
+        chanDat.HFB.onMulTim, ...
+        chanDat.retInfo(triali, 3), ...
+        1);
+
+    triali = chanDat.retInfo(:,1)==4;
+    HFB_lat.retFA = gausLat(chanDat.HFB.fa_on, ...
         chanDat.HFB.onMulTim, ...
         chanDat.retInfo(triali, 3), ...
         1);
@@ -255,7 +267,7 @@ end
 
 %% get ISPC and PPC values 
 
-if ~isfield(chanDat, 'ISPC')
+if ~isfield(chanDat, 'hjk')
     disp('working on ISPC')
     ISPCout = struct; 
     %store the downsample index (di) 
@@ -279,12 +291,16 @@ if ~isfield(chanDat, 'ISPC')
 
     ISPCout.subMiss = zeros(length(subFiles), length(ISPCout.encdi), length(frex), 4); 
     ISPCout.subHit = zeros(length(subFiles), length(ISPCout.encdi), length(frex), 4); 
-
+    ISPCout.subMissRT = zeros(length(subFiles), length(ISPCout.encRdi), length(frex), 4);
+    ISPCout.subHitRT = zeros(length(subFiles), length(ISPCout.encRdi), length(frex), 4);
     
     
     ISPCout.hit_on = zeros(length(subFiles), length(ISPCout.ondi), length(frex), 4);
-  
     ISPCout.miss_on = zeros(length(subFiles), length(ISPCout.ondi), length(frex), 4);
+    ISPCout.cr_on = zeros(length(subFiles), length(ISPCout.ondi), length(frex), 4);
+    ISPCout.miss_onRT = zeros(length(subFiles), length(ISPCout.rtdi), length(frex), 4);
+    ISPCout.hit_onRT = zeros(length(subFiles), length(ISPCout.rtdi), length(frex), 4);
+    ISPCout.cr_onRT = zeros(length(subFiles), length(ISPCout.rtdi), length(frex), 4);
 
 
 
@@ -301,32 +317,72 @@ if ~isfield(chanDat, 'ISPC')
         ISPCout.subMiss(chan,:,:,:) = getChanISPC(chanDat.enc, chanDat2.enc, ...
             frex, numfrex, stds, chanDat.fsample, ISPCout.encdi, ...
             chanDat.use & chanDat.misses, chanDat.HFB_lat.subMiss, ...
-            chanDat.HFB.encMulTim);
+            chanDat.HFB.encMulTim, true);
         end
         if sum(chanDat.use & chanDat.hits)>1
         ISPCout.subHit(chan,:,:,:) = getChanISPC(chanDat.enc, chanDat2.enc, ...
             frex, numfrex, stds, chanDat.fsample, ISPCout.encdi, ...
             chanDat.use & chanDat.hits, chanDat.HFB_lat.subHit, ...
-            chanDat.HFB.encMulTim);
+            chanDat.HFB.encMulTim, true);
         end
 
      
+        %ENCODING DATA BEHAVIOR RESPONSE: *************************************************
+        if sum(chanDat.use & chanDat.misses)>1
+        ISPCout.subMissRT(chan,:,:,:) = getChanISPC(chanDat.encRT, chanDat2.encRT, ...
+            frex, numfrex, stds, chanDat.fsample, ISPCout.encRdi, ...
+            chanDat.use & chanDat.misses, chanDat.HFB_lat.subMiss, ...
+            chanDat.HFB.encRT_tim, false);
+        end
+        if sum(chanDat.use & chanDat.hits)>1
+        ISPCout.subHitRT(chan,:,:,:) = getChanISPC(chanDat.encRT, chanDat2.encRT, ...
+            frex, numfrex, stds, chanDat.fsample, ISPCout.encRdi, ...
+            chanDat.use & chanDat.hits, chanDat.HFB_lat.subHit, ...
+            chanDat.HFB.encRT_tim, false);
+        end
+
+
 
         %RETRIEVAL STIM ONSET: ****************************************************
         if sum(chanDat.retInfo(:,1)==1) > 1
         ISPCout.hit_on(chan,:,:,:) = getChanISPC(chanDat.retOn, chanDat2.retOn, ...
             frex, numfrex, stds, chanDat.fsample, ISPCout.ondi, ...
             chanDat.retInfo(:,1)==1, chanDat.HFB_lat.retHit, ...
-            chanDat.HFB.onMulTim);
+            chanDat.HFB.onMulTim, true);
         end
         if sum(chanDat.retInfo(:,1)==2) > 1
         ISPCout.miss_on(chan,:,:,:) = getChanISPC(chanDat.retOn, chanDat2.retOn, ...
             frex, numfrex, stds, chanDat.fsample, ISPCout.ondi, ...
             chanDat.retInfo(:,1)==2, chanDat.HFB_lat.retMiss, ...
-            chanDat.HFB.onMulTim);
+            chanDat.HFB.onMulTim, true);
+        end
+        if sum(chanDat.retInfo(:,1)==3) > 1
+        ISPCout.cr_on(chan,:,:,:) = getChanISPC(chanDat.retOn, chanDat2.retOn, ...
+            frex, numfrex, stds, chanDat.fsample, ISPCout.ondi, ...
+            chanDat.retInfo(:,1)==3, chanDat.HFB_lat.retCR, ...
+            chanDat.HFB.onMulTim, true);
         end
      
         
+        %RETRIEVAL BEHAVIOR RESPONSE: ****************************************************
+        if sum(chanDat.retInfo(:,1)==1) > 1
+        ISPCout.hit_onRT(chan,:,:,:) = getChanISPC(chanDat.retRT, chanDat2.retRT, ...
+            frex, numfrex, stds, chanDat.fsample, ISPCout.rtdi, ...
+            chanDat.retInfo(:,1)==1, chanDat.HFB_lat.retHit, ...
+            chanDat.HFB.rtMulTim, false);
+        end
+        if sum(chanDat.retInfo(:,1)==2) > 1
+        ISPCout.miss_onRT(chan,:,:,:) = getChanISPC(chanDat.retRT, chanDat2.retRT, ...
+            frex, numfrex, stds, chanDat.fsample, ISPCout.rtdi, ...
+            chanDat.retInfo(:,1)==2, chanDat.HFB_lat.retMiss, ...
+            chanDat.HFB.rtMulTim, false);
+        end
+        if sum(chanDat.retInfo(:,1)==3) > 1
+        ISPCout.cr_onRT(chan,:,:,:) = getChanISPC(chanDat.retRT, chanDat2.retRT, ...
+            frex, numfrex, stds, chanDat.fsample, ISPCout.rtdi, ...
+            chanDat.retInfo(:,1)==3, chanDat.HFB_lat.retCR, ...
+            chanDat.HFB.rtMulTim, false);
+        end
      
         
 
