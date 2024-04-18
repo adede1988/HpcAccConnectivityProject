@@ -25,7 +25,7 @@ datPre = '/projects/p31578/dtf8829/QuestConnect/';
 
 %% set paths
 
-addpath([codePre 'HpcAccConnectivityProject'])
+addpath(genpath([codePre 'HpcAccConnectivityProject']))
 addpath([codePre 'myFrequentUse'])
 addpath([codePre 'fieldtrip-20230118'])
 ft_defaults;
