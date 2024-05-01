@@ -1,0 +1,50 @@
+---
+title: "GAM_analysis_HFB_spectra"
+author: "Adam Dede"
+date: "2024-04-24"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+## Load packages and set up environment
+
+```{r message = FALSE, warning = FALSE}
+
+knitr::opts_chunk$set(message = FALSE, warning = FALSE)
+
+# load packages
+library(tidyverse)
+library(RColorBrewer)
+library(hrbrthemes)
+library(lme4)
+# library(lmerOut)
+library(lmerTest)
+library(car)
+library(ggeffects)
+library(emmeans)
+library(effects)
+library(mgcv)
+
+# set contrasts
+options(contrasts=c("contr.Sum","contr.Helmert"))
+options(decorate.contr.Sum="",decorate.contrasts=c("[","]"))
+
+```
+
+## Read in data frame
+
+```{r load data}
+
+# load in main data frame
+df <- read.csv("R:\\MSS\\Johnson_Lab\\dtf8829\\GitHub\\HpcAccConnectivityProject\\HFBpeakPowerSpectra.csv", header = T)
+setwd('G:\\My Drive\\Johnson\\MTL_PFC_networkFigs\\Rfigs')
+
+model <- mgcv::bam(power ~ encRet + 
+                     s(freq, by = encRet,k = .05*600,bs = 'cr') + 
+                     s(freq, )
+                     s(subID, bs = 're'), 
+                   data = df, family = scat(), select = T)
+
+```
+

@@ -73,7 +73,7 @@ end
 
 %% get the HFB latencies and save them in order to reference other variables to them
 
-if ~isfield(chanDat, 'gjfds')
+if ~isfield(chanDat, 'HFB_lat')
     HFB_lat = struct; 
    
 
@@ -267,7 +267,7 @@ end
 
 %% get ISPC and PPC values 
 
-if ~isfield(chanDat, 'hjk')
+if ~isfield(chanDat, 'ISPC')
     disp('working on ISPC')
     ISPCout = struct; 
     %store the downsample index (di) 

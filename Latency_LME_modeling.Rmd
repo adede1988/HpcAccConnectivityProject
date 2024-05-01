@@ -322,8 +322,9 @@ glm_test_all_adj <- glmer(adjTime ~ hitMiss * encRet * reg + (1|realID),
 summary(glm_test_all_adj)
 
 # use emmeans contrast for post-hoc testing
-em_dat_all_adj <- emmeans(glm_test_all_adj, pairwise ~ hitMiss * encRet | hitMiss * reg | 
-                    encRet * reg, type="response", adjust = "holm")
+em_dat_all_adj <- emmeans(glm_test_all_adj, pairwise ~ encRet* hitMiss * reg , type="response", adjust = "holm")
+emm <- emmeans(glm_test_all_adj, ~ encRet * hitMiss * reg)
+comp <- pairs(emm, by = c("encRet", "hitMiss"), adjust = "holm")
 em_dat_all_adj
 plot(em_dat_all_adj)
 em_dat_all_adj = as.data.frame(em_dat_all_adj)
@@ -444,6 +445,8 @@ glm_test_sub_adj <- glmer(adjTime ~ hitMiss * encRet * reg + (1|realID),
 
 # get stats
 summary(glm_test_sub_adj)
+
+
 
 # use emmeans contrast for post-hoc testing
 em_dat_sub_adj <- emmeans(glm_test_sub_adj, pairwise ~ hitMiss * encRet | hitMiss * reg | 
@@ -919,7 +922,15 @@ glm_peak <- lmer(peakHFB ~ hitMiss * encRet * reg +(1|realID),
                   data = all_data) 
 
 # get stats
-summary(glm_peak)
+Anova(glm_peak)
+
+
+emm <- emmeans(glm_peak, ~ encRet * hitMiss * reg)
+comp <- pairs(emm, by = c("encRet", "hitMiss"), adjust = "holm")
+
+emm <- emmeans(glm_peak, ~ encRet * hitMiss * reg)
+comp <- pairs(emm, by = c("reg"), adjust = "holm")
+
 
 # use emmeans contrast for post-hoc testing
 em_dat_all_adj <- emmeans(glm_peak, pairwise ~ hitMiss * encRet | hitMiss * reg | 
@@ -1007,9 +1018,9 @@ for(hm in 1:2){
                                      labels=reg_order) +
                   #scale_color_manual(values=c("turquoise4", "black")) +
                   ylab("Peak HFB [z-score]") +
-                  ylim(c(0, 30)) +
-                  geom_hline(yintercept = c(15), linewidth = 2, linetype = 'dashed')+
-                  geom_hline(yintercept = seq(5,25, 5), linewidth = .75, linetype = 'dotted')+
+                  ylim(c(0, 70)) +
+                  # geom_hline(yintercept = c(15), linewidth = 2, linetype = 'dashed')+
+                  geom_hline(yintercept = seq(10,60, 10), linewidth = .75, linetype = 'dotted')+
                   geom_point(aes(hitMiss, avg, colour = factor(reg, level = reg_order)), 
                             alpha = 0.3, size = 8, data = tmpPnts, 
                             position = position_jitterdodge()) +

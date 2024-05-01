@@ -12,14 +12,15 @@ for tt = 1:length(latency)
                    
         test = gausswin(11);
         test = test ./ sum(test); 
-        trial = [zeros(5,1); trial; zeros(5,1)];
-        smoothT = conv(trial, test, 'valid'); 
+        padTrial = [zeros(5,1); trial; zeros(5,1)];
+        smoothT = conv(padTrial, test, 'valid'); 
         [maxVal, idx] = max(smoothT(find(tim==0):find(tim>=RT(tt),1))); 
         testTim = tim(find(tim==0):find(tim>=RT(tt),1));
         if statChoice == 1
             latency(tt) =  testTim(idx);
         else
-            latency(tt) = maxVal; 
+            idx = idx+find(tim==0)-1; 
+            latency(tt) = max(trial(idx:idx)); 
         end
     else
         latency(tt) = -1; 

@@ -56,8 +56,8 @@ regCounts = zeros(length(regions), length(chanFiles));
 %12: TF time X trials X freq miss phase
 %13: HFB latency hit
 %14: HFB latency miss
-%15: low Theta latency hit
-%16: low Theta latency miss
+%15: 3-8 Hz hit connectivity ISPC
+%16: 3-8 Hz miss connectivity ISPC
 %17: high Theta latency hit
 %18: high Theta latency miss
 %19: d
@@ -110,6 +110,10 @@ if sum(cellfun(@(x) strcmp(x, lab), regions)) == 1  &&...
     out{10}= chanDat.TF2.subMiss; 
     out{11}= chanDat.TF2.subHit_p; 
     out{12}= chanDat.TF2.subMiss_p; 
+    out{15}= mean(chanDat.ISPC.subHit(:, chanDat.HFB.encMulTim>=0 &...
+                           chanDat.HFB.encMulTim<=1500, 5:11, 2), [2,3]); 
+    out{16}= mean(chanDat.ISPC.subMiss(:, chanDat.HFB.encMulTim>=0 &...
+                           chanDat.HFB.encMulTim<=1500, 5:11, 2), [2,3]);
     out{19}= d; 
     out{20} = acc; 
     out{21} = chanDat.age;
@@ -132,6 +136,10 @@ if sum(cellfun(@(x) strcmp(x, lab), regions)) == 1  &&...
     out{10}= chanDat.TF2.miss_on; 
     out{11}= chanDat.TF2.hit_on_p; 
     out{12}= chanDat.TF2.miss_on_p; 
+    out{15}= mean(chanDat.ISPC.hit_on(:, chanDat.HFB.onMulTim>=0 &...
+                           chanDat.HFB.onMulTim<=1500, 5:11, 2), [2,3]); 
+    out{16}= mean(chanDat.ISPC.miss_on(:, chanDat.HFB.onMulTim>=0 &...
+                           chanDat.HFB.onMulTim<=1500, 5:11, 2), [2,3]);
     out{19}= d; 
     out{20} = acc; 
     out{21} = chanDat.age;
@@ -192,6 +200,18 @@ allResRET(:,23) = cellfun(@(x,y) gausLat(x, tim, y,2), allResRET(:,1), allResRET
 allResRET(:,24) = cellfun(@(x,y) gausLat(x, tim, y,2), allResRET(:,2), allResRET(:,4), ...
     'uniformoutput', false );
 
+%theta connectivity difference score in column 18
+allResENC(:,17) = cellfun(@(x,y,z) x([1:z-1, z+1:end]) - y([1:z-1, z+1:end]), ...
+    allResENC(:,15), allResENC(:,16), allResENC(:,8), 'UniformOutput',false); 
+allResRET(:,17) = cellfun(@(x,y,z) x([1:z-1, z+1:end]) - y([1:z-1, z+1:end]), ...
+    allResRET(:,15), allResRET(:,16), allResRET(:,8), 'UniformOutput',false); 
+%sum increase column 25, and decrease column 26
+test = cellfun(@(x) sum(x>0), allResENC(:,17));
+test2 = cellfun(@(x) sum(x<0), allResENC(:,17)); 
+
+test = cellfun(@(x) sum(x>0), allResRET(:,17));
+test2 = cellfun(@(x) sum(x<0), allResRET(:,17)); 
+
 
 %% get demographics 
 %in general this doesn't need to be run 
@@ -237,6 +257,7 @@ aovDat.reg = repmat("askj", 75000,1);
 aovDat.RT = zeros(75000,1); 
 aovDat.adjTime = zeros(75000,1); 
 aovDat.peakHFB = zeros(75000,1); 
+
 
 
 aovi = 1; 

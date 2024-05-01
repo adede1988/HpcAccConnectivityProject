@@ -70,7 +70,7 @@ fftDat2 = fft(reshape(padDat2,1,numel(padDat2)),n_conv_pow2);
             1:size(fDat,1) ).^2;
        
 
-        %implementing pairwise phase consistency from Vink et al., 2010 
+        %implementing pairwise phase consistency from Vinck et al., 2010 
         difs = fDat - fDat2; 
         N = size(difs,2); 
         %equation 14
@@ -100,7 +100,7 @@ fftDat2 = fft(reshape(padDat2,1,numel(padDat2)),n_conv_pow2);
                 1:size(fDat,1) ).^2;
            
     
-            %implementing pairwise phase consistency from Vink et al., 2010 
+            %implementing pairwise phase consistency from Vinck et al., 2010 
             difs = fDat - fDat2; 
             N = size(difs,2); 
             %equation 14

@@ -159,13 +159,13 @@ figure('position', [0,0,1000,400])
 hold on 
 spread = 35;
 tim = reactChan.HFB.encMulTim; 
-for ii = 9:13
+for ii = 9:12
     hitIdx = find(reactChan.hits & reactChan.use); 
     RT = reactChan.encInfo(hitIdx(ii),4);
     plot(tim, allTrials(:,ii)+ii*spread, ...
-        'color', purpleYellow((ii-9)*60+1,:), 'linewidth', 2)
+        'color', purpleYellow((13-9)*60+1,:), 'linewidth', 2)
     scatter(repmat(RT,[50,1]), ii*linspace(spread-1.25,spread+1.25,50), 10, ...
-        'k', 'filled')
+        'red', 'filled')
     trial = allTrials(:,ii);            
     test = gausswin(11);
     test = test ./ sum(test); 
@@ -173,7 +173,7 @@ for ii = 9:13
     smoothT = conv(trial, test, 'valid'); 
     coli = 14-ii;
     plot(tim, smoothT+ii*spread, ...
-        'color', purpleYellow((coli-1)*60+1,:), 'linewidth', 2)
+        'color', purpleYellow((1-1)*60+1,:), 'linewidth', 2)
     [maxVal, idx] = max(smoothT(find(tim==0):find(tim>=RT,1))); 
     testTim = tim(find(tim==0):find(tim>=RT,1));
     scatter(testTim(idx), smoothT(tim==testTim(idx))+ii*spread,...
@@ -187,7 +187,8 @@ set(gcf,'color','w');
 box off;
 ax=gca; ax.LineWidth=4;
 xlim([-450, 3000])
-export_fig([postFigPath 'HFBpeakDetection' '.jpg'], '-r300')
+yticks([])
+export_fig([figDat 'pubFigs/' 'Fig1_HFBpeakDetection' '.jpg'], '-r300')
 
 
 figure('position', [0,0,600,1200])
@@ -244,11 +245,8 @@ fig1Dat([fig1Dat.isdir]) = [];
 
 %% basic image locked HFB time courses
 
-%while looping, grab the distribution of effect sizes for later comparison
-%to HFB-peak diffs
-%effect sizes stored as time X enc/ret X region
+
 %panel 1A
-% imgDist = zeros(139, 2, 9); 
 parfor ii = 1:length(fig1Dat)
     panelDat = load([fig1Dat(ii).folder '/' fig1Dat(ii).name]).outDat; 
 
@@ -262,13 +260,8 @@ parfor ii = 1:length(fig1Dat)
     panelDat.hitVals(isnan(panelDat.hitVals)) = 0; 
     panelDat.missVals(isnan(panelDat.missVals)) = 0; 
 
-    %get effect sizes
-    diffs = panelDat.hitVals - panelDat.missVals; 
-    diffs = mean(diffs) ./ std(diffs); 
-    regi = find(cellfun(@(x) strcmp(x, panelDat.reg), regions)); 
-    phasei = find(cellfun(@(x) strcmp(x, panelDat.phase), phaseVals)); 
-
-%     imgDist(:,phasei, regi) = diffs; 
+  
+  
     figure('visible', false, 'position', [0,0,600,600])
     x = panelDat.tim; 
     x(panelDat.p>.05) = []; 
@@ -320,7 +313,8 @@ parfor ii = 1:length(fig1Dat)
     box off;
     ax=gca;ax.LineWidth=4;
     xlim([-450, 3000])
-    export_fig([figDat 'pubFigs/' 'Fig1_' panelDat.reg '_' panelDat.phase  '.jpg'], '-r300')
+    export_fig([figDat 'pubFigs/' 'Fig1_' ...
+        panelDat.reg '_' panelDat.phase  '.jpg'], '-r300')
     
 end
 
@@ -329,11 +323,11 @@ end
 
 
 
-%% single trial heatmap figures
+%% single trial heatmap figure and HFB peak
 % for ii = 1:length(singleFig1Dat)
-%hard code for hippocampus at encoding hits only
+%hard code for acc at encoding hits only
 %panel 1B
-    ii = 18;
+    ii = 6;
     panelDat = load([singleFig1Dat(ii).folder '/'...
         singleFig1Dat(ii).name]).outDat; 
     
@@ -357,6 +351,79 @@ end
     export_fig([figDat 'pubFigs/' 'Fig1_singleTrial' ...
         panelDat.reg '_' panelDat.phase  '.jpg'], '-r300')
 
+    for ii = 1:18
+    panelDat = load([headFilesHFB(ii).folder '/' ...
+        headFilesHFB(ii).name]).statInfo; 
+
+    HFBidx = arrayfun(@(x) find(panelDat.tim >= x, 1), panelDat.hitLat); 
+    HFBidx(HFBidx<21) = 21; 
+    HFBidx(HFBidx>length(panelDat.tim)-20) = length(panelDat.tim)- 20;
+    %get the +- 20 points around the HFB peaks
+    HFB_aligned_hits = arrayfun(@(x, y) panelDat.hits(x-20:x+20, y), HFBidx', ...
+        1:length(HFBidx), 'UniformOutput',false );
+    HFB_aligned_hits = cat(2, HFB_aligned_hits{:});
+    %get channel means
+    chi = panelDat.hitChi; 
+    subIDs = panelDat.hitSub; 
+    chanIDs = arrayfun(@(x) [subIDs{x} '_' num2str(chi(x))], 1:length(chi),...
+        'uniformoutput', false);
+    uniIDs = unique(chanIDs); 
+    HFB_aligned_hits = cellfun(@(x)...
+        mean(HFB_aligned_hits(:, ismember(chanIDs, x)),2), uniIDs, ...
+        'uniformoutput', false);
+    HFB_aligned_hits = cat(2, HFB_aligned_hits{:}); 
+
+
+    HFBidx = arrayfun(@(x) find(panelDat.tim >= x, 1), panelDat.missLat); 
+    HFBidx(HFBidx<21) = 21; 
+    HFBidx(HFBidx>length(panelDat.tim)-20) = length(panelDat.tim)- 20;
+    %get the +- 20 points around the HFB peaks
+    HFB_aligned_misses = arrayfun(@(x, y) panelDat.misses(x-20:x+20, y), HFBidx', ...
+        1:length(HFBidx), 'UniformOutput',false );
+    HFB_aligned_misses = cat(2, HFB_aligned_misses{:});
+    %get channel means
+    chi = panelDat.missChi; 
+    subIDs = panelDat.missSub; 
+    chanIDs = arrayfun(@(x) [subIDs{x} '_' num2str(chi(x))], 1:length(chi),...
+        'uniformoutput', false);
+    uniIDs = unique(chanIDs); 
+    HFB_aligned_misses = cellfun(@(x)...
+        mean(HFB_aligned_misses(:, ismember(chanIDs, x)),2), uniIDs, ...
+        'uniformoutput', false);
+    HFB_aligned_misses = cat(2, HFB_aligned_misses{:}); 
+
+    figure('visible', true, 'position', [0,0,600,600])
+    x = [-500:25:500]; 
+    hold on 
+    yline(0, 'color', 'k', 'linewidth', linWid)
+    xline(0, '--', 'linewidth', linWid, 'color', 'k')
+   
+    y = mean(HFB_aligned_hits,2); 
+  
+    plot(x, y, 'color', hitCol, 'linewidth', 4)
+    se = std(HFB_aligned_hits,[],2) ./ sqrt(size(HFB_aligned_hits,2)); 
+    y = [y + se; flip(y) - flip(se)]; 
+    x = [x, flip(x)]; 
+    hold on 
+    fill(x, y, hitCol, 'facealpha', errAlpha, 'edgealpha', 0)
+    allMax = max(y); 
+    allMin = min(y); 
+    
+    y = mean(HFB_aligned_misses,2); 
+    x = [-500:25:500]; 
+    plot(x, y, 'color', missCol, 'linewidth', 4)
+    se = std(HFB_aligned_hits,[],2) ./ sqrt(size(HFB_aligned_hits,2)); 
+    y = [y + se; flip(y) - flip(se)]; 
+    x = [x, flip(x)]; 
+    hold on 
+    fill(x, y, hitCol, 'facealpha', errAlpha, 'edgealpha', 0)
+    set(gcf,'color','w');
+    box off;
+    ax=gca;ax.LineWidth=4;
+    export_fig([figDat 'pubFigs/' 'Fig1_HFBpeakExample_' ...
+        panelDat.reg '_' panelDat.phase  '.jpg'], '-r300')
+
+    end
 
 % end
 %% get the latencies for all regions on a single plot HITS Retrieve
@@ -663,7 +730,8 @@ parfor ii = 1:length(HFBfiles)
     box off;
     ax=gca;ax.LineWidth=4;
    
-    export_fig([figDat 'pubFigs/' 'Fig1_HFBlocked_' panelDat.reg '_' panelDat.phase  '.jpg'], '-r300')
+    export_fig([figDat 'pubFigs/' 'Fig1_HFBlocked_'...
+        panelDat.reg '_' panelDat.phase  '.jpg'], '-r300')
     
 end
 
@@ -680,126 +748,120 @@ test = cellfun(@(x) length(x)>0, ...
     strfind({TF_files.name}, '_HFB'));
 TF_files_HFB = TF_files(test); 
 
+%grab a .csv of data with the columns: power, frequency, enc/ret, subID,
+%chanID
+aovDat = table;
+aovDat.power = zeros(112200,1); 
+aovDat.freq = zeros(112200, 1); 
+aovDat.encRet = repmat("askj", 112200,1); 
+aovDat.subID = repmat("askj", 112200,1); 
+aovDat.reg = repmat("askj", 112200,1); 
+ai = 1; 
 
 
-
-
-parfor ii = 1:length(TF_files_HFB)
+for ii = 1:length(TF_files_HFB)
     try
     panelDat = load([TF_files_HFB(ii).folder '/' ...
         TF_files_HFB(ii).name]).outDat;
- 
+    ii
 
-    regi = find(cellfun(@(x) strcmp(x, panelDat.reg), regions)); 
-    phasei = find(cellfun(@(x) strcmp(x, panelDat.phase), phaseVals)); 
+% %     regi = find(cellfun(@(x) strcmp(x, panelDat.reg), regions)); 
+% %     phasei = find(cellfun(@(x) strcmp(x, panelDat.phase), phaseVals)); 
+% % 
+% %     figure('visible', false, 'position', [0,0,600,600])
+% %     x = 1:length(panelDat.frex); 
+% % %     yline(0, 'color', 'k', 'linewidth', linWid)
+% %     x(panelDat.p_hfb(21,:)>.05) = []; 
+% %     if ~isempty(x) %check if we have any sig time points
+% %     breakVals = [0, find(diff(x)> 25), length(x)];
+% %     for jj = 1:length(breakVals)-1
+% %         tmpX = x(breakVals(jj)+1:breakVals(jj+1));
+% %         tmpY = ones(length(tmpX),1) * 10000; 
+% %         tmpX = [tmpX, flip(tmpX)]; 
+% %         tmpY = [tmpY', -tmpY'];
+% %         fill(tmpX, tmpY, sigCol, 'facealpha', sigAlpha, 'edgealpha', 0)
+% %         hold on 
+% % %         yline(0, 'color', 'k', 'linewidth', linWid)
+% %     
+% %     end
+% %     else
+% %         hold on 
+% %     end
 
-    figure('visible', false, 'position', [0,0,600,600])
-    x = 1:length(panelDat.frex); 
-%     yline(0, 'color', 'k', 'linewidth', linWid)
-    x(panelDat.p_hfb(21,:)>.05) = []; 
-    if ~isempty(x) %check if we have any sig time points
-    breakVals = [0, find(diff(x)> 25), length(x)];
-    for jj = 1:length(breakVals)-1
-        tmpX = x(breakVals(jj)+1:breakVals(jj+1));
-        tmpY = ones(length(tmpX),1) * 10000; 
-        tmpX = [tmpX, flip(tmpX)]; 
-        tmpY = [tmpY', -tmpY'];
-        fill(tmpX, tmpY, sigCol, 'facealpha', sigAlpha, 'edgealpha', 0)
-        hold on 
-%         yline(0, 'color', 'k', 'linewidth', linWid)
+
+
     
-    end
-    else
-        hold on 
-    end
 
-
-%     hitSpect = arrayfun(@(x) find(panelDat.tim>=x, 1), panelDat.hitLat);
-%     hitSpect = arrayfun(@(x,y) squeeze(panelDat.hits(x,y,:)), ...
-%         hitSpect, [1:length(hitSpect)]', 'uniformoutput', false);
-%     hitSpect = cat(2, hitSpect{:});
-%     % need to take channel-wise means
-%     realID = arrayfun(@(x) [panelDat.hitSub{x} '_'...
-%         num2str(panelDat.hitChi(x))], 1:length(panelDat.hitChi), ...
-%         'UniformOutput', false);
-%     uniIDs = unique(realID); 
-%     hitSpect = cellfun(@(x) ...
-%         mean(hitSpect(:, ismember( realID,x)), 2), uniIDs, ...
-%         'uniformoutput', false);
-%     hitSpect = cat(2, hitSpect{:});
     hitSpect = squeeze(panelDat.hits_hfb(:,21,:)); 
 
 
-    if regi == 9 %outliers in the hippocampus retrieval data, remove for plot
-        hitSpect(8:10,:) = []; 
-    end
+%     if regi == 9 %outliers in the hippocampus retrieval data, remove for plot
+%         hitSpect(8:10,:) = []; 
+%     end
     
-%     
-% 
-%     
-%     hitBase = permute(panelDat.hits, [3,1,2]); 
-%     hitBase = reshape(hitBase, [100, prod(size(hitBase, [2,3]))]);
-% 
-%     ybase = median(hitBase, 2); 
-% %     plot(ybase, 'color', hitCol, 'linewidth', 4,'linestyle', '--')
+% %     y = mean(hitSpect); 
+% %     plot( y, 'color', hitCol, 'linewidth', 4)
+% %     se = std(hitSpect) ./ sqrt(size(hitSpect,1)); 
+% %     y = [y + se, flip(y) - flip(se)]; 
+% %     x = [[1:100], flip([1:100])]; 
+% %     hold on 
+% %     fill(x, y, hitCol, 'facealpha', errAlpha, 'edgealpha', 0)
+% %     allMax = max(y); 
+% %     allMin = min(y);  
+    
 
-    y = mean(hitSpect); 
-    plot( y, 'color', hitCol, 'linewidth', 4)
-    se = std(hitSpect) ./ sqrt(size(hitSpect,1)); 
-    y = [y + se, flip(y) - flip(se)]; 
-    x = [[1:100], flip([1:100])]; 
-    hold on 
-    fill(x, y, hitCol, 'facealpha', errAlpha, 'edgealpha', 0)
-    allMax = max(y); 
-    allMin = min(y);  
-    
-%     missSpect = arrayfun(@(x) find(panelDat.tim>=x, 1), panelDat.missLat);
-%     missSpect = arrayfun(@(x,y) squeeze(panelDat.misses(x,y,:)), ...
-%          missSpect, [1:length( missSpect)]', 'uniformoutput', false);
-%     missSpect = cat(2,  missSpect{:});
-% 
-%     realID = arrayfun(@(x) [panelDat.missSub{x} '_'...
-%         num2str(panelDat.missChi(x))], 1:length(panelDat.missChi), ...
-%         'UniformOutput', false);
-%     uniIDs = unique(realID); 
-%     missSpect = cellfun(@(x) ...
-%         mean(missSpect(:, ismember( realID,x)), 2), uniIDs, ...
-%         'uniformoutput', false);
-%     missSpect = cat(2, missSpect{:});
     missSpect = squeeze(panelDat.misses_hfb(:,21,:)); 
 
-     if regi == 9 %outliers in the hippocampus retrieval data, remove for plot
-        missSpect(8:10,:) = []; 
+%      if regi == 9 %outliers in the hippocampus retrieval data, remove for plot
+%         missSpect(8:10,:) = []; 
+%     end
+
+
+% %     y = mean(missSpect);  
+% %     plot( y, 'color', missCol, 'linewidth', 4)
+% %     se = std(missSpect) ./ sqrt(size(missSpect,1));  
+% %     y = [y + se, flip(y) - flip(se)]; 
+% %     x = [[1:100], flip([1:100])]; 
+% %     hold on 
+% %     fill(x, y, missCol, 'facealpha', errAlpha, 'edgealpha', 0)
+% %     allMax = max([allMax, max(y)]); 
+% %     allMin = min([allMin, min(y)]); 
+% %     allMin = min([allMin, -2]); 
+% %     ylim([-1, 18])
+% %     xlim([1, 100])
+% %     xticks([1:11:100])
+% %     xticklabels(round(panelDat.frex([1:11:100])))
+% %     set(gcf,'color','w');
+% %     box off;
+% %     ax=gca;ax.LineWidth=4;
+% %     export_fig([figDat 'pubFigs/' 'Fig2_' panelDat.reg '_' panelDat.phase  '.jpg'], '-r300')
+
+
+
+    realID = arrayfun(@(x) [panelDat.hitSub{x} '_'...
+        num2str(panelDat.hitChi(x))], 1:length(panelDat.hitChi), ...
+        'UniformOutput', false);
+    uniIDs = unique(realID); 
+    comboSpect = (hitSpect + missSpect) /2; 
+    
+    for subi = 1:size(comboSpect,1)
+        aovDat.power(ai:ai+99) = comboSpect(subi,:); 
+        aovDat.freq(ai:ai+99) = panelDat.frex; 
+        aovDat.encRet(ai:ai+99) = repmat(panelDat.phase, 100,1);
+        aovDat.subID(ai:ai+99) = repmat(uniIDs{subi}, 100,1); 
+        aovDat.reg(ai:ai+99) = repmat(panelDat.reg, 100,1); 
+        ai = ai+100; 
     end
 
-%     missBase = permute(panelDat.misses, [3,1,2]); 
-%     missBase = reshape(missBase, [100, prod(size(missBase, [2,3]))]);
-% 
-%     ybase = mean(missBase, 2); 
-%     plot(ybase, 'color', missCol, 'linewidth', 4,'linestyle', '--')
-    y = mean(missSpect);  
-    plot( y, 'color', missCol, 'linewidth', 4)
-    se = std(missSpect) ./ sqrt(size(missSpect,1));  
-    y = [y + se, flip(y) - flip(se)]; 
-    x = [[1:100], flip([1:100])]; 
-    hold on 
-    fill(x, y, missCol, 'facealpha', errAlpha, 'edgealpha', 0)
-    allMax = max([allMax, max(y)]); 
-    allMin = min([allMin, min(y)]); 
-    allMin = min([allMin, -2]); 
-    ylim([-1, 18])
-    xlim([1, 100])
-    xticks([1:11:100])
-    xticklabels(round(panelDat.frex([1:11:100])))
-    set(gcf,'color','w');
-    box off;
-    ax=gca;ax.LineWidth=4;
-    export_fig([figDat 'pubFigs/' 'Fig2_' panelDat.reg '_' panelDat.phase  '.jpg'], '-r300')
+
     catch
         ii
     end
 end
 
+writetable(aovDat, ...
+    ['R:\MSS\Johnson_Lab\dtf8829\GitHub\' ...
+    'HpcAccConnectivityProject\HFBpeakPowerSpectra.csv'])
 
 
 %% ITPC spectra at HFB peak 
