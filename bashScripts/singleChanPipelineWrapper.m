@@ -3,6 +3,8 @@
 %github access token: 
 %Feb 20: 
 %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
+%July 3rd: 
+% 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
 
 
 %simulated HPC looping input from shell script
