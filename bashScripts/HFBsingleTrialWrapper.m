@@ -32,7 +32,7 @@ datPre = '/projects/p31578/dtf8829/QuestConnect/';
 
 %% set paths
 
-addpath([codePre 'HpcAccConnectivityProject'])
+addpath(genpath([codePre 'HpcAccConnectivityProject']))
 addpath([codePre 'myFrequentUse'])
 addpath([codePre 'myFrequentUse/export_fig_repo'])
 % addpath(genpath([codePre 'fieldtrip-20230118']))
