@@ -1,6 +1,6 @@
 function [] = connectivitypipeline(statFiles, reg1, reg2, encRet,...
     statType, permi, datPre)
-
+    rng(permi)
     perms = 50; 
     frex = logspace(log10(2), log10(25), 20);
     regions = {'acc', 'dlPFC', 'hip', 'lTemp', 'iTemp', 'mtl', ...

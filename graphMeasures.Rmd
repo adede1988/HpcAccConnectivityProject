@@ -37,21 +37,54 @@ options(decorate.contr.Sum="",decorate.contrasts=c("[","]"))
 
 # load in main data frame
 df <- read.csv("R:\\MSS\\Johnson_Lab\\dtf8829\\GitHub\\HpcAccConnectivityProject\\graphDat.csv", header = T)
+df$idx = c(1:length(df$date))
+df <- df %>% filter(!is.na(bytes))
 setwd('G:\\My Drive\\Johnson\\MTL_PFC_networkFigs\\Rfigs')
 # factorise variables
-df$realID = paste(df$subID, '_', df$chi, '_', df$timeSet, '_', df$time, sep = '')
-df <- df %>% 
-  distinct(realID, .keep_all = TRUE)
-df$realID = paste(df$subID, '_', df$chi, sep = '')
+df$realID = paste(df$subID, '_', df$chi, 
+                  '_', df$chi2, '_', df$timeSet,
+                  '_', df$time, sep = '')
+#channel reversal because it's equivalent for image time connections
+df$realID2 = paste(df$subID, '_', df$chi2, 
+                  '_', df$chi, '_', df$timeSet,
+                  '_', df$time, sep = '')
+df$realID2[df$timeSet=='HFB'] = ''
 
-df <- df %>% filter(reg1 != 'acc')
+# match(df$realID, df$realID2) -> df$repeatCheck
+# 
+# df$deleteFlag = is.numeric(df$repeatCheck) & df$repeatCheck > df$idx
+# df$deleteFlag[is.na(df$deleteFlag)] = F
+# df <- df[df$deleteFlag==F,]
+# 
+# 
+# df <- df %>% 
+#   distinct(realID, .keep_all = TRUE)
+
+
+
+
+df$realID = paste(df$subID, '_', df$chi, sep = '')
+df$realID2 = paste(df$subID, '_', df$chi2, sep = '')
+
+df$pairID = ifelse(df$chi < df$chi2, 
+                   paste(df$reg1, '_', df$reg2, '_', df$subID, 
+                         '_', df$chi, '_', df$chi2, sep = ''),
+                   paste(df$reg1, '_', df$reg2, '_', df$subID, 
+                         '_', df$chi2, '_', df$chi, sep = ''))
+
+
+# df <- df %>% filter(reg1 != 'acc')
 
 df <- df %>%
   mutate(subID= as.factor(subID),
          encRet = as.factor(encRet),
          reg1 = as.factor(reg1),
          reg2 = as.factor(reg2),
-         chi = as.factor(chi))
+         chi = as.factor(chi), 
+         timeSet = as.factor(timeSet), 
+         pairID = as.factor(pairID), 
+         realID = as.factor(realID), 
+         realID2 = as.factor(realID2))
 
 
 
@@ -72,10 +105,439 @@ df$charDif = df$hitChar - df$missChar
 
 ```
 
-## encoding characteristic mean vector length
+## plots!
 
-```{r char encode}
+```{r plotting}
 
+reg_order <- c("hip", "mtl", "acc", "dlPFC", "pPFC")
+# Color data frame in R
+regColors <- data.frame(
+  parahip = rgb(214, 77, 97, maxColorValue = 255),       # dark pink
+  dlPFC = rgb(145, 162, 80, maxColorValue = 255),        # light forest green
+  iTemp = rgb(145, 162, 80, maxColorValue = 255),        # light forest green
+  lTemp = rgb(145, 162, 80, maxColorValue = 255),        # light forest green
+  polarPFC = rgb(51, 102, 153, maxColorValue = 255),     # lilac
+  visual = rgb(132, 125, 212, maxColorValue = 255),      # lilac
+  ACC = rgb(204, 153, 204, maxColorValue = 255),         # dark red
+  PCC = rgb(184, 78, 83, maxColorValue = 255),          # dark red
+  Hip = rgb(61, 187, 218, maxColorValue = 255)           # dusky blue
+)
+
+reg_order <- c("hip", "mtl", "acc", "dlPFC", "pPFC")
+
+timeSet_colors <- c("HFB" = "#b9e9e9", "image" = '#ffc9e4')  # For boxplots
+reg2_colors <- c("acc" = regColors$ACC, 
+                 "dlPFC" = regColors$dlPFC, 
+                 "hip" = regColors$Hip, 
+                 "mtl" = regColors$parahip, 
+                 "pPFC" = regColors$polarPFC)  # For point borders
+
+hmVals = c('hit', 'miss')
+erVals = c('enc', 'ret')
+dotalpha = .2
+linealpha = .1
+boxalpha = .6
+dotsize = 3.5
+boxthick = 1.5
+dotjitter = .6
+
+for(hm in hmVals){
+  for(er in erVals){
+
+## plot the encoding hits characteristic path length
+    curDat <- filter(long_df, encRet == er, hitMiss == hm) 
+    
+    
+    
+    curDat[dim(curDat)[1]+1,] = NA
+    curDat$reg1[dim(curDat)[1]] = 'acc'
+    curDat$Char[dim(curDat)[1]] = NA
+    curDat$reg2[dim(curDat)[1]] = 'dlPFC' 
+    curDat$timeSet[dim(curDat)[1]] = 'image'
+    curDat$xInt[dim(curDat)[1]] = 2*5 + 2
+    
+    line_data <- curDat %>%
+      group_by(pairID, reg1) %>%
+      filter(n_distinct(timeSet) > 1) %>%
+      arrange(reg1, timeSet) %>%
+      ungroup() 
+    
+  
+    
+    
+    outPlot <- curDat  %>%
+      ggplot(aes(y = Char, 
+                 x = interaction(timeSet, factor(reg1, level = reg_order)))) + 
+      geom_boxplot(outlier.shape = NA, alpha = boxalpha, aes(fill = timeSet, 
+                                                        color = timeSet), 
+                     position = position_dodge(.85)) +
+      geom_line(data = line_data, aes(
+                group = interaction(pairID, factor(reg1, level = reg_order))), 
+                color = "black", alpha = linealpha)+ 
+      geom_point(aes(color = factor(reg2, level = reg_order), 
+                     fill = factor(reg2, level = reg_order), group = timeSet), 
+                     show.legend = F, 
+                     shape = 21, size = dotsize, alpha = dotalpha, 
+                     position = position_jitterdodge(jitter.width = dotjitter, 
+                                                     dodge.width = .85, 
+                                                     seed = 123)) + 
+      geom_boxplot(outlier.shape = NA, color = 'black', fill='transparent', 
+                     position = position_dodge(.85), size = boxthick) +
+      scale_fill_manual(values = c(timeSet_colors, reg2_colors)) + 
+      scale_color_manual(values = c(timeSet_colors, reg2_colors)) + 
+      theme_classic() +
+      ylim(c(0,50)) + 
+        theme(axis.line = element_line(color = 'black', linewidth = 3),
+              axis.ticks = element_line(colour = "black", linewidth = 2),
+              axis.ticks.length=unit(-.25, "cm"),
+              text = element_text(size = 20),
+              legend.position = 'none',
+              axis.text.x = element_text(margin = margin(t = 10)),
+              axis.text.y = element_text(margin = margin(r = 10))) 
+
+    png(paste( "R:\\MSS\\Johnson_Lab\\dtf8829\\publicationFigureData\\pubFigs\\" ,
+                  'Fig4','_','Char_', hm ,'_', er, '.png', 
+                  sep = ''),         # File name
+        width=600, height=600)
+    print(outPlot)
+    dev.off()
+  }
+}
+
+
+
+hmVals = c('hit', 'miss')
+erVals = c('enc', 'ret')
+for(hm in hmVals){
+  for(er in erVals){
+
+## plot the encoding hits characteristic path length
+    curDat <- filter(long_df, encRet == er, hitMiss == hm)
+    
+    
+    curDat[dim(curDat)[1]+1,] = NA
+    curDat$reg1[dim(curDat)[1]] = 'acc'
+    curDat$ST[dim(curDat)[1]] = NA
+    curDat$reg2[dim(curDat)[1]] = 'dlPFC' 
+    curDat$timeSet[dim(curDat)[1]] = 'image'
+    curDat$xInt[dim(curDat)[1]] = 2*5 + 2
+    
+    
+    line_data <- curDat %>%
+      group_by(pairID, reg1) %>%
+      filter(n_distinct(timeSet) > 1) %>%
+      arrange(reg1, timeSet) %>%
+      ungroup() 
+    
+    outPlot <- curDat  %>%
+      ggplot(aes(y = ST, x = interaction(timeSet, factor(reg1, level = reg_order)))) + 
+      geom_boxplot(outlier.shape = NA, alpha = boxalpha, aes(fill = timeSet, color = timeSet), 
+                     position = position_dodge(.85)) +
+      geom_line(data = line_data, aes(group = interaction(pairID, factor(reg1, level = reg_order))), 
+                color = "black", alpha = linealpha)+ 
+      geom_point(aes(color = reg2, fill = reg2, group = timeSet), show.legend = F, 
+                 shape = 21, size = dotsize, alpha = dotalpha, 
+                   position = position_jitterdodge(jitter.width = dotjitter, 
+                                                   dodge.width = .85, 
+                                                   seed = 123)) + 
+      geom_boxplot(outlier.shape = NA, color = 'black', fill='transparent', 
+                     position = position_dodge(.85), size = boxthick) +
+      scale_fill_manual(values = c(timeSet_colors, reg2_colors)) + 
+      scale_color_manual(values = c(timeSet_colors, reg2_colors)) + 
+      scale_x_discrete(name = "reg", labels = c('acc', 'dlPFC', 'hip', 'phg', 'pPFC')) + 
+      theme_classic() +
+      ylim(c(-.05,.1)) + 
+        theme(axis.line = element_line(color = 'black', linewidth = 3),
+              axis.ticks = element_line(colour = "black", linewidth = 2),
+              axis.ticks.length=unit(-.25, "cm"),
+              text = element_text(size = 20),
+              legend.position = 'none',
+              axis.text.x = element_text(margin = margin(t = 10)),
+              axis.text.y = element_text(margin = margin(r = 10))) 
+
+    png(paste( "R:\\MSS\\Johnson_Lab\\dtf8829\\publicationFigureData\\pubFigs\\" ,
+                  'Fig4','_','ST_', hm ,'_', er, '.png', 
+                  sep = ''),         # File name
+        width=600, height=600)
+    print(outPlot)
+    dev.off()
+  }
+}
+
+
+
+hmVals = c('hit', 'miss')
+erVals = c('enc', 'ret')
+for(hm in hmVals){
+  for(er in erVals){
+
+## plot the encoding hits characteristic path length
+    curDat <- filter(long_df, encRet == er, hitMiss == hm)
+    
+    
+    curDat[dim(curDat)[1]+1,] = NA
+    curDat$reg1[dim(curDat)[1]] = 'acc'
+    curDat$Saturation[dim(curDat)[1]] = NA
+    curDat$reg2[dim(curDat)[1]] = 'dlPFC' 
+    curDat$timeSet[dim(curDat)[1]] = 'image'
+    curDat$xInt[dim(curDat)[1]] = 2*5 + 2
+    
+    
+    line_data <- curDat %>%
+      group_by(pairID, reg1) %>%
+      filter(n_distinct(timeSet) > 1) %>%
+      arrange(reg1, timeSet) %>%
+      ungroup() 
+    
+    outPlot <- curDat  %>%
+      ggplot(aes(y = Saturation, x = interaction(timeSet, factor(reg1, level = reg_order)))) + 
+       geom_boxplot(outlier.shape = NA, alpha = boxalpha, aes(fill = timeSet, color = timeSet), 
+                     position = position_dodge(.85)) +
+      geom_line(data = line_data, aes(group = interaction(pairID, factor(reg1, level = reg_order))), 
+                color = "black", alpha = linealpha)+ 
+      geom_point(aes(color = reg2, fill = reg2, group = timeSet), show.legend = F, 
+                 shape = 21, size = dotsize, alpha = dotalpha, 
+                   position = position_jitterdodge(jitter.width = dotjitter, 
+                                                   dodge.width = .85, 
+                                                   seed = 123)) + 
+      geom_boxplot(outlier.shape = NA, color = 'black', fill='transparent', 
+                     position = position_dodge(.85), size = boxthick) + 
+      scale_fill_manual(values = c(timeSet_colors, reg2_colors)) + 
+      scale_color_manual(values = c(timeSet_colors, reg2_colors)) + 
+      scale_x_discrete(name = "reg", labels = c('acc', 'dlPFC', 'hip', 'phg', 'pPFC')) + 
+      theme_classic() +
+      ylim(c(0,.3)) + 
+        theme(axis.line = element_line(color = 'black', linewidth = 3),
+              axis.ticks = element_line(colour = "black", linewidth = 2),
+              axis.ticks.length=unit(-.25, "cm"),
+              text = element_text(size = 20),
+              legend.position = 'none',
+              axis.text.x = element_text(margin = margin(t = 10)),
+              axis.text.y = element_text(margin = margin(r = 10))) 
+
+    png(paste( "R:\\MSS\\Johnson_Lab\\dtf8829\\publicationFigureData\\pubFigs\\" ,
+                  'Fig4','_','Saturation_', hm ,'_', er, '.png', 
+                  sep = ''),         # File name
+        width=600, height=600)
+    print(outPlot)
+    dev.off()
+  }
+}
+
+
+
+
+
+```
+
+## full hit/miss models
+
+```{r hit miss models}
+
+long_df <- long_df %>% filter(reg1 != 'acc')
+
+#CHARACTERISTIC PATH LENGTH ENCODE
+charModel <- lmer(Char ~  reg1 * timeSet * hitMiss + (1|realID) + (1|realID2), 
+                     data = filter(long_df, encRet == 'enc' ), 
+            control = lmerControl(optimizer = "bobyqa"))
+summary(charModel)
+Anova(charModel)
+
+#CHARACTERISTIC PATH LENGTH RETRIEVE
+charModel <- lmer(Char ~  reg1 * timeSet * hitMiss + (1|realID) + (1|realID2), 
+                     data = filter(long_df, encRet == 'ret' ), 
+            control = lmerControl(optimizer = "bobyqa"))
+summary(charModel)
+Anova(charModel)
+
+
+#STRENGTH ENCODE
+charModel <- lmer(ST ~  reg1 * timeSet * hitMiss + (1|realID) + (1|realID2), 
+                     data = filter(long_df, encRet == 'enc' ), 
+            control = lmerControl(optimizer = "bobyqa"))
+summary(charModel)
+Anova(charModel)
+
+#STRENGTH RETRIEVE
+charModel <- lmer(ST ~  reg1 * timeSet * hitMiss + (1|realID) + (1|realID2), 
+                     data = filter(long_df, encRet == 'ret' ), 
+            control = lmerControl(optimizer = "bobyqa"))
+summary(charModel)
+Anova(charModel)
+
+
+#SATURATION ENCODE
+charModel <- lmer(Saturation ~  reg1 * timeSet * hitMiss + (1|realID) + (1|realID2), 
+                     data = filter(long_df, encRet == 'enc' ), 
+            control = lmerControl(optimizer = "bobyqa"))
+summary(charModel)
+Anova(charModel)
+
+#SATURATION rETRIEVE
+charModel <- lmer(Saturation ~  reg1 * timeSet * hitMiss + (1|realID) + (1|realID2), 
+                     data = filter(long_df, encRet == 'ret' ), 
+            control = lmerControl(optimizer = "bobyqa"))
+summary(charModel)
+Anova(charModel)
+
+```
+## models for hit trials only ENCODING 
+
+```{r hit models}
+
+#CHARACTERISTIC PATH LENGTH HIT TRIALS ENCODING
+charModel <- lmer(Char ~  reg1 * timeSet + (1|realID), 
+                     data = filter(long_df, encRet == 'enc', hitMiss == 'hit'), 
+            control = lmerControl(optimizer = "bobyqa"))
+summary(charModel)
+Anova(charModel)
+
+emm <- emmeans(charModel, ~ reg1 * timeSet)
+pairs(emm, by = c("reg1"), adjust = "holm")
+
+#STRENGTH HIT TRIALS ENCODING
+charModel <- lmer(ST ~  reg1 * timeSet + (1|realID), 
+                     data = filter(long_df, encRet == 'enc', hitMiss == 'hit'), 
+            control = lmerControl(optimizer = "bobyqa"))
+summary(charModel)
+Anova(charModel)
+
+emm <- emmeans(charModel, ~ reg1 * timeSet)
+pairs(emm, by = c("reg1"), adjust = "holm")
+
+
+#SATURATION HIT TRIALS ENCODING
+charModel <- lmer(Saturation ~  reg1 * timeSet + (1|realID), 
+                     data = filter(long_df, encRet == 'enc', hitMiss == 'hit'), 
+            control = lmerControl(optimizer = "bobyqa"))
+summary(charModel)
+Anova(charModel)
+
+emm <- emmeans(charModel, ~ reg1 * timeSet)
+pairs(emm, by = c("reg1"), adjust = "holm")
+
+
+```
+
+## models for miss trials only ENCODING 
+
+```{r miss models}
+
+#CHARACTERISTIC PATH LENGTH HIT TRIALS ENCODING
+charModel <- lmer(Char ~  reg1 * timeSet + (1|realID), 
+                     data = filter(long_df, encRet == 'enc', hitMiss == 'miss'), 
+            control = lmerControl(optimizer = "bobyqa"))
+summary(charModel)
+Anova(charModel)
+
+emm <- emmeans(charModel, ~ reg1 * timeSet)
+pairs(emm, by = c("reg1"), adjust = "holm")
+
+#STRENGTH HIT TRIALS ENCODING
+charModel <- lmer(ST ~  reg1 * timeSet + (1|realID), 
+                     data = filter(long_df, encRet == 'enc', hitMiss == 'miss'), 
+            control = lmerControl(optimizer = "bobyqa"))
+summary(charModel)
+Anova(charModel)
+
+emm <- emmeans(charModel, ~ reg1 * timeSet)
+pairs(emm, by = c("reg1"), adjust = "holm")
+
+
+#SATURATION HIT TRIALS ENCODING
+charModel <- lmer(Saturation ~  reg1 * timeSet + (1|realID), 
+                     data = filter(long_df, encRet == 'enc', hitMiss == 'miss'), 
+            control = lmerControl(optimizer = "bobyqa"))
+summary(charModel)
+Anova(charModel)
+
+emm <- emmeans(charModel, ~ reg1 * timeSet)
+pairs(emm, by = c("reg1"), adjust = "holm")
+
+
+```
+
+
+## models for hit trials only RETRIEVAL 
+
+```{r hit models ret}
+
+#CHARACTERISTIC PATH LENGTH HIT TRIALS ENCODING
+charModel <- lmer(Char ~  reg1 * timeSet + (1|realID), 
+                     data = filter(long_df, encRet == 'ret', hitMiss == 'hit'), 
+            control = lmerControl(optimizer = "bobyqa"))
+summary(charModel)
+Anova(charModel)
+
+emm <- emmeans(charModel, ~ reg1 * timeSet)
+pairs(emm, by = c("reg1"), adjust = "holm")
+
+#STRENGTH HIT TRIALS ENCODING
+charModel <- lmer(ST ~  reg1 * timeSet + (1|realID), 
+                     data = filter(long_df, encRet == 'ret', hitMiss == 'hit'), 
+            control = lmerControl(optimizer = "bobyqa"))
+summary(charModel)
+Anova(charModel)
+
+emm <- emmeans(charModel, ~ reg1 * timeSet)
+pairs(emm, by = c("reg1"), adjust = "holm")
+
+
+#SATURATION HIT TRIALS ENCODING
+charModel <- lmer(Saturation ~  reg1 * timeSet + (1|realID), 
+                     data = filter(long_df, encRet == 'ret', hitMiss == 'hit'), 
+            control = lmerControl(optimizer = "bobyqa"))
+summary(charModel)
+Anova(charModel)
+
+emm <- emmeans(charModel, ~ reg1 * timeSet)
+pairs(emm, by = c("reg1"), adjust = "holm")
+
+
+```
+
+## models for miss trials only RETRIEVAL 
+
+```{r miss models ret}
+
+#CHARACTERISTIC PATH LENGTH HIT TRIALS ENCODING
+charModel <- lmer(Char ~  reg1 * timeSet + (1|realID), 
+                     data = filter(long_df, encRet == 'ret', hitMiss == 'miss'), 
+            control = lmerControl(optimizer = "bobyqa"))
+summary(charModel)
+Anova(charModel)
+
+emm <- emmeans(charModel, ~ reg1 * timeSet)
+pairs(emm, by = c("reg1"), adjust = "holm")
+
+#STRENGTH HIT TRIALS ENCODING
+charModel <- lmer(ST ~  reg1 * timeSet + (1|realID), 
+                     data = filter(long_df, encRet == 'ret', hitMiss == 'miss'), 
+            control = lmerControl(optimizer = "bobyqa"))
+summary(charModel)
+Anova(charModel)
+
+emm <- emmeans(charModel, ~ reg1 * timeSet)
+pairs(emm, by = c("reg1"), adjust = "holm")
+
+
+#SATURATION HIT TRIALS ENCODING
+charModel <- lmer(Saturation ~  reg1 * timeSet + (1|realID), 
+                     data = filter(long_df, encRet == 'ret', hitMiss == 'miss'), 
+            control = lmerControl(optimizer = "bobyqa"))
+summary(charModel)
+Anova(charModel)
+
+emm <- emmeans(charModel, ~ reg1 * timeSet)
+pairs(emm, by = c("reg1"), adjust = "holm")
+
+
+```
+
+
+## characteristic mean vector length retrieval 
+
+```{r char retrieve}
 reg_order <- c("hip", "mtl", "acc", "dlPFC", "pPFC")
 # Color data frame in R
 regColors <- data.frame(
@@ -94,36 +556,45 @@ long_df$reg1 = factor(long_df$reg1, reg_order)
 
 
 #region by region? hip: 
-charModel <- lmer(Char ~  reg1 * timeSet * hitMiss + (1|realID), 
-                     data = filter(long_df, encRet == 'enc'), 
+charModel <- lmer(Char ~  reg1 * timeSet * hitMiss + (1|realID) + (1|realID2), 
+                     data = filter(long_df, encRet == 'ret' ), 
             control = lmerControl(optimizer = "bobyqa"))
 summary(charModel)
 Anova(charModel)
 
 charModel <- lmer(Char ~  reg1 * timeSet + (1|realID), 
-                     data = filter(long_df, encRet == 'enc', hitMiss == 'hit'), 
+                     data = filter(long_df, encRet == 'ret', hitMiss == 'hit'), 
             control = lmerControl(optimizer = "bobyqa"))
 summary(charModel)
 Anova(charModel)
 
-emmeans(charModel, pairwise ~ reg1 * timeSet , type="response", adjust = "holm")
+emm <- emmeans(charModel, ~ reg1 * timeSet)
+pairs(emm, by = c("reg1"), adjust = "holm")
+
+em_dat_all_adj <- emmeans(charModel, pairwise ~ reg1*timeSet , type="response", adjust = "holm")
+emm <- emmeans(glm_test_all_adj, ~ reg1*timeSet)
+em_dat_all_adj
+
+plot(em_dat_all_adj)
+em_dat_all_adj = as.data.frame(em_dat_all_adj)
+
 
 charModel <- lmer(Char ~  reg1 * timeSet + (1|realID), 
-                     data = filter(long_df, encRet == 'enc', hitMiss == 'miss'), 
+                     data = filter(long_df, encRet == 'ret', hitMiss == 'miss'), 
             control = lmerControl(optimizer = "bobyqa"))
 summary(charModel)
 Anova(charModel)
 
-emmeans(charModel, pairwise ~ reg1 * timeSet , type="response", adjust = "holm")
+emm <- emmeans(charModel, ~ reg1 * timeSet)
+pairs(emm, by = c("reg1"), adjust = "holm")
 
-write.csv(filter(long_df, encRet == 'enc', hitMiss == 'hit'), 'testDat.csv')
 
 
-long_df %>% filter(encRet == 'enc', hitMiss == 'hit') %>%
+long_df %>% filter(encRet == 'ret', hitMiss == 'hit') %>%
   ggplot(aes( fill = timeSet, color = timeSet, y = Char, x = reg1)) + 
     geom_boxplot(outlier.shape = NA, alpha = .75, 
                  position = position_dodge(.85)) +
-    geom_jitter(show.legend = F, shape = 21, size = 4, 
+    geom_jitter(show.legend = F, shape = 21, size = 4, alpha = .5,
                 position = position_jitterdodge(dodge.width = .85, 
                                                 jitter.width = .2)) + 
     scale_fill_manual(values=c( "#E1C271", "#3BACDD"),
@@ -146,7 +617,7 @@ long_df %>% filter(encRet == 'enc', hitMiss == 'miss') %>%
   ggplot(aes( fill = timeSet, color = timeSet, y = Char, x = reg1)) + 
     geom_boxplot(outlier.shape = NA, alpha = .75, 
                  position = position_dodge(.85)) +
-    geom_jitter(show.legend = F, shape = 21, size = 4, 
+    geom_jitter(show.legend = F, shape = 21, size = 4, alpha = .2,
                 position = position_jitterdodge(dodge.width = .85, 
                                                 jitter.width = .2)) + 
     scale_fill_manual(values=c( "#E1C271", "#3BACDD"),
@@ -161,97 +632,7 @@ long_df %>% filter(encRet == 'enc', hitMiss == 'miss') %>%
           text = element_text(size = 20),
           legend.position = 'none',
           axis.text.x = element_text(margin = margin(t = 10)),
-          axis.text.y = element_text(margin = margin(r = 10))) 
-
-```
-## characteristic mean vector length retrieval 
-
-```{r char retrieve}
-reg_order <- c("hip", "mtl", "acc", "dlPFC", "pPFC")
-# Color data frame in R
-regColors <- data.frame(
-  parahip = rgb(214, 77, 97, maxColorValue = 255),       # dark pink
-  dlPFC = rgb(145, 162, 80, maxColorValue = 255),        # light forest green
-  iTemp = rgb(145, 162, 80, maxColorValue = 255),        # light forest green
-  lTemp = rgb(145, 162, 80, maxColorValue = 255),        # light forest green
-  polarPFC = rgb(51, 102, 153, maxColorValue = 255),     # lilac
-  visual = rgb(132, 125, 212, maxColorValue = 255),      # lilac
-  ACC = rgb(204, 153, 204, maxColorValue = 255),         # dark red
-  PCC = rgb(184, 78, 83, maxColorValue = 255),          # dark red
-  Hip = rgb(61, 187, 218, maxColorValue = 255)           # dusky blue
-)
-
-long_df$reg1 = factor(long_df$reg1, reg_order)
-
-
-#region by region? hip: 
-charModel <- lmer(Char ~  reg1 * timeSet * hitMiss + (1|realID), 
-                     data = filter(long_df, encRet == 'ret'), 
-            control = lmerControl(optimizer = "bobyqa"))
-summary(charModel)
-Anova(charModel)
-
-charModel <- lmer(Char ~  reg1 * timeSet + (1|realID), 
-                     data = filter(long_df, encRet == 'ret', hitMiss == 'hit'), 
-            control = lmerControl(optimizer = "bobyqa"))
-summary(charModel)
-Anova(charModel)
-
-emmeans(charModel, pairwise ~ reg1 * timeSet , type="response", adjust = "holm")
-
-charModel <- lmer(Char ~  reg1 * timeSet + (1|realID), 
-                     data = filter(long_df, encRet == 'ret', hitMiss == 'miss'), 
-            control = lmerControl(optimizer = "bobyqa"))
-summary(charModel)
-Anova(charModel)
-
-emmeans(charModel, pairwise ~ reg1 * timeSet , type="response", adjust = "holm")
-
-
-
-long_df %>% filter(encRet == 'ret', hitMiss == 'hit') %>%
-  ggplot(aes( fill = timeSet, color = timeSet, y = Char, x = reg1)) + 
-    geom_boxplot(outlier.shape = NA, alpha = .75, 
-                 position = position_dodge(.85)) +
-    geom_jitter(show.legend = F, shape = 21, size = 4, 
-                position = position_jitterdodge(dodge.width = .85, 
-                                                jitter.width = .2)) + 
-    scale_fill_manual(values=c( "#E1C271", "#3BACDD"),
-                      labels=c(  'HFB', 'Image')) +  
-    scale_color_manual(values=c( "#E1C271", "#3BACDD"),
-                      labels=c(  'HFB', 'Image')) +  
-  theme_classic() +
-  ylim(c(0,50)) + 
-    theme(axis.line = element_line(color = 'black', linewidth = 3),
-          axis.ticks = element_line(colour = "black", linewidth = 2),
-          axis.ticks.length=unit(-.25, "cm"),
-          text = element_text(size = 20),
-          legend.position = 'none',
-          axis.text.x = element_text(margin = margin(t = 10)),
-          axis.text.y = element_text(margin = margin(r = 10))) 
-
-
-  
-long_df %>% filter(encRet == 'ret', hitMiss == 'miss') %>%
-  ggplot(aes( fill = timeSet, color = timeSet, y = Char, x = reg1)) + 
-    geom_boxplot(outlier.shape = NA, alpha = .75, 
-                 position = position_dodge(.85)) +
-    geom_jitter(show.legend = F, shape = 21, size = 4, 
-                position = position_jitterdodge(dodge.width = .85, 
-                                                jitter.width = .2)) + 
-    scale_fill_manual(values=c( "#E1C271", "#3BACDD"),
-                      labels=c(  'HFB', 'Image')) +  
-    scale_color_manual(values=c( "#E1C271", "#3BACDD"),
-                      labels=c(  'HFB', 'Image')) +  
-  theme_classic() +
-  ylim(c(0,50)) + 
-    theme(axis.line = element_line(color = 'black', linewidth = 3),
-          axis.ticks = element_line(colour = "black", linewidth = 2),
-          axis.ticks.length=unit(-.25, "cm"),
-          text = element_text(size = 20),
-          legend.position = 'none',
-          axis.text.x = element_text(margin = margin(t = 10)),
-          axis.text.y = element_text(margin = margin(r = 10))) 
+          axis.text.y = element_text(margin = margin(r = 10)))  
 
 
 ```

@@ -1,5 +1,5 @@
 function [] = TFsingleTrialpipeline(statFiles, fileIdx, statType, permi)
-
+        rng(permi)
         HFBdat = load([statFiles(fileIdx).folder '/' statFiles(fileIdx).name]).statInfo; 
         perms = 50; 
     

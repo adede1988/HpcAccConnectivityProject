@@ -14,7 +14,7 @@ datPre = 'R:\MSS\Johnson_Lab\dtf8829\QuestConnect\';
 
 %% set paths
 
-addpath([codePre 'HpcAccConnectivityProject'])
+addpath(genpath([codePre 'HpcAccConnectivityProject']))
 addpath([codePre 'myFrequentUse'])
 addpath([codePre 'myFrequentUse/export_fig_repo'])
 % addpath(genpath([codePre 'mni2atlas']))
@@ -58,8 +58,8 @@ regCounts = zeros(length(regions), length(chanFiles));
 %14: HFB latency miss
 %15: 3-8 Hz hit connectivity ISPC
 %16: 3-8 Hz miss connectivity ISPC
-%17: high Theta latency hit
-%18: high Theta latency miss
+%17: hit - miss diff in 3-8 Hz connectivity
+        %18: high Theta latency miss
 %19: d
 %20: acc
 %21: age
@@ -92,8 +92,8 @@ if acc>0 && chanDat.age > 13 %memory and age
 regCounts(:,ii) = cellfun(@(x) strcmp(x, lab), regions);
 
 
-if sum(cellfun(@(x) strcmp(x, lab), regions)) == 1  &&...
-        sum(chanDat.reactiveRes==1)>0 
+if sum(cellfun(@(x) strcmp(x, lab), regions)) == 1  %&&...
+      %  sum(chanDat.reactiveRes==1)>0 
     %the label of this channel matches one of the ROIs and is reactive
     
     % ENCODING
@@ -160,9 +160,9 @@ allResRET(cellfun(@(x) isempty(x), allResRET(:,1)), :) = [];
 %get the latency information and put it into the 13th and 14th columns HFB
 %+ THETA power latency cols 15-18 are low frequency latencies
 tim = allResENC{1,6}; 
-allResENC(:,13) = cellfun(@(x,y) gausLat(x, tim, y,1), allResENC(:,1), allResENC(:,3), ...
+allResENC(:,13) = cellfun(@(x,y) gausLat(x, tim, y,1,5), allResENC(:,1), allResENC(:,3), ...
     'uniformoutput', false );
-allResENC(:,14) = cellfun(@(x,y) gausLat(x, tim, y,1), allResENC(:,2), allResENC(:,4), ...
+allResENC(:,14) = cellfun(@(x,y) gausLat(x, tim, y,1,5), allResENC(:,2), allResENC(:,4), ...
     'uniformoutput', false );
 % %low frequency
 % allResENC(:,15) = cellfun(@(x,y) gausLat(x, tim, y), allResENC(:,9), allResENC(:,3), ...
@@ -174,16 +174,16 @@ allResENC(:,14) = cellfun(@(x,y) gausLat(x, tim, y,1), allResENC(:,2), allResENC
 %     'uniformoutput', false );
 % allResENC(:,18) = cellfun(@(x,y) gausLat(x, tim, y), allResENC(:,12), allResENC(:,4), ...
 %     'uniformoutput', false );
-allResENC(:,23) = cellfun(@(x,y) gausLat(x, tim, y,2), allResENC(:,1), allResENC(:,3), ...
+allResENC(:,23) = cellfun(@(x,y) gausLat(x, tim, y,2,5), allResENC(:,1), allResENC(:,3), ...
     'uniformoutput', false );
-allResENC(:,24) = cellfun(@(x,y) gausLat(x, tim, y,2), allResENC(:,2), allResENC(:,4), ...
+allResENC(:,24) = cellfun(@(x,y) gausLat(x, tim, y,2,5), allResENC(:,2), allResENC(:,4), ...
     'uniformoutput', false );
 
 
 tim = allResRET{1,6}; 
-allResRET(:,13) = cellfun(@(x,y) gausLat(x, tim, y,1), allResRET(:,1), allResRET(:,3), ...
+allResRET(:,13) = cellfun(@(x,y) gausLat(x, tim, y,1,5), allResRET(:,1), allResRET(:,3), ...
     'uniformoutput', false );
-allResRET(:,14) = cellfun(@(x,y) gausLat(x, tim, y,1), allResRET(:,2), allResRET(:,4), ...
+allResRET(:,14) = cellfun(@(x,y) gausLat(x, tim, y,1,5), allResRET(:,2), allResRET(:,4), ...
     'uniformoutput', false );
 %low frequency
 % allResRET(:,15) = cellfun(@(x,y) gausLat(x, tim, y), allResRET(:,9), allResRET(:,3), ...
@@ -195,16 +195,34 @@ allResRET(:,14) = cellfun(@(x,y) gausLat(x, tim, y,1), allResRET(:,2), allResRET
 %     'uniformoutput', false );
 % allResRET(:,18) = cellfun(@(x,y) gausLat(x, tim, y), allResRET(:,12), allResRET(:,4), ...
 %     'uniformoutput', false );
-allResRET(:,23) = cellfun(@(x,y) gausLat(x, tim, y,2), allResRET(:,1), allResRET(:,3), ...
+allResRET(:,23) = cellfun(@(x,y) gausLat(x, tim, y,2,5), allResRET(:,1), allResRET(:,3), ...
     'uniformoutput', false );
-allResRET(:,24) = cellfun(@(x,y) gausLat(x, tim, y,2), allResRET(:,2), allResRET(:,4), ...
+allResRET(:,24) = cellfun(@(x,y) gausLat(x, tim, y,2,5), allResRET(:,2), allResRET(:,4), ...
     'uniformoutput', false );
 
-%theta connectivity difference score in column 18
+%theta connectivity difference score in column 17
 allResENC(:,17) = cellfun(@(x,y,z) x([1:z-1, z+1:end]) - y([1:z-1, z+1:end]), ...
     allResENC(:,15), allResENC(:,16), allResENC(:,8), 'UniformOutput',false); 
 allResRET(:,17) = cellfun(@(x,y,z) x([1:z-1, z+1:end]) - y([1:z-1, z+1:end]), ...
     allResRET(:,15), allResRET(:,16), allResRET(:,8), 'UniformOutput',false); 
+
+
+encHit = cell2mat(cellfun(@(x,z) x([1:z-1, z+1:end]) , ...
+    allResENC(:,15), allResENC(:,8), 'UniformOutput',false));
+encMiss = cell2mat(cellfun(@(x,z) x([1:z-1, z+1:end]) , ...
+    allResENC(:,16), allResENC(:,8), 'UniformOutput',false));
+
+retHit = cell2mat(cellfun(@(x,z) x([1:z-1, z+1:end]) , ...
+    allResRET(:,15), allResRET(:,8), 'UniformOutput',false));
+retMiss = cell2mat(cellfun(@(x,z) x([1:z-1, z+1:end]) , ...
+    allResRET(:,16), allResRET(:,8), 'UniformOutput',false));
+
+encDif = cell2mat(cellfun(@(x,z) x([1:z-1]) , ...
+    allResENC(:,17), allResENC(:,8), 'UniformOutput',false));
+
+retDif = cell2mat(cellfun(@(x,z) x([1:z-1]) , ...
+    allResRET(:,17), allResRET(:,8), 'UniformOutput',false));
+
 %sum increase column 25, and decrease column 26
 test = cellfun(@(x) sum(x>0), allResENC(:,17));
 test2 = cellfun(@(x) sum(x<0), allResENC(:,17)); 

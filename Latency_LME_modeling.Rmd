@@ -119,6 +119,17 @@ all_data <- df %>%
 reactiveCounts = all_data %>% group_by(reg) %>% summarize(chanCount = length(unique(realID)))
 reactiveCounts$Totals = c(44,247,40,79,35)
 
+Total = sum(reactiveCounts$Totals) #total chan count
+totalReact = sum(reactiveCounts$chanCount) #total reactive
+propExp = totalReact / Total
+
+reactiveCounts$exp = reactiveCounts$Totals * propExp
+reactiveCounts$nonReact = reactiveCounts$Totals - reactiveCounts$chanCount
+
+chisq.test(reactiveCounts[,c(2,5)])
+
+
+
 
 ```
 

@@ -10,9 +10,9 @@ s2w2y = [[linspace(s(1),m(1),128)'; linspace(m(1),e(1),128)'], ...
          [linspace(s(3),m(3),128)'; linspace(m(3),e(3),128)'], ...
          ] / 255;
 test = s2w2y; 
-s2w2y(1:85,:) = repmat([96,62,149]/255, [85,1]);
-s2w2y(86:171,:) = repmat([0,157,161]/255, [86,1]);
-s2w2y(171:256,:) = repmat([249,205,15]/255, [86,1]);
+s2w2y(1:82,:) = repmat([96,62,149]/255, [82,1]);
+s2w2y(83:256,:) = repmat([249,205,15]/255, [174,1]);
+% s2w2y(171:256,:) = repmat([249,205,15]/255, [86,1]);
 
 
 globalSize = 150; 
@@ -67,6 +67,7 @@ for ii = 1:5
         meanT = mean(tMat(pMask<.05), 'all'); 
         if meanT < 0 
             meanT = 0; 
+            fn1
             disp(['negative connection:  ' ...
                 regions{keyRegIdx(ii)} ' ' regions{keyRegIdx(jj)}])
             skip = true; 
@@ -91,7 +92,7 @@ for ii = 1:5
         switch colOpt %what determines color? 
 
             case "freq"
-                indices = logspace(log10(frex(1)), log10(frex(12)), 256);
+                indices = logspace(log10(frex(1)), log10(frex(20)), 256);
                 coli = find(indices>=meanF, 1);
                 if isempty(coli)
                     coli = 255; 
@@ -299,7 +300,7 @@ if wantLegend
         xlim([-.35, 1.2])
         yVals = linspace(-1.55, 1.25, 7); 
         hold on 
-        frexKey = logspace(log10(frex(1)), log10(frex(12)), size(s2w2y,1));
+        frexKey = logspace(log10(frex(1)), log10(frex(20)), size(s2w2y,1));
         idx = round(linspace(1, size(s2w2y,1), 7)); 
         for ii = 1:length(yVals)
             plx = [0:.001:1];

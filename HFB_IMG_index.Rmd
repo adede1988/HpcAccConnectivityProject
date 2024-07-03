@@ -1,0 +1,261 @@
+---
+title: "Adam's Analysis"
+author: "Zachariah Cross & Adam Dede"
+date: "2023-10-24"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+## Load packages and set up environment
+
+```{r message = FALSE, warning = FALSE}
+
+knitr::opts_chunk$set(message = FALSE, warning = FALSE)
+
+# load packages
+library(tidyverse)
+library(RColorBrewer)
+library(hrbrthemes)
+library(lme4)
+# library(lmerOut)
+library(lmerTest)
+library(car)
+library(ggeffects)
+library(emmeans)
+library(effects)
+
+# set contrasts
+options(contrasts=c("contr.Sum","contr.Helmert"))
+options(decorate.contr.Sum="",decorate.contrasts=c("[","]"))
+
+```
+
+## Read in data frame
+
+```{r load data}
+
+# load in main data frame
+df <- read.csv("R:\\MSS\\Johnson_Lab\\dtf8829\\GitHub\\HpcAccConnectivityProject\\HFB_IMG_index.csv", header = T)
+setwd('G:\\My Drive\\Johnson\\MTL_PFC_networkFigs\\Rfigs')
+# factorise variables
+
+
+
+df <- df %>%
+  mutate(subID= as.factor(subID),
+         encRet = as.factor(encRet),
+         hitMiss = as.factor(hitMiss),
+         reg = as.factor(reg)) 
+
+regLabs = unique(df$reg)
+cr = regLabs[[1]]
+
+
+
+df$realID = df$subID
+
+
+
+# data for our five regions
+all_data <- df %>% 
+  filter(reg == "mtl" | reg == "hip" | reg == "acc" | 
+         reg == "dlPFC" | reg == "pPFC")
+
+```
+
+
+## Run generalised linear mixed-effects regression on full data set with adjTime as the dependent variable
+
+```{r mixed model}
+
+
+# run generalized mixed-effects model #rescale outcome to 0-1 
+
+all_data$index = (all_data$index + 1) / 2
+
+glm_test_all_adj <- lmer(index ~  reg * hitMiss * encRet + (1|realID), 
+                  data = all_data)
+
+# get stats
+summary(glm_test_all_adj)
+Anova(glm_test_all_adj)
+em_dat_all_adj <- emmeans(glm_test_all_adj, pairwise ~ reg , type="response", adjust = "holm")
+# use emmeans contrast for post-hoc testing
+em_dat_all_adj <- emmeans(glm_test_all_adj, pairwise ~ encRet* hitMiss * reg , type="response", adjust = "holm")
+emm <- emmeans(glm_test_all_adj, ~ encRet * hitMiss * reg)
+comp <- pairs(emm, by = c("encRet", "hitMiss"), adjust = "holm")
+comp <- pairs(emm, by = c("reg"), adjust = "holm")
+em_dat_all_adj
+plot(em_dat_all_adj)
+em_dat_all_adj = as.data.frame(em_dat_all_adj)
+
+
+
+ggplot(all_data, aes(x = index, fill = reg, group = reg)) + 
+  geom_histogram(aes(y = ..density..), breaks = seq(-1,1,.2), position="identity") + 
+  facet_wrap(~reg)
+
+ggplot(all_data, aes(x = index)) + 
+  geom_histogram(aes(y = ..density..), breaks = seq(-1,1,.2)) 
+
+
+```
+
+## Generate plot to show both the predicted and raw effects with adjTime in the full dataset! 
+
+```{r plot glmer}
+
+#THIS IS PANEL D in Figure 1
+
+# Color data frame in R
+regColors <- data.frame(
+  parahip = rgb(214, 77, 97, maxColorValue = 255),       # dark pink
+  dlPFC = rgb(145, 162, 80, maxColorValue = 255),        # light forest green
+  iTemp = rgb(145, 162, 80, maxColorValue = 255),        # light forest green
+  lTemp = rgb(145, 162, 80, maxColorValue = 255),        # light forest green
+  polarPFC = rgb(51, 102, 153, maxColorValue = 255),     # lilac
+  visual = rgb(132, 125, 212, maxColorValue = 255),      # lilac
+  ACC = rgb(204, 153, 204, maxColorValue = 255),         # dark red
+  PCC = rgb(184, 78, 83, maxColorValue = 255),          # dark red
+  Hip = rgb(61, 187, 218, maxColorValue = 255)           # dusky blue
+)
+
+hitCol = rgb(88, 113, 206, maxColorValue = 255) 
+missCol = rgb(240, 172, 99, maxColorValue = 255)
+
+hmCols = c(hitCol, missCol)
+
+# re-order regions
+reg_order <- c("hip", "mtl", "acc", "dlPFC", "pPFC")
+reg_color <- c("Hip", "parahip", "ACC", "dlPFC", "polarPFC")
+for(rr in 1:5){
+ 
+  tmpDat <- all_data %>% filter(reg == reg_order[rr])
+    
+  outPlot <- ggplot(tmpDat, aes(x=index)) + 
+                  geom_histogram(breaks = seq(0,1,.1), 
+                                 fill = regColors[[reg_color[rr]]]) +
+                  ylab("Channel Count") +
+                  geom_vline(xintercept = .5, linewidth = 2, linetype = 'dashed')+
+                  xlab("Image locked          HFB locked") +
+                  theme_classic() +
+                  theme(legend.position="none",
+                        panel.border = element_blank(),
+                        panel.grid.major = element_blank(),
+                        panel.grid.minor = element_blank(),
+                        axis.line = element_blank(),
+                        axis.ticks.length = unit(-0.4, "cm"),
+                        axis.ticks.x = element_blank(),
+                        axis.text.x = element_blank(),
+                        axis.line.x = element_line(size = 2),  
+                        axis.line.y = element_line(size = 2),
+                        axis.ticks = element_line(size = 2),
+                        axis.text.y = element_text(size = 12, face = "bold", 
+                                               margin = margin(r = 10)),
+                        plot.margin = margin(l = 30)  
+                  
+                  )
+    
+  png(paste( "R:\\MSS\\Johnson_Lab\\dtf8829\\publicationFigureData\\pubFigs\\" ,
+                'imageHFBindex','_',reg_order[rr], '.png', 
+                sep = ''),         # File name
+      width=600, height=600)
+  print(outPlot)
+  dev.off()
+  
+  
+  
+}
+
+
+hmVals = c("hit", "miss")
+erVals = c("sub", "ret")
+for(hm in 1:2){
+ 
+  tmpDat <- all_data %>% filter(hitMiss == hmVals[hm])
+    
+  outPlot <- ggplot(tmpDat, aes(x=index)) + 
+                  geom_histogram(breaks = seq(0,1,.1), 
+                                 fill = hmCols[hm]) +
+                  ylab("Channel Count") +
+                  geom_vline(xintercept = .5, linewidth = 2, linetype = 'dashed')+
+                  xlab("Image locked          HFB locked") +
+                  theme_classic() +
+                  theme(legend.position="none",
+                        panel.border = element_blank(),
+                        panel.grid.major = element_blank(),
+                        panel.grid.minor = element_blank(),
+                        axis.line = element_blank(),
+                        axis.ticks.length = unit(-0.4, "cm"),
+                        axis.ticks.x = element_blank(),
+                        axis.text.x = element_blank(),
+                        axis.line.x = element_line(size = 2),  
+                        axis.line.y = element_line(size = 2),
+                        axis.ticks = element_line(size = 2),
+                        axis.text.y = element_text(size = 12, face = "bold", 
+                                               margin = margin(r = 10)),
+                        plot.margin = margin(l = 30)  
+                  
+                  )
+    
+  png(paste( "R:\\MSS\\Johnson_Lab\\dtf8829\\publicationFigureData\\pubFigs\\" ,
+                'imageHFBindex','_',hmVals[hm], '.png', 
+                sep = ''),         # File name
+      width=600, height=600)
+  print(outPlot)
+  dev.off()
+  
+  
+  
+}
+
+erCols = c('red', 'blue')
+
+for(hm in 1:2){
+ 
+  tmpDat <- all_data %>% filter(encRet == erVals[hm])
+    
+  outPlot <- ggplot(tmpDat, aes(x=index)) + 
+                  geom_histogram(breaks = seq(0,1,.1), 
+                                 fill = erCols[hm]) +
+                  ylab("Channel Count") +
+                  geom_vline(xintercept = .5, linewidth = 2, linetype = 'dashed')+
+                  xlab("Image locked          HFB locked") +
+                  theme_classic() +
+                  theme(legend.position="none",
+                        panel.border = element_blank(),
+                        panel.grid.major = element_blank(),
+                        panel.grid.minor = element_blank(),
+                        axis.line = element_blank(),
+                        axis.ticks.length = unit(-0.4, "cm"),
+                        axis.ticks.x = element_blank(),
+                        axis.text.x = element_blank(),
+                        axis.line.x = element_line(size = 2),  
+                        axis.line.y = element_line(size = 2),
+                        axis.ticks = element_line(size = 2),
+                        axis.text.y = element_text(size = 12, face = "bold", 
+                                               margin = margin(r = 10)),
+                        plot.margin = margin(l = 30)  
+                  
+                  )
+    
+  png(paste( "R:\\MSS\\Johnson_Lab\\dtf8829\\publicationFigureData\\pubFigs\\" ,
+                'imageHFBindex','_',erVals[hm], '.png', 
+                sep = ''),         # File name
+      width=600, height=600)
+  print(outPlot)
+  dev.off()
+  
+  
+  
+}
+
+```
+
+## Get session information
+
+```{r session info}
+# session info
+pander::pander(sessionInfo(), compact = FALSE)
+```

@@ -65,8 +65,8 @@ function latency = visualizeHFBsingleTrialDat(allRes, reg, regions, phase)
    
 
     %calcualte the latency values
-    latency = gausLat(hits, tim, hitRT, 1);
-    latency2 = gausLat(misses, tim, missRT, 1); 
+    latency = gausLat(hits, tim, hitRT, 1, 5);
+    latency2 = gausLat(misses, tim, missRT, 1, 5); 
 
 
 
