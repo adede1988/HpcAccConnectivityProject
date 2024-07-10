@@ -15,8 +15,8 @@
 %simulated HPC looping input from shell script
 
 %start = 1;
-%targLen = 'LONG'
-%targType = 'HFB'
+%targLen = 'SHORT'
+%targType = 'image'
 
 disp(['attempting file: ' num2str(start)])
 

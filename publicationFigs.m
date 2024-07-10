@@ -738,8 +738,8 @@ end
 
 
 
+%% individual peak events
 
-%% power spectra at HFB peak
 
 test = cellfun(@(x) length(x)>0, ...
     strfind({fig2Dat.name}, 'TF_'));
@@ -768,14 +768,17 @@ parfor ii = 1:length(TF_files_HFB)
     ii
 
     regi = find(cellfun(@(x) strcmp(x, panelDat.reg), regions)); 
-    phasei = find(cellfun(@(x) strcmp(x, panelDat.phase), phaseVals)); 
+    phasei = find(cellfun(@(x) strcmp(x, panelDat.phase), phaseVals));
 
 
-    % MEAN PEAK ALIGNED BROADBAND AND HFB BAND DATA
+
+
+
+  % MEAN PEAK ALIGNED BROADBAND AND HFB BAND DATA
 
     %HITS
-    BroadBandPeaksHITS = zeros([1001, length(panelDat.hitSub)]);
-    HFBpeaksHITS = zeros([1001, length(panelDat.hitSub)]); 
+    BroadBandPeaksHITS = zeros([3001, length(panelDat.hitSub)]);
+    HFBpeaksHITS = zeros([3001, length(panelDat.hitSub)]); 
     for tt = 1:length(panelDat.hitSub)
        tt
         %load in a single channel of data: 
@@ -859,11 +862,11 @@ chanDat = load(['R:\MSS\Johnson_Lab\dtf8829\QuestConnect\CHANDAT\finished\' ...
         [~, troughOff] = min(phaseTrial(L+idx-10:L+idx+10));
 %         troughOff = 10; %% debug check to see how much trough alignment matters
         idx = idx + troughOff - 10; 
-        HFBpeaksHITS(:, tt) = curTrial(L+idx-500: L+idx+500); 
+        HFBpeaksHITS(:, tt) = curTrial(L+idx-1500: L+idx+1500); 
         curTrial = broadBand(:, hitidx); 
         curTrial = curTrial(:, triali); 
         curTrial = mirrorPad(curTrial); 
-        BroadBandPeaksHITS(:, tt) = curTrial(L+idx-500: L+idx+500);
+        BroadBandPeaksHITS(:, tt) = curTrial(L+idx-1500: L+idx+1500);
 %         idx = randsample(HFBlatHit, 1); 
 %         idx = find(tim>=idx,1); 
 %         BroadBandPeaksHITS(2,:,tt) = curTrial(idx-200:idx+200);
@@ -871,15 +874,63 @@ chanDat = load(['R:\MSS\Johnson_Lab\dtf8829\QuestConnect\CHANDAT\finished\' ...
     end
 
 
+    allRatios = []; 
 
     for nn = 1:1400
-        if rand()>.95
-            figure
-            plot(BroadBandPeaksHITS(:,nn) - BroadBandPeaksHITS(501,nn))
-            hold on 
-            plot(HFBpeaksHITS(:,nn).*2)
-            xlim([0,1001])
-        end
+        during = mean(abs(hilbert(HFBpeaksHITS(1400:1600,nn))));
+        before = mean(abs(hilbert(HFBpeaksHITS(1200:1400,nn))));
+        allRatios = [allRatios during/before];
+%         if during/before > 2 && ~exist([figDat 'pubFigs/exampleTrials/' ...
+%                  'highRatio_'  panelDat.reg '_'...
+%                  panelDat.phase '_' num2str(nn)  '.jpg'])
+%             fig = figure('visible', false);
+%             subplot 211
+%             plot(BroadBandPeaksHITS(:,nn) - BroadBandPeaksHITS(1501,nn))
+%             hold on 
+%             plot(HFBpeaksHITS(:,nn).*2)
+%             xlim([0,3001])
+%             xline(1501)
+% 
+%             title([num2str(round(during/before, 2)) ' during/before power'])
+% 
+%             subplot 212
+%             plot(BroadBandPeaksHITS(1200:1800,nn) - BroadBandPeaksHITS(1501,nn))
+%             hold on 
+%             plot(HFBpeaksHITS(1200:1800,nn).*2)
+%             xlim([0,600])
+%             xline(301)
+%             saveas(fig, [figDat 'pubFigs/exampleTrials/' ...
+%                  'highRatio_'  panelDat.reg '_'...
+%                  panelDat.phase '_' num2str(nn)  '.jpg'])
+% 
+%             
+%         end
+% 
+%         if during/before < 1.5 && ~exist([figDat 'pubFigs/exampleTrials/' ...
+%                  'lowRatio_'  panelDat.reg '_'...
+%                  panelDat.phase '_' num2str(nn)  '.jpg'])
+%             fig = figure('visible', false);
+%             subplot 211
+%             plot(BroadBandPeaksHITS(:,nn) - BroadBandPeaksHITS(1501,nn))
+%             hold on 
+%             plot(HFBpeaksHITS(:,nn).*2)
+%             xlim([0,3001])
+%             xline(1501)
+% 
+%             title([num2str(round(during/before, 2)) ' during/before power'])
+% 
+%             subplot 212
+%             plot(BroadBandPeaksHITS(1200:1800,nn) - BroadBandPeaksHITS(1501,nn))
+%             hold on 
+%             plot(HFBpeaksHITS(1200:1800,nn).*2)
+%             xlim([0,600])
+%             xline(301)
+%             saveas(fig, [figDat 'pubFigs/exampleTrials/' ...
+%                  'lowRatio_'  panelDat.reg '_'...
+%                  panelDat.phase '_' num2str(nn)  '.jpg'])
+% 
+%             
+%         end
     end
 
 
@@ -1010,6 +1061,44 @@ chanDat = load(['R:\MSS\Johnson_Lab\dtf8829\QuestConnect\CHANDAT\finished\' ...
     saveas(fig, [figDat 'pubFigs/' 'broadBandHFBpeak_' panelDat.reg '_' panelDat.phase  '.jpg'])
 
     close(fig)
+    catch
+        ii
+    end
+end
+
+%% power spectra at HFB peak
+
+test = cellfun(@(x) length(x)>0, ...
+    strfind({fig2Dat.name}, 'TF_'));
+TF_files = fig2Dat(test); 
+
+test = cellfun(@(x) length(x)>0, ...
+    strfind({TF_files.name}, '_HFB'));
+TF_files_HFB = TF_files(test); 
+
+%grab a .csv of data with the columns: power, frequency, enc/ret, subID,
+%chanID
+% % % aovDat = table;
+% % % aovDat.power = zeros(112200,1); 
+% % % aovDat.freq = zeros(112200, 1); 
+% % % aovDat.encRet = repmat("askj", 112200,1); 
+% % % aovDat.subID = repmat("askj", 112200,1); 
+% % % aovDat.reg = repmat("askj", 112200,1); 
+% % % ai = 1; 
+
+allSpect = struct; 
+
+parfor ii = 1:length(TF_files_HFB)
+    try
+    panelDat = load([TF_files_HFB(ii).folder '/' ...
+        TF_files_HFB(ii).name]).outDat;
+    ii
+
+    regi = find(cellfun(@(x) strcmp(x, panelDat.reg), regions)); 
+    phasei = find(cellfun(@(x) strcmp(x, panelDat.phase), phaseVals)); 
+
+
+  
 
     fig = figure('visible', false, 'position', [0,0,600,600])
     

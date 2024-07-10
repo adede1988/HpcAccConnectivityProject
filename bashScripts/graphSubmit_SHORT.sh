@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --account=p31578  ## YOUR ACCOUNT pXXXX or bXXXX
 #SBATCH --partition=short  ### PARTITION (buyin, short, normal, w10001, etc)
-#SBATCH --array=1-150 ## number of jobs to run "in parallel" 
+#SBATCH --array=1-133 ## number of jobs to run "in parallel" 
 #SBATCH --nodes=1 ## how many computers do you need
 #SBATCH --ntasks-per-node=1 ## how many cpus or processors do you need on each computer
 #SBATCH --time=4:00:00 ## how long does this need to run (remember different partitions have restrictions on this param)

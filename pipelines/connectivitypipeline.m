@@ -217,8 +217,8 @@ function [] = connectivitypipeline(statFiles, reg1, reg2, encRet,...
        outDat.tVals = tVals; 
        %store out all the hit and miss vals by pair once
        if permi > 1
-       outDat.hitVals = mean(hitVals); 
-       outDat.missVals = mean(missVals);
+       outDat.hitVals = mean(hitVals,3); 
+       outDat.missVals = mean(missVals,3);
        else
        outDat.hitVals = hitVals; 
        outDat.missVals = missVals;

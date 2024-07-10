@@ -291,11 +291,11 @@ export_fig(['G:\My Drive\Johnson\MTL_PFC_networkFigs\TF_regional\wavelet'...
 perm = load([ImagepermsPhase(1).folder '/'...
     ImagepermsPhase(1).name]).outDat;
 %aggregate the perms
-nullTs = zeros([size(perm.nulls, [1,2]), length(ImagepermsPhase)*5]);
+nullTs = zeros([size(perm.nulls, [1,2]), length(ImagepermsPhase)*50]);
 for ii = 1:length(ImagepermsPhase)
     perm = load([ImagepermsPhase(ii).folder '/' ...
         ImagepermsPhase(ii).name]).outDat;
-    nullTs(:,:,(ii-1)*5+1:ii*5) = perm.nulls; 
+    nullTs(:,:,(ii-1)*50+1:ii*50) = perm.nulls; 
 
 end
 
@@ -303,10 +303,10 @@ end
 
 perm2 = load([HFBpermsPhase(1).folder '/' HFBpermsPhase(1).name]).outDat;
 %aggregate the perms
-nullTs = zeros([size(perm2.nulls, [1,2]), length(HFBpermsPhase)*5]);
+nullTs = zeros([size(perm2.nulls, [1,2]), length(HFBpermsPhase)*50]);
 for ii = 1:length(HFBpermsPhase)
     perm2 = load([HFBpermsPhase(ii).folder '/' HFBpermsPhase(ii).name]).outDat;
-    nullTs(:,:,(ii-1)*5+1:ii*5) = perm2.nulls; 
+    nullTs(:,:,(ii-1)*50+1:ii*50) = perm2.nulls; 
 
 end
 
