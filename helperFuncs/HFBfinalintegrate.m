@@ -51,6 +51,10 @@ outDat.hitRT = dat.hitRT;
 outDat.missRT = dat.missRT;
 outDat.hitLat = dat.hitLat; 
 outDat.missLat = dat.missLat; 
+outDat.hitSub = dat.hitSub; 
+outDat.missSub = dat.missSub; 
+outDat.hitChi = dat.hitChi; 
+outDat.missChi = dat.missChi; 
 outDat.phase = phase; 
 tim(tim<-450 | tim>3000) = []; 
 outDat.tim = tim; 
@@ -59,8 +63,15 @@ save(['R:\MSS\Johnson_Lab\dtf8829\publicationFigureData/Figure1/' ...
     regions{reg} '_' phase '_image.mat'], "outDat")
 
 
+realID = arrayfun(@(i) [dat.hitSub{i} '_' num2str(dat.hitChi(i))],...
+    1:length(dat.hitChi), 'UniformOutput', false);
+uniID = unique(realID); 
+
+
+
 
 outDat = perm; 
+outDat.realID = uniID; 
 outDat.clusterinfo = clusterinfo; 
 outDat.h = h; 
 outDat.p = p; 
@@ -95,6 +106,7 @@ end
 
 
 outDat = perm2; 
+outDat.realID = uniID; 
 outDat.clusterinfo = clusterinfo; 
 outDat.h = h; 
 outDat.p = p2; 

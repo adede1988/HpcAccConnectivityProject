@@ -61,7 +61,7 @@ for ii = 1:length(HFBperms)
 
 end
 
-[h, p2, clusterinfo] = cluster_test(perm2.tVals, nullTs); 
+[h, p2, clusterinfo2] = cluster_test(perm2.tVals, nullTs); 
 
 
 %permutations on TF power took the mean, 
@@ -69,14 +69,32 @@ end
 [perm, perm2] = fixMissing(dat, perm, perm2);
 
 
+realID = arrayfun(@(i) [dat.hitSub{i} '_' num2str(dat.hitChi(i))],...
+    1:length(dat.hitChi), 'UniformOutput', false);
+uniID = unique(realID); 
+
+
 %% create output structures for later publication plotting
 %power
-
+if isfield(clusterinfo, 'pos_clusters')
+    clusterinfo.pos_clusters(:,[clusterinfo.pos_clusters.p]>.05) = [];
+    if isempty(clusterinfo.pos_clusters)
+        clusterinfo = rmfield(clusterinfo, 'pos_clusters');
+    end
+end
+if isfield(clusterinfo, 'neg_clusters')
+    clusterinfo.neg_clusters(:,[clusterinfo.neg_clusters.p]>.05) = [];
+    if isempty(clusterinfo.neg_clusters)
+        clusterinfo = rmfield(clusterinfo, 'neg_clusters')
+    end
+end
 %image locked power 
 outDat = struct; 
+outDat.clusterinfo = clusterinfo; 
 tim = dat.tim; 
 tim(tim<-450 | tim>3000) = []; 
 outDat.tim = tim; 
+outDat.realID = uniID; 
 outDat.reg = regions{reg}; 
 outDat.frex = dat.frex; 
 outDat.hits_image = perm.hitVals; 
@@ -102,6 +120,7 @@ outDat = struct;
 tim = [-500:25:500];
 outDat.tim = tim; 
 outDat.reg = regions{reg}; 
+outDat.realID = uniID;
 outDat.frex = dat.frex; 
 outDat.hits_hfb = perm2.hitVals; 
 outDat.misses_hfb = perm2.missVals;  
@@ -310,7 +329,7 @@ for ii = 1:length(HFBpermsPhase)
 
 end
 
-[h, p2, clusterinfo] = cluster_test(perm2.tVals, nullTs); 
+[h, p2, clusterinfo2] = cluster_test(perm2.tVals, nullTs); 
 
 
 if ~isempty(perm.eliminate)
@@ -325,11 +344,27 @@ end
 %% create output structures for later publication plotting
 %phase
 
+if isfield(clusterinfo, 'pos_clusters')
+    clusterinfo.pos_clusters(:,[clusterinfo.pos_clusters.p]>.05) = [];
+    if isempty(clusterinfo.pos_clusters)
+        clusterinfo = rmfield(clusterinfo, 'pos_clusters');
+    end
+end
+if isfield(clusterinfo, 'neg_clusters')
+    clusterinfo.neg_clusters(:,[clusterinfo.neg_clusters.p]>.05) = [];
+    if isempty(clusterinfo.neg_clusters)
+        clusterinfo = rmfield(clusterinfo, 'neg_clusters')
+    end
+end
+
+
 %image locked phase 
 outDat = struct; 
+outDat.clusterinfo = clusterinfo; 
 tim = dat.tim; 
 tim(tim<-450 | tim>3000) = []; 
 outDat.tim = tim; 
+outDat.realID = uniID;
 outDat.reg = regions{reg}; 
 outDat.frex = dat.frex; 
 outDat.hits_image = perm.hitVals; 
@@ -469,6 +504,7 @@ end
 outDat.miss_angles_high = meanAngles;
 outDat.p_hfb = p2; 
 outDat.hitRT = dat.hitRT; 
+outDat.realID = uniID;
 outDat.missRT = dat.missRT;
 outDat.hitLat = dat.hitLat; 
 outDat.missLat = dat.missLat; 

@@ -1,0 +1,577 @@
+---
+title: "predicting memory performance"
+author: "Adam Dede"
+date: "2024-07-13"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+## Load packages and set up environment
+
+```{r message = FALSE, warning = FALSE}
+
+knitr::opts_chunk$set(message = FALSE, warning = FALSE)
+
+# load packages
+library(tidyverse)
+library(RColorBrewer)
+library(hrbrthemes)
+library(lme4)
+# library(lmerOut)
+library(lmerTest)
+library(car)
+library(ggeffects)
+library(emmeans)
+library(effects)
+
+# set contrasts
+options(contrasts=c("contr.Sum","contr.Helmert"))
+options(decorate.contr.Sum="",decorate.contrasts=c("[","]"))
+
+```
+
+## Read in data frame
+
+```{r load data}
+
+# load in main data frame
+df <- read.csv("R:\\MSS\\Johnson_Lab\\dtf8829\\GitHub\\HpcAccConnectivityProject\\allSig.csv", header = T)
+
+
+```
+
+## reformat into better format
+
+```{r demo stats}
+
+longDF <- df %>% pivot_longer(cols = -all_of(c('subID', 'sex', 'age', 'memAcc', 
+                                               'memD', 'reg', 'encHIT', 
+                                               'encMISS', 'retHIT', 'retMISS')),
+                              names_to = c('type', 'regionphase'), 
+                              names_pattern = "^([^_]+)(.*)$",
+                              values_to = 'stat'
+                              ) %>%
+          filter(!is.nan(stat))
+
+longDF1 <- filter(longDF, type == 'ppc')
+longDF2 <- filter(longDF, type != 'ppc')
+longDF1$HFB = grepl('HFB', longDF1$regionphase)
+longDF2$HFB = grepl('peak', longDF2$type)
+
+longDF <- rbind(longDF1, longDF2)
+
+
+longDF <- longDF %>% 
+  filter(reg == "mtl" | reg == "hip" | reg == "acc" | 
+         reg == "dlPFC" | reg == "pPFC")
+
+
+test <- longDF %>% group_by(type, regionphase, HFB) %>%
+  summarize(corVal = cor(memAcc, stat), 
+            count = n()) 
+test = test[test$count>8,]
+
+
+df_hist <- test %>%
+  group_by(HFB) %>%
+  mutate(bin = cut(corVal, breaks = seq(-1,1,.2))) %>%  # You can adjust the number of breaks
+  count(HFB, bin) %>%
+  group_by(HFB) %>%
+  mutate(proportion = n / sum(n))
+
+# Plot the histogram with proportions
+ggplot(df_hist, aes(x = bin, y = proportion, fill = HFB)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(y = "Proportion", x = "Value", title = "Histogram Scaled to Within-Group Proportion") +
+  theme_minimal() +
+  facet_wrap(~ group, scales = "free_x")
+
+
+
+test %>% ggplot(aes(x = corVal, color = HFB, fill = HFB)) + 
+  geom_histogram(aes(y = ..density..), bins = 10)+
+  scale_y_continuous(labels = scales::percent_format()) 
+
+
+
+age.lm = lm(age ~ as.factor(reg), data = df)
+summary(age.lm)
+
+sex.glm = glm(as.factor(sex) ~ as.factor(reg), family = binomial,  data = df)
+summary(sex.glm)
+
+memAcc.lm = lm(memAcc ~ as.factor(reg), data = df)
+summary(memAcc.lm)
+
+memD.lm = lm(memD ~ as.factor(reg), data = df)
+summary(memD.lm)
+
+
+```
+
+## summarize table
+
+```{r table}
+
+df %>% group_by(reg) %>% summarize(N = n(), 
+                                   Fem = sum(sex == "F"),
+                                   agemean = mean(age), 
+                                   agesd = sd(age),
+                                   memAccmean = mean(memAcc),  
+                                   memAccsd = sd(memAcc),
+                                   memDmean = mean(memD), 
+                                   memDsd = sd(memD),
+                                   encHitmean = mean(encHIT),
+                                   encHitsd = sd(encHIT),
+                                   encMissmean = mean(encMISS),
+                                   encMisssd = sd(encMISS),
+                                   retHitmean = mean(retHIT),
+                                   retHitsd = sd(retHIT),
+                                   retMissmean = mean(retMISS),
+                                   retMisssd = sd(retMISS) )
+
+```
+## models for hit trials only ENCODING 
+
+```{r hit models}
+
+#CHARACTERISTIC PATH LENGTH HIT TRIALS ENCODING
+charModel <- lmer(Char ~  reg1 * timeSet + (1|realID), 
+                     data = filter(long_df, encRet == 'enc', hitMiss == 'hit'), 
+            control = lmerControl(optimizer = "bobyqa"))
+summary(charModel)
+Anova(charModel)
+
+emm <- emmeans(charModel, ~ reg1 * timeSet)
+pairs(emm, by = c("reg1"), adjust = "holm")
+
+#STRENGTH HIT TRIALS ENCODING
+charModel <- lmer(ST ~  reg1 * timeSet + (1|realID), 
+                     data = filter(long_df, encRet == 'enc', hitMiss == 'hit'), 
+            control = lmerControl(optimizer = "bobyqa"))
+summary(charModel)
+Anova(charModel)
+
+emm <- emmeans(charModel, ~ reg1 * timeSet)
+pairs(emm, by = c("reg1"), adjust = "holm")
+
+
+#SATURATION HIT TRIALS ENCODING
+charModel <- lmer(Saturation ~  reg1 * timeSet + (1|realID), 
+                     data = filter(long_df, encRet == 'enc', hitMiss == 'hit'), 
+            control = lmerControl(optimizer = "bobyqa"))
+summary(charModel)
+Anova(charModel)
+
+emm <- emmeans(charModel, ~ reg1 * timeSet)
+pairs(emm, by = c("reg1"), adjust = "holm")
+
+
+```
+
+## models for miss trials only ENCODING 
+
+```{r miss models}
+
+#CHARACTERISTIC PATH LENGTH HIT TRIALS ENCODING
+charModel <- lmer(Char ~  reg1 * timeSet + (1|realID), 
+                     data = filter(long_df, encRet == 'enc', hitMiss == 'miss'), 
+            control = lmerControl(optimizer = "bobyqa"))
+summary(charModel)
+Anova(charModel)
+
+emm <- emmeans(charModel, ~ reg1 * timeSet)
+pairs(emm, by = c("reg1"), adjust = "holm")
+
+#STRENGTH HIT TRIALS ENCODING
+charModel <- lmer(ST ~  reg1 * timeSet + (1|realID), 
+                     data = filter(long_df, encRet == 'enc', hitMiss == 'miss'), 
+            control = lmerControl(optimizer = "bobyqa"))
+summary(charModel)
+Anova(charModel)
+
+emm <- emmeans(charModel, ~ reg1 * timeSet)
+pairs(emm, by = c("reg1"), adjust = "holm")
+
+
+#SATURATION HIT TRIALS ENCODING
+charModel <- lmer(Saturation ~  reg1 * timeSet + (1|realID), 
+                     data = filter(long_df, encRet == 'enc', hitMiss == 'miss'), 
+            control = lmerControl(optimizer = "bobyqa"))
+summary(charModel)
+Anova(charModel)
+
+emm <- emmeans(charModel, ~ reg1 * timeSet)
+pairs(emm, by = c("reg1"), adjust = "holm")
+
+
+```
+
+
+## models for hit trials only RETRIEVAL 
+
+```{r hit models ret}
+
+#CHARACTERISTIC PATH LENGTH HIT TRIALS ENCODING
+charModel <- lmer(Char ~  reg1 * timeSet + (1|realID), 
+                     data = filter(long_df, encRet == 'ret', hitMiss == 'hit'), 
+            control = lmerControl(optimizer = "bobyqa"))
+summary(charModel)
+Anova(charModel)
+
+emm <- emmeans(charModel, ~ reg1 * timeSet)
+pairs(emm, by = c("reg1"), adjust = "holm")
+
+#STRENGTH HIT TRIALS ENCODING
+charModel <- lmer(ST ~  reg1 * timeSet + (1|realID), 
+                     data = filter(long_df, encRet == 'ret', hitMiss == 'hit'), 
+            control = lmerControl(optimizer = "bobyqa"))
+summary(charModel)
+Anova(charModel)
+
+emm <- emmeans(charModel, ~ reg1 * timeSet)
+pairs(emm, by = c("reg1"), adjust = "holm")
+
+
+#SATURATION HIT TRIALS ENCODING
+charModel <- lmer(Saturation ~  reg1 * timeSet + (1|realID), 
+                     data = filter(long_df, encRet == 'ret', hitMiss == 'hit'), 
+            control = lmerControl(optimizer = "bobyqa"))
+summary(charModel)
+Anova(charModel)
+
+emm <- emmeans(charModel, ~ reg1 * timeSet)
+pairs(emm, by = c("reg1"), adjust = "holm")
+
+
+```
+
+## models for miss trials only RETRIEVAL 
+
+```{r miss models ret}
+
+#CHARACTERISTIC PATH LENGTH HIT TRIALS ENCODING
+charModel <- lmer(Char ~  reg1 * timeSet + (1|realID), 
+                     data = filter(long_df, encRet == 'ret', hitMiss == 'miss'), 
+            control = lmerControl(optimizer = "bobyqa"))
+summary(charModel)
+Anova(charModel)
+
+emm <- emmeans(charModel, ~ reg1 * timeSet)
+pairs(emm, by = c("reg1"), adjust = "holm")
+
+#STRENGTH HIT TRIALS ENCODING
+charModel <- lmer(ST ~  reg1 * timeSet + (1|realID), 
+                     data = filter(long_df, encRet == 'ret', hitMiss == 'miss'), 
+            control = lmerControl(optimizer = "bobyqa"))
+summary(charModel)
+Anova(charModel)
+
+emm <- emmeans(charModel, ~ reg1 * timeSet)
+pairs(emm, by = c("reg1"), adjust = "holm")
+
+
+#SATURATION HIT TRIALS ENCODING
+charModel <- lmer(Saturation ~  reg1 * timeSet + (1|realID), 
+                     data = filter(long_df, encRet == 'ret', hitMiss == 'miss'), 
+            control = lmerControl(optimizer = "bobyqa"))
+summary(charModel)
+Anova(charModel)
+
+emm <- emmeans(charModel, ~ reg1 * timeSet)
+pairs(emm, by = c("reg1"), adjust = "holm")
+
+
+```
+
+
+## characteristic mean vector length retrieval 
+
+```{r char retrieve}
+reg_order <- c("hip", "mtl", "acc", "dlPFC", "pPFC")
+# Color data frame in R
+regColors <- data.frame(
+  parahip = rgb(214, 77, 97, maxColorValue = 255),       # dark pink
+  dlPFC = rgb(145, 162, 80, maxColorValue = 255),        # light forest green
+  iTemp = rgb(145, 162, 80, maxColorValue = 255),        # light forest green
+  lTemp = rgb(145, 162, 80, maxColorValue = 255),        # light forest green
+  polarPFC = rgb(51, 102, 153, maxColorValue = 255),     # lilac
+  visual = rgb(132, 125, 212, maxColorValue = 255),      # lilac
+  ACC = rgb(204, 153, 204, maxColorValue = 255),         # dark red
+  PCC = rgb(184, 78, 83, maxColorValue = 255),          # dark red
+  Hip = rgb(61, 187, 218, maxColorValue = 255)           # dusky blue
+)
+
+long_df$reg1 = factor(long_df$reg1, reg_order)
+
+
+#region by region? hip: 
+charModel <- lmer(Char ~  reg1 * timeSet * hitMiss + (1|realID) + (1|realID2), 
+                     data = filter(long_df, encRet == 'ret' ), 
+            control = lmerControl(optimizer = "bobyqa"))
+summary(charModel)
+Anova(charModel)
+
+charModel <- lmer(Char ~  reg1 * timeSet + (1|realID), 
+                     data = filter(long_df, encRet == 'ret', hitMiss == 'hit'), 
+            control = lmerControl(optimizer = "bobyqa"))
+summary(charModel)
+Anova(charModel)
+
+emm <- emmeans(charModel, ~ reg1 * timeSet)
+pairs(emm, by = c("reg1"), adjust = "holm")
+
+em_dat_all_adj <- emmeans(charModel, pairwise ~ reg1*timeSet , type="response", adjust = "holm")
+emm <- emmeans(glm_test_all_adj, ~ reg1*timeSet)
+em_dat_all_adj
+
+plot(em_dat_all_adj)
+em_dat_all_adj = as.data.frame(em_dat_all_adj)
+
+
+charModel <- lmer(Char ~  reg1 * timeSet + (1|realID), 
+                     data = filter(long_df, encRet == 'ret', hitMiss == 'miss'), 
+            control = lmerControl(optimizer = "bobyqa"))
+summary(charModel)
+Anova(charModel)
+
+emm <- emmeans(charModel, ~ reg1 * timeSet)
+pairs(emm, by = c("reg1"), adjust = "holm")
+
+
+
+long_df %>% filter(encRet == 'ret', hitMiss == 'hit') %>%
+  ggplot(aes( fill = timeSet, color = timeSet, y = Char, x = reg1)) + 
+    geom_boxplot(outlier.shape = NA, alpha = .75, 
+                 position = position_dodge(.85)) +
+    geom_jitter(show.legend = F, shape = 21, size = 4, alpha = .5,
+                position = position_jitterdodge(dodge.width = .85, 
+                                                jitter.width = .2)) + 
+    scale_fill_manual(values=c( "#E1C271", "#3BACDD"),
+                      labels=c(  'HFB', 'Image')) +  
+    scale_color_manual(values=c( "#E1C271", "#3BACDD"),
+                      labels=c(  'HFB', 'Image')) +  
+  theme_classic() +
+  ylim(c(0,50)) + 
+    theme(axis.line = element_line(color = 'black', linewidth = 3),
+          axis.ticks = element_line(colour = "black", linewidth = 2),
+          axis.ticks.length=unit(-.25, "cm"),
+          text = element_text(size = 20),
+          legend.position = 'none',
+          axis.text.x = element_text(margin = margin(t = 10)),
+          axis.text.y = element_text(margin = margin(r = 10))) 
+
+
+  
+long_df %>% filter(encRet == 'enc', hitMiss == 'miss') %>%
+  ggplot(aes( fill = timeSet, color = timeSet, y = Char, x = reg1)) + 
+    geom_boxplot(outlier.shape = NA, alpha = .75, 
+                 position = position_dodge(.85)) +
+    geom_jitter(show.legend = F, shape = 21, size = 4, alpha = .2,
+                position = position_jitterdodge(dodge.width = .85, 
+                                                jitter.width = .2)) + 
+    scale_fill_manual(values=c( "#E1C271", "#3BACDD"),
+                      labels=c(  'HFB', 'Image')) +  
+    scale_color_manual(values=c( "#E1C271", "#3BACDD"),
+                      labels=c(  'HFB', 'Image')) +  
+  theme_classic() +
+  ylim(c(0,50)) + 
+    theme(axis.line = element_line(color = 'black', linewidth = 3),
+          axis.ticks = element_line(colour = "black", linewidth = 2),
+          axis.ticks.length=unit(-.25, "cm"),
+          text = element_text(size = 20),
+          legend.position = 'none',
+          axis.text.x = element_text(margin = margin(t = 10)),
+          axis.text.y = element_text(margin = margin(r = 10)))  
+
+
+```
+
+## encoding strength mean vector length
+
+```{r strength encode}
+
+reg_order <- c("hip", "mtl", "acc", "dlPFC", "pPFC")
+# Color data frame in R
+regColors <- data.frame(
+  parahip = rgb(214, 77, 97, maxColorValue = 255),       # dark pink
+  dlPFC = rgb(145, 162, 80, maxColorValue = 255),        # light forest green
+  iTemp = rgb(145, 162, 80, maxColorValue = 255),        # light forest green
+  lTemp = rgb(145, 162, 80, maxColorValue = 255),        # light forest green
+  polarPFC = rgb(51, 102, 153, maxColorValue = 255),     # lilac
+  visual = rgb(132, 125, 212, maxColorValue = 255),      # lilac
+  ACC = rgb(204, 153, 204, maxColorValue = 255),         # dark red
+  PCC = rgb(184, 78, 83, maxColorValue = 255),          # dark red
+  Hip = rgb(61, 187, 218, maxColorValue = 255)           # dusky blue
+)
+
+long_df$reg1 = factor(long_df$reg1, reg_order)
+
+
+#region by region? hip: 
+charModel <- lmer(ST ~  reg1 * timeSet * hitMiss + (1|realID), 
+                     data = filter(long_df, encRet == 'enc'), 
+            control = lmerControl(optimizer = "bobyqa"))
+summary(charModel)
+Anova(charModel)
+
+charModel <- lmer(ST ~  reg1 * timeSet + (1|realID), 
+                     data = filter(long_df, encRet == 'enc', hitMiss == 'hit'), 
+            control = lmerControl(optimizer = "bobyqa"))
+summary(charModel)
+Anova(charModel)
+
+emmeans(charModel, pairwise ~ reg1 * timeSet , type="response", adjust = "holm")
+
+charModel <- lmer(ST ~  reg1 * timeSet + (1|realID), 
+                     data = filter(long_df, encRet == 'enc', hitMiss == 'miss'), 
+            control = lmerControl(optimizer = "bobyqa"))
+summary(charModel)
+Anova(charModel)
+
+emmeans(charModel, pairwise ~ reg1 * timeSet , type="response", adjust = "holm")
+
+
+
+
+long_df %>% filter(encRet == 'enc', hitMiss == 'hit') %>%
+  ggplot(aes( fill = timeSet, color = timeSet, y = ST, x = reg1)) + 
+    geom_boxplot(outlier.shape = NA, alpha = .75, 
+                 position = position_dodge(.85)) +
+    geom_jitter(show.legend = F, shape = 21, size = 4, 
+                position = position_jitterdodge(dodge.width = .85, 
+                                                jitter.width = .2)) + 
+    scale_fill_manual(values=c( "#E1C271", "#3BACDD"),
+                      labels=c(  'HFB', 'Image')) +  
+    scale_color_manual(values=c( "#E1C271", "#3BACDD"),
+                      labels=c(  'HFB', 'Image')) +  
+  theme_classic() +
+  ylim(c(0,.2)) + 
+    theme(axis.line = element_line(color = 'black', linewidth = 3),
+          axis.ticks = element_line(colour = "black", linewidth = 2),
+          axis.ticks.length=unit(-.25, "cm"),
+          text = element_text(size = 20),
+          legend.position = 'none',
+          axis.text.x = element_text(margin = margin(t = 10)),
+          axis.text.y = element_text(margin = margin(r = 10))) 
+
+
+  
+long_df %>% filter(encRet == 'enc', hitMiss == 'miss') %>%
+  ggplot(aes( fill = timeSet, color = timeSet, y = ST, x = reg1)) + 
+    geom_boxplot(outlier.shape = NA, alpha = .75, 
+                 position = position_dodge(.85)) +
+    geom_jitter(show.legend = F, shape = 21, size = 4, 
+                position = position_jitterdodge(dodge.width = .85, 
+                                                jitter.width = .2)) + 
+    scale_fill_manual(values=c( "#E1C271", "#3BACDD"),
+                      labels=c(  'HFB', 'Image')) +  
+    scale_color_manual(values=c( "#E1C271", "#3BACDD"),
+                      labels=c(  'HFB', 'Image')) +  
+  theme_classic() +
+  ylim(c(0,.2)) + 
+    theme(axis.line = element_line(color = 'black', linewidth = 3),
+          axis.ticks = element_line(colour = "black", linewidth = 2),
+          axis.ticks.length=unit(-.25, "cm"),
+          text = element_text(size = 20),
+          legend.position = 'none',
+          axis.text.x = element_text(margin = margin(t = 10)),
+          axis.text.y = element_text(margin = margin(r = 10))) 
+
+```
+## characteristic mean vector length retrieval 
+
+```{r char retrieve}
+reg_order <- c("hip", "mtl", "acc", "dlPFC", "pPFC")
+# Color data frame in R
+regColors <- data.frame(
+  parahip = rgb(214, 77, 97, maxColorValue = 255),       # dark pink
+  dlPFC = rgb(145, 162, 80, maxColorValue = 255),        # light forest green
+  iTemp = rgb(145, 162, 80, maxColorValue = 255),        # light forest green
+  lTemp = rgb(145, 162, 80, maxColorValue = 255),        # light forest green
+  polarPFC = rgb(51, 102, 153, maxColorValue = 255),     # lilac
+  visual = rgb(132, 125, 212, maxColorValue = 255),      # lilac
+  ACC = rgb(204, 153, 204, maxColorValue = 255),         # dark red
+  PCC = rgb(184, 78, 83, maxColorValue = 255),          # dark red
+  Hip = rgb(61, 187, 218, maxColorValue = 255)           # dusky blue
+)
+
+long_df$reg1 = factor(long_df$reg1, reg_order)
+
+
+#region by region? hip: 
+charModel <- lmer(Char ~  reg1 * timeSet * hitMiss + (1|realID), 
+                     data = filter(long_df, encRet == 'ret'), 
+            control = lmerControl(optimizer = "bobyqa"))
+summary(charModel)
+Anova(charModel)
+
+charModel <- lmer(Char ~  reg1 * timeSet + (1|realID), 
+                     data = filter(long_df, encRet == 'ret', hitMiss == 'hit'), 
+            control = lmerControl(optimizer = "bobyqa"))
+summary(charModel)
+Anova(charModel)
+
+emmeans(charModel, pairwise ~ reg1 * timeSet , type="response", adjust = "holm")
+
+charModel <- lmer(Char ~  reg1 * timeSet + (1|realID), 
+                     data = filter(long_df, encRet == 'ret', hitMiss == 'miss'), 
+            control = lmerControl(optimizer = "bobyqa"))
+summary(charModel)
+Anova(charModel)
+
+emmeans(charModel, pairwise ~ reg1 * timeSet , type="response", adjust = "holm")
+
+
+
+long_df %>% filter(encRet == 'ret', hitMiss == 'hit') %>%
+  ggplot(aes( fill = timeSet, color = timeSet, y = Char, x = reg1)) + 
+    geom_boxplot(outlier.shape = NA, alpha = .75, 
+                 position = position_dodge(.85)) +
+    geom_jitter(show.legend = F, shape = 21, size = 4, 
+                position = position_jitterdodge(dodge.width = .85, 
+                                                jitter.width = .2)) + 
+    scale_fill_manual(values=c( "#E1C271", "#3BACDD"),
+                      labels=c(  'HFB', 'Image')) +  
+    scale_color_manual(values=c( "#E1C271", "#3BACDD"),
+                      labels=c(  'HFB', 'Image')) +  
+  theme_classic() +
+  ylim(c(0,50)) + 
+    theme(axis.line = element_line(color = 'black', linewidth = 3),
+          axis.ticks = element_line(colour = "black", linewidth = 2),
+          axis.ticks.length=unit(-.25, "cm"),
+          text = element_text(size = 20),
+          legend.position = 'none',
+          axis.text.x = element_text(margin = margin(t = 10)),
+          axis.text.y = element_text(margin = margin(r = 10))) 
+
+
+  
+long_df %>% filter(encRet == 'ret', hitMiss == 'miss') %>%
+  ggplot(aes( fill = timeSet, color = timeSet, y = Char, x = reg1)) + 
+    geom_boxplot(outlier.shape = NA, alpha = .75, 
+                 position = position_dodge(.85)) +
+    geom_jitter(show.legend = F, shape = 21, size = 4, 
+                position = position_jitterdodge(dodge.width = .85, 
+                                                jitter.width = .2)) + 
+    scale_fill_manual(values=c( "#E1C271", "#3BACDD"),
+                      labels=c(  'HFB', 'Image')) +  
+    scale_color_manual(values=c( "#E1C271", "#3BACDD"),
+                      labels=c(  'HFB', 'Image')) +  
+  theme_classic() +
+  ylim(c(0,50)) + 
+    theme(axis.line = element_line(color = 'black', linewidth = 3),
+          axis.ticks = element_line(colour = "black", linewidth = 2),
+          axis.ticks.length=unit(-.25, "cm"),
+          text = element_text(size = 20),
+          legend.position = 'none',
+          axis.text.x = element_text(margin = margin(t = 10)),
+          axis.text.y = element_text(margin = margin(r = 10))) 
+
+
+```
+
+
+

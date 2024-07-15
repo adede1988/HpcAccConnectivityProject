@@ -239,11 +239,50 @@ ages = allResENC(firstidx, 21);
 sexes = allResENC(firstidx, 22); 
 sum(cellfun(@(x) strcmp(x, 'M'), sexes))
 
-regSums = zeros(9,0); 
+%sub X stats
+regSums = table; 
+regSums.subID = repmat("askj", 300,1); 
+regSums.sex = repmat("F", 300,1); 
+regSums.age = zeros(300,1); 
+regSums.memAcc = zeros(300,1); 
+regSums.memD = zeros(300,1); 
+regSums.reg = repmat("hip", 300, 1); 
+regSums.encHIT = zeros(300,1);
+regSums.encMISS = zeros(300,1);
+regSums.retHIT = zeros(300,1);
+regSums.retMISS = zeros(300,1); 
+
+
+ai = 1; 
 for reg = 1:length(regions)
-    regSums(reg) = ...
-        sum(cellfun(@(x) strcmp(x, regions{reg}), allResENC(:, 5))); 
+    tmp = allResENC(cellfun(@(x) strcmp(regions{reg}, x), allResENC(:,5)),:);
+    uniSub = unique(tmp(:,7)); 
+    tmp = tmp(cellfun(@(y) find(cellfun(@(x) strcmp(x,y), tmp(:,7)),1),...
+        uniSub),:);
+
+    tmp2 = allResENC(cellfun(@(x) strcmp(regions{reg}, x), allResRET(:,5)),:);
+    uniSub = unique(tmp2(:,7)); 
+    tmp2 = tmp2(cellfun(@(y) find(cellfun(@(x) strcmp(x,y), tmp2(:,7)),1),...
+        uniSub),:);
+
+    N = size(tmp,1); 
+    regSums.subID(ai:ai+N-1) = {tmp{:,7}}; 
+    regSums.sex(ai:ai+N-1) =  {tmp{:,22}};
+    regSums.age(ai:ai+N-1) = [tmp{:,21}];
+    regSums.memAcc(ai:ai+N-1) = [tmp{:,20}];
+    regSums.memD(ai:ai+N-1) = [tmp{:,19}];
+    regSums.reg(ai:ai+N-1) = {tmp{1, 5}};
+    regSums.encHIT(ai:ai+N-1) = cellfun(@(x) size(x,2), tmp(:,1));
+    regSums.encMISS(ai:ai+N-1) = cellfun(@(x) size(x,2), tmp(:,2));
+    regSums.retHIT(ai:ai+N-1) = cellfun(@(x) size(x,2), tmp2(:,1));
+    regSums.retMISS(ai:ai+N-1) = cellfun(@(x) size(x,2), tmp2(:,2));
+    ai = ai+N; 
+    
 end
+regSums(ai:end,:) = []; 
+writetable(regSums, ...
+    ['R:\MSS\Johnson_Lab\dtf8829\GitHub\' ...
+    'HpcAccConnectivityProject\demographics.csv'])
 
 
 %% making a .csv for export to R for overall latency

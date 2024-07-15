@@ -25,6 +25,7 @@ ft_defaults;
 regions = {'acc', 'dlPFC', 'hip', ...
     'lTemp', 'iTemp', 'mtl', 'pcc', 'pPFC', 'vis'}; 
 
+allSig = readtable([codePre 'HpcAccConnectivityProject/demographics.csv']);
 
 
 
@@ -244,11 +245,13 @@ singleFig1Dat = fig1Dat(stidx);
 fig1Dat = fig1Dat(~stidx); 
 fig1Dat([fig1Dat.isdir]) = []; 
 
+
 %% basic image locked HFB time courses
 
 
 %panel 1A
-parfor ii = 1:length(fig1Dat)
+for ii = 1:length(fig1Dat)
+    ii
     panelDat = load([fig1Dat(ii).folder '/' fig1Dat(ii).name]).outDat; 
 
     %quick cleaning for plotting purposes only, all data were used in stats
@@ -260,7 +263,10 @@ parfor ii = 1:length(fig1Dat)
 %     end
     panelDat.hitVals(isnan(panelDat.hitVals)) = 0; 
     panelDat.missVals(isnan(panelDat.missVals)) = 0; 
-
+    subIDs = cellfun(@(x) split(x, '_'), panelDat.realID, ...
+                         'UniformOutput', false); 
+    subIDs = cellfun(@(x) x{1}, subIDs, 'uniformoutput', false); 
+    uniIDs = unique(subIDs); 
   
   
     figure('visible', false, 'position', [0,0,600,600])
@@ -268,14 +274,31 @@ parfor ii = 1:length(fig1Dat)
     x(panelDat.p>.05) = []; 
     if ~isempty(x) %check if we have any sig time points
     breakVals = [0, find(diff(x)> 25), length(x)];
+    
     for jj = 1:length(breakVals)-1
+        varName = ['HFB_' panelDat.reg '_' panelDat.phase num2str(jj)];
+        allSig.(varName) = nan(length(allSig.subID),1); 
         tmpX = x(breakVals(jj)+1:breakVals(jj+1));
         tmpY = ones(length(tmpX),1) * 10000; 
         tmpX = [tmpX, flip(tmpX)]; 
         tmpY = [tmpY', -tmpY'];
         fill(tmpX, tmpY, sigCol, 'facealpha', sigAlpha, 'edgealpha', 0)
         hold on 
-    
+        %store raw differences for significant time periods: 
+        chanMeans = mean(panelDat.hitVals(:,...
+                            breakVals(jj)+1:breakVals(jj+1)) ...
+                            - ...
+                         panelDat.missVals(:,...
+                            breakVals(jj)+1:breakVals(jj+1)), 2);
+        for sub = 1:length(uniIDs)
+            %store subject means into allSig for later correlation to
+            %memory
+            idx = find(strcmp(allSig.reg, panelDat.reg) & ...
+                       strcmp(allSig.subID, uniIDs{sub}));
+             allSig.(varName)(idx) = ...
+                 mean(chanMeans(ismember(subIDs, uniIDs{sub})));
+
+        end
     
     end
     else
@@ -649,7 +672,7 @@ fig2Dat = dir([figDat 'Figure2']);
 fig2Dat(1:2) = []; 
 
 
-%% basic image locked HFB time courses LOCKED TO HFB PEAK! 
+%% basic HFB time courses LOCKED TO HFB PEAK! 
 
 
 test = cellfun(@(x) length(x)>0, ...
@@ -1088,7 +1111,7 @@ TF_files_HFB = TF_files(test);
 
 allSpect = struct; 
 
-parfor ii = 1:length(TF_files_HFB)
+for ii = 1:length(TF_files_HFB)
     try
     panelDat = load([TF_files_HFB(ii).folder '/' ...
         TF_files_HFB(ii).name]).outDat;
@@ -1097,43 +1120,38 @@ parfor ii = 1:length(TF_files_HFB)
     regi = find(cellfun(@(x) strcmp(x, panelDat.reg), regions)); 
     phasei = find(cellfun(@(x) strcmp(x, panelDat.phase), phaseVals)); 
 
+    figure('visible', false, 'position', [0,0,600,600])
 
-  
-
-    fig = figure('visible', false, 'position', [0,0,600,600])
-    
-%     x = 1:401;
-    y = mean(HFBpeaksHITS,2);
-    plot( y, 'color', hitCol, 'linewidth', 4)
-    hold on
-%     se = std(BroadBandPeaksHITS,[],2) ./ sqrt(size(BroadBandPeaksHITS,2)); 
-%     y = [y + se, flip(y) - flip(se)]; 
-%     x = [[1:100], flip([1:100])]; 
-%     hold on 
-%     fill(x, y, hitCol, 'facealpha', errAlpha, 'edgealpha', 0)
-
-
-    y = mean(HFBpeaksMISSES,2);  
-    plot( y, 'color', missCol, 'linewidth', 4)
-%     se = std(BroadBandPeaksMISSES,[],2) ./ sqrt(size(BroadBandPeaksMISSES,2));  
-%     y = [y + se, flip(y) - flip(se)]; 
-%     x = [[1:100], flip([1:100])]; 
-%     hold on 
-%     fill(x, y, missCol, 'facealpha', errAlpha, 'edgealpha', 0)
-
-    xticks([1:50:401])
-    xticklabels([-200:50:200])
-    xlim([1,401])
+    imagesc([-500:25:500], [], squeeze(mean(panelDat.hits_hfb,1))')
+    yticks([10:10:100])
+    yticklabels(round(panelDat.frex([10:10:100])))
+    set(gca, 'ydir', 'normal')
     set(gcf,'color','w');
     box off;
     ax=gca;ax.LineWidth=4;
+    caxis([0, 10])
 
-    saveas(fig, [figDat 'pubFigs/' 'narrowBandHFBpeak_' panelDat.reg '_' panelDat.phase  '.jpg'])
+%     export_fig([figDat 'pubFigs/' 'SUP2_' panelDat.reg '_HIT_' panelDat.phase  '.jpg'], '-r300')
 
-    close(fig)
+    figure('visible', false, 'position', [0,0,600,600])
 
-%     export_fig([figDat 'pubFigs/' 'broadBandHFBpeak_' panelDat.reg '_' panelDat.phase  '.jpg'], '-r300')
+    imagesc([-500:25:500], [], squeeze(mean(panelDat.misses_hfb,1))')
+    yticks([10:10:100])
+    yticklabels(round(panelDat.frex([10:10:100])))
+    set(gca, 'ydir', 'normal')
+    set(gcf,'color','w');
+    box off;
+    ax=gca;ax.LineWidth=4;
+    caxis([0, 10])
 
+%     export_fig([figDat 'pubFigs/' 'SUP2_' panelDat.reg '_MISS_' panelDat.phase  '.jpg'], '-r300')
+
+
+    subIDs = cellfun(@(x) split(x, '_'), panelDat.realID, ...
+                         'UniformOutput', false); 
+    subIDs = cellfun(@(x) x{1}, subIDs, 'uniformoutput', false); 
+    uniIDs = unique(subIDs); 
+  
 
 
     figure('visible', false, 'position', [0,0,600,600])
@@ -1143,13 +1161,29 @@ parfor ii = 1:length(TF_files_HFB)
     if ~isempty(x) %check if we have any sig time points
     breakVals = [0, find(diff(x)> 25), length(x)];
     for jj = 1:length(breakVals)-1
+        varName = ['peakPow_' panelDat.reg '_' panelDat.phase num2str(jj)];
+        allSig.(varName) = nan(length(allSig.subID),1); 
         tmpX = x(breakVals(jj)+1:breakVals(jj+1));
         tmpY = ones(length(tmpX),1) * 10000; 
         tmpX = [tmpX, flip(tmpX)]; 
         tmpY = [tmpY', -tmpY'];
         fill(tmpX, tmpY, sigCol, 'facealpha', sigAlpha, 'edgealpha', 0)
         hold on 
-%         yline(0, 'color', 'k', 'linewidth', linWid)
+        %store raw differences for significant time periods: 
+        chanMeans = mean(panelDat.hits_hfb(:,21,...
+                            breakVals(jj)+1:breakVals(jj+1)) ...
+                            - ...
+                         panelDat.misses_hfb(:,21,...
+                            breakVals(jj)+1:breakVals(jj+1)), 2);
+        for sub = 1:length(uniIDs)
+            %store subject means into allSig for later correlation to
+            %memory
+            idx = find(strcmp(allSig.reg, panelDat.reg) & ...
+                       strcmp(allSig.subID, uniIDs{sub}));
+             allSig.(varName)(idx) = ...
+                 mean(chanMeans(ismember(subIDs, uniIDs{sub})));
+
+        end
     
     end
     else
@@ -1162,9 +1196,7 @@ parfor ii = 1:length(TF_files_HFB)
     hitSpect = squeeze(panelDat.hits_hfb(:,21,:)); 
 
 
-%     if regi == 9 %outliers in the hippocampus retrieval data, remove for plot
-%         hitSpect(8:10,:) = []; 
-%     end
+
     
     y = mean(hitSpect); 
     plot( y, 'color', hitCol, 'linewidth', 4)
@@ -1179,9 +1211,7 @@ parfor ii = 1:length(TF_files_HFB)
 
     missSpect = squeeze(panelDat.misses_hfb(:,21,:)); 
 
-%      if regi == 9 %outliers in the hippocampus retrieval data, remove for plot
-%         missSpect(8:10,:) = []; 
-%     end
+
 
 
     y = mean(missSpect);  
@@ -1201,7 +1231,7 @@ parfor ii = 1:length(TF_files_HFB)
     set(gcf,'color','w');
     box off;
     ax=gca;ax.LineWidth=4;
-    export_fig([figDat 'pubFigs/' 'Fig2_' panelDat.reg '_' panelDat.phase  '.jpg'], '-r300')
+%     export_fig([figDat 'pubFigs/' 'Fig2_' panelDat.reg '_' panelDat.phase  '.jpg'], '-r300')
 
 
 
@@ -1262,7 +1292,7 @@ ITPCindex = struct;
 
 
 
-parfor ii = 1:length(TF_files_HFB)
+for ii = 1:length(TF_files_HFB)
     try
     panelDat = load([TF_files_HFB(ii).folder '/' ...
         TF_files_HFB(ii).name]).outDat;
@@ -1270,7 +1300,12 @@ parfor ii = 1:length(TF_files_HFB)
 
     regi = find(cellfun(@(x) strcmp(x, panelDat.reg), regions)); 
     phasei = find(cellfun(@(x) strcmp(x, panelDat.phase), phaseVals)); 
-
+    
+    subIDs = cellfun(@(x) split(x, '_'), panelDat.realID, ...
+                         'UniformOutput', false); 
+    subIDs = cellfun(@(x) x{1}, subIDs, 'uniformoutput', false); 
+    uniIDs = unique(subIDs); 
+    
     figure('visible', false, 'position', [0,0,600,600])
     x = 1:length(panelDat.frex); 
     yline(0, 'color', 'k', 'linewidth', linWid)
@@ -1288,7 +1323,23 @@ parfor ii = 1:length(TF_files_HFB)
         hold on 
         xline(12, 'color', 'k', 'linewidth',2, 'linestyle', '--')
         xline(33, 'color', 'k', 'linewidth',2, 'linestyle', '--')
-    
+        varName = ['peakITPC_' panelDat.reg '_' panelDat.phase num2str(jj)];
+        allSig.(varName) = nan(length(allSig.subID),1);
+        %store raw differences for significant time periods: 
+        chanMeans = mean(panelDat.hits_hfb(:,21,...
+                            breakVals(jj)+1:breakVals(jj+1)) ...
+                            - ...
+                         panelDat.misses_hfb(:,21,...
+                            breakVals(jj)+1:breakVals(jj+1)), 2);
+        for sub = 1:length(uniIDs)
+            %store subject means into allSig for later correlation to
+            %memory
+            idx = find(strcmp(allSig.reg, panelDat.reg) & ...
+                       strcmp(allSig.subID, uniIDs{sub}));
+             allSig.(varName)(idx) = ...
+                 mean(chanMeans(ismember(subIDs, uniIDs{sub})));
+
+        end
     end
     else
         hold on 
@@ -1440,11 +1491,84 @@ TF_files_image = TF_files(test);
 %differences are in main text Figure 3
 
 
-parfor ii = 1:length(TF_files_image)
-   
+for ii = 1:length(TF_files_image)
+   ii
     panelDat = load([TF_files_image(ii).folder '/' ...
         TF_files_image(ii).name]).outDat;
  
+    subIDs = cellfun(@(x) split(x, '_'), panelDat.realID, ...
+                         'UniformOutput', false); 
+    subIDs = cellfun(@(x) x{1}, subIDs, 'uniformoutput', false); 
+    uniIDs = unique(subIDs);
+
+    if isfield(panelDat.clusterinfo, 'pos_clusters')
+        pos_clusters = panelDat.clusterinfo.pos_clusters; 
+        for clu = 1:length(pos_clusters)
+            if ~isempty(pos_clusters(clu).p)
+            idx = pos_clusters(clu).inds; 
+            L = sum(idx, 'all');
+            n = size(panelDat.hits_image,1);
+            chanMeans = []; 
+            for chan = 1:n
+                slice = squeeze(panelDat.hits_image(chan,:,:) - ...
+                    panelDat.misses_image(chan,:,:));
+                chanMeans = [chanMeans, mean(slice(idx))]; 
+            end
+
+            varName = ['imagePow_' panelDat.reg '_' ...
+                panelDat.phase num2str(clu)];
+            allSig.(varName) = nan(length(allSig.subID),1);
+       
+        for sub = 1:length(uniIDs)
+            %store subject means into allSig for later correlation to
+            %memory
+            idx = find(strcmp(allSig.reg, panelDat.reg) & ...
+                       strcmp(allSig.subID, uniIDs{sub}));
+             allSig.(varName)(idx) = ...
+                 mean(chanMeans(ismember(subIDs, uniIDs{sub})));
+
+        end
+            end
+        end
+
+
+    end
+
+    if isfield(panelDat.clusterinfo, 'neg_clusters')
+        neg_clusters = panelDat.clusterinfo.neg_clusters; 
+        for clu = 1:length(neg_clusters)
+            if ~isempty(neg_clusters(clu).p)
+            idx = neg_clusters(clu).inds; 
+            L = sum(idx, 'all');
+            n = size(panelDat.hits_image,1);
+
+            chanMeans = []; 
+            for chan = 1:n
+                slice = squeeze(panelDat.hits_image(chan,:,:) - ...
+                    panelDat.misses_image(chan,:,:));
+                chanMeans = [chanMeans, mean(slice(idx))]; 
+            end
+
+            varName = ['imagePow_neg_' panelDat.reg '_' ...
+                panelDat.phase num2str(clu)];
+            allSig.(varName) = nan(length(allSig.subID),1);
+        %store raw differences for significant time periods: 
+        for sub = 1:length(uniIDs)
+            %store subject means into allSig for later correlation to
+            %memory
+            idx = find(strcmp(allSig.reg, panelDat.reg) & ...
+                       strcmp(allSig.subID, uniIDs{sub}));
+             allSig.(varName)(idx) = ...
+                 mean(chanMeans(ismember(subIDs, uniIDs{sub})));
+
+        end
+            end
+        end
+
+
+    end
+
+
 
     regi = find(cellfun(@(x) strcmp(x, panelDat.reg), regions)); 
     phasei = find(cellfun(@(x) strcmp(x, panelDat.phase), phaseVals)); 
@@ -1536,11 +1660,94 @@ TF_files_image = TF_files(test);
 %differences are in main text Figure 3
 
 
-parfor ii = 1:length(TF_files_image)
+for ii = 1:length(TF_files_image)
    
     panelDat = load([TF_files_image(ii).folder '/' ...
         TF_files_image(ii).name]).outDat;
  
+    %update allSig
+    subIDs = cellfun(@(x) split(x, '_'), panelDat.realID, ...
+                         'UniformOutput', false); 
+    subIDs = cellfun(@(x) x{1}, subIDs, 'uniformoutput', false); 
+    uniIDs = unique(subIDs);
+
+    if isfield(panelDat.clusterinfo, 'pos_clusters')
+        pos_clusters = panelDat.clusterinfo.pos_clusters; 
+        for clu = 1:length(pos_clusters)
+            if ~isempty(pos_clusters(clu).p)
+            idx = pos_clusters(clu).inds; 
+            L = sum(idx, 'all');
+            n = size(panelDat.hits_image,1);
+
+            chanMeans = []; 
+            for chan = 1:n
+                slice = squeeze(panelDat.hits_image(chan,:,:) - ...
+                    panelDat.misses_image(chan,:,:));
+                chanMeans = [chanMeans, mean(slice(idx))]; 
+            end
+
+
+           
+            varName = ['imageITPC_' panelDat.reg '_' ...
+                panelDat.phase num2str(clu)];
+            allSig.(varName) = nan(length(allSig.subID),1);
+        %store raw differences for significant time periods: 
+        
+        for sub = 1:length(uniIDs)
+            %store subject means into allSig for later correlation to
+            %memory
+            idx = find(strcmp(allSig.reg, panelDat.reg) & ...
+                       strcmp(allSig.subID, uniIDs{sub}));
+             allSig.(varName)(idx) = ...
+                 mean(chanMeans(ismember(subIDs, uniIDs{sub})));
+
+        end
+            end
+        end
+
+
+    end
+
+    if isfield(panelDat.clusterinfo, 'neg_clusters')
+        neg_clusters = panelDat.clusterinfo.neg_clusters; 
+        for clu = 1:length(neg_clusters)
+            if ~isempty(neg_clusters(clu).p)
+            idx = neg_clusters(clu).inds; 
+            L = sum(idx, 'all');
+            n = size(panelDat.hits_image,1);
+
+            chanMeans = []; 
+            for chan = 1:n
+                slice = squeeze(panelDat.hits_image(chan,:,:) - ...
+                    panelDat.misses_image(chan,:,:));
+                chanMeans = [chanMeans, mean(slice(idx))]; 
+            end
+
+          
+            varName = ['imageITPC_neg_' panelDat.reg '_' ...
+                panelDat.phase num2str(clu)];
+            allSig.(varName) = nan(length(allSig.subID),1);
+        %store raw differences for significant time periods: 
+        
+        for sub = 1:length(uniIDs)
+            %store subject means into allSig for later correlation to
+            %memory
+            idx = find(strcmp(allSig.reg, panelDat.reg) & ...
+                       strcmp(allSig.subID, uniIDs{sub}));
+             allSig.(varName)(idx) = ...
+                 mean(chanMeans(ismember(subIDs, uniIDs{sub})));
+
+        end
+            end
+        end
+
+
+    end
+
+    % end add allSig
+
+
+
     [~, timMax] = max(abs(mean(panelDat.hits_image,[1,3])));
     [~, timMax2] = max(abs(mean(panelDat.misses_image,[1,3])));
     ITPCindex(ii).IMGhit = panelDat.hits_image(:,timMax,ITPCindex(ii).HFBfi_hit);
@@ -1752,7 +1959,60 @@ allConnections = zeros(9,9,139, 20, 4, 2);
 allConnections2 = zeros(9,9,41,20,4,2); 
 for ii = 1:length(fig3Dat)
     curDat = load([fig3Dat(ii).folder '/' fig3Dat(ii).name]).outDat; 
+    ii
+     %update allSig
     
+    subIDs = curDat.subVals; 
+    uniIDs = unique(subIDs);
+    varCodes = {'enc_image', 'ret_image', 'enc_HFB', 'ret_HFB'};
+    direction = {'pos', 'neg'}; 
+    for d = 1:2
+    for cc = 1:4
+    %do encoding image locked
+    if isfield(curDat.([varCodes{cc} '_clust']), [direction{d} '_clusters'])
+        clust = curDat.([varCodes{cc} '_clust']).([direction{d} '_clusters']); 
+        clust(:,[clust.p]>.05) = [];
+        for clu = 1:length(clust)
+            if ~isempty(clust(clu).p)
+            idx = clust(clu).inds; 
+            L = sum(idx, 'all');
+            n = size(curDat.([varCodes{cc} '_hitVals']),3);
+
+            chanMeans = []; 
+            for chan = 1:n
+                slice = squeeze(curDat.([varCodes{cc} '_hitVals'])(:,:,chan) - ...
+                    curDat.([varCodes{cc} '_missVals'])(:,:,chan));
+                chanMeans = [chanMeans, mean(slice(idx))]; 
+            end
+
+         
+            varName = ['ppc_' varCodes{cc} '_' curDat.reg1 '_' ...
+                curDat.reg2 '_' num2str(clu)];
+            allSig.(varName) = nan(length(allSig.subID),1);
+        %store raw differences for significant time periods: 
+        
+        for sub = 1:length(uniIDs)
+            %store subject means into allSig for later correlation to
+            %memory
+            idx = find((strcmp(allSig.reg, curDat.reg1) & ...
+                       strcmp(allSig.subID, uniIDs{sub})) |...
+                       (strcmp(allSig.reg, curDat.reg2) & ...
+                       strcmp(allSig.subID, uniIDs{sub})));
+             allSig.(varName)(idx) = ...
+                 mean(chanMeans(ismember(subIDs, uniIDs{sub})));
+
+        end
+            end
+        end
+
+
+    end
+
+    end
+    end
+    %end update allSig
+
+
     tim = curDat.enc_image_tim; 
     reg1 = find(cellfun(@(x) strcmp(x, curDat.reg1), regions)); 
     reg2 = find(cellfun(@(x) strcmp(x, curDat.reg2), regions)); 
@@ -2041,6 +2301,9 @@ for ii = 1:length(fig3Dat)
 
 end
 
+writetable(allSig, ...
+    ['R:\MSS\Johnson_Lab\dtf8829\GitHub\' ...
+    'HpcAccConnectivityProject\allSig.csv'])
 
 %% which frequencies have the most connectivity? and when? 
 
