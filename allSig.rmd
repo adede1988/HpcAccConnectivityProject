@@ -15,15 +15,6 @@ knitr::opts_chunk$set(message = FALSE, warning = FALSE)
 
 # load packages
 library(tidyverse)
-library(RColorBrewer)
-library(hrbrthemes)
-library(lme4)
-# library(lmerOut)
-library(lmerTest)
-library(car)
-library(ggeffects)
-library(emmeans)
-library(effects)
 
 # set contrasts
 options(contrasts=c("contr.Sum","contr.Helmert"))
@@ -36,7 +27,7 @@ options(decorate.contr.Sum="",decorate.contrasts=c("[","]"))
 ```{r load data}
 
 # load in main data frame
-df <- read.csv("R:\\MSS\\Johnson_Lab\\dtf8829\\GitHub\\HpcAccConnectivityProject\\allSig.csv", header = T)
+df <- read.csv("G:\\My Drive\\GitHub\\HpcAccConnectivityProject\\allSig.csv", header = T)
 
 
 ```
@@ -53,43 +44,423 @@ longDF <- df %>% pivot_longer(cols = -all_of(c('subID', 'sex', 'age', 'memAcc',
                               values_to = 'stat'
                               ) %>%
           filter(!is.nan(stat))
+longDF$ogName = paste0(longDF$type, longDF$regionphase)
 
 longDF1 <- filter(longDF, type == 'ppc')
-longDF2 <- filter(longDF, type != 'ppc')
-longDF1$HFB = grepl('HFB', longDF1$regionphase)
-longDF2$HFB = grepl('peak', longDF2$type)
+peakPow <- filter(longDF, type == 'peakPow')
+peakITPC <- filter(longDF, type == 'peakITPC')
+imagePow <- filter(longDF, type == 'imagePow')
+imageITPC <- filter(longDF, type == 'imageITPC')
+HFB <- filter(longDF, type == 'HFB')
 
-longDF <- rbind(longDF1, longDF2)
+#extract all information from variable names for connectivity
+tmp = strsplit(longDF1$regionphase, '_')
+tmp <- do.call(rbind, lapply(tmp, function(x) data.frame(
+  phase = x[3],
+  timeSet = x[4],
+  reg1 = x[5],
+  reg2 = x[6]
+)))
+longDF1 <- cbind(longDF1, tmp)
+longDF1$reg2[longDF1$reg != longDF1$reg1] = longDF1$reg1[longDF1$reg != longDF1$reg1]
+longDF1$reg1[longDF1$reg1 == longDF1$reg2] = longDF1$reg[longDF1$reg1 == longDF1$reg2]
+
+#extract all information from variable names for peak Pow
+tmp = strsplit(peakPow$regionphase, '_')
+peakPow$type = 'pow'
+tmp <- do.call(rbind, lapply(tmp, function(x) data.frame(
+  phase = substr(x[3], 1, 3),
+  timeSet = 'HFB',
+  reg1 = x[2],
+  reg2 = NA
+)))
+peakPow <- cbind(peakPow, tmp)
+
+#extract all information from variable names for peak ITPC
+tmp = strsplit(peakITPC$regionphase, '_')
+peakITPC$type = 'ITPC'
+tmp <- do.call(rbind, lapply(tmp, function(x) data.frame(
+  phase = substr(x[3], 1, 3),
+  timeSet = 'HFB',
+  reg1 = x[2],
+  reg2 = NA
+)))
+peakITPC <- cbind(peakITPC, tmp)
+
+
+#extract all information from variable names for image Pow
+tmp = strsplit(imagePow$regionphase, '_')
+imagePow$type = 'pow'
+tmp <- do.call(rbind, lapply(tmp, function(x) {
+  if (x[2] == 'neg') {
+    phase <- substr(x[4], 1, 3)
+    reg1 <- x[3]
+  } else {
+    phase <- substr(x[3], 1, 3)
+    reg1 <- x[2]
+  }
+  
+  timeSet <- 'image'
+  reg2 <- NA
+  
+  data.frame(
+    phase = phase,
+    timeSet = timeSet,
+    reg1 = reg1,
+    reg2 = reg2
+  )
+}))
+imagePow <- cbind(imagePow, tmp)
+
+#extract all information from variable names for image ITPC
+tmp = strsplit(imageITPC$regionphase, '_')
+imageITPC$type = 'ITPC'
+tmp <- do.call(rbind, lapply(tmp, function(x) {
+  if (x[2] == 'neg') {
+    phase <- substr(x[4], 1, 3)
+    reg1 <- x[3]
+  } else {
+    phase <- substr(x[3], 1, 3)
+    reg1 <- x[2]
+  }
+  
+  timeSet <- 'image'
+  reg2 <- NA
+  
+  data.frame(
+    phase = phase,
+    timeSet = timeSet,
+    reg1 = reg1,
+    reg2 = reg2
+  )
+}))
+imageITPC <- cbind(imageITPC, tmp)
+
+#extract all information from variable names for HFB amplitude
+tmp = strsplit(HFB$regionphase, '_')
+HFB$type = 'HFB'
+tmp <- do.call(rbind, lapply(tmp, function(x) data.frame(
+  phase = substr(x[3], 1, 3),
+  timeSet = 'image',
+  reg1 = x[2],
+  reg2 = NA
+)))
+HFB <- cbind(HFB, tmp)
+
+longDF1 <- longDF1 %>% filter(reg2 == "mtl" | reg2 == "hip" | reg2 == "acc" | 
+                          reg2 == "dlPFC" | reg2 == "pPFC")
+
+longDF <- rbind(longDF1, peakPow, peakITPC, imagePow, imageITPC, HFB)
 
 
 longDF <- longDF %>% 
   filter(reg == "mtl" | reg == "hip" | reg == "acc" | 
          reg == "dlPFC" | reg == "pPFC")
 
+rm(HFB, imageITPC, imagePow, longDF1, peakITPC, peakPow, tmp)
 
-test <- longDF %>% group_by(type, regionphase, HFB) %>%
+
+```
+## do correlations and plot some histograms 
+```{r correlate and hists}
+
+#calculate correlations between physiology stats and memory performance
+corTest <- longDF  %>% group_by(type, phase, timeSet, reg1, reg2, regionphase, ogName) %>%
   summarize(corVal = cor(memAcc, stat), 
+            corP = cor.test(memAcc, stat)[[3]],
             count = n()) 
-test = test[test$count>8,]
 
 
-df_hist <- test %>%
-  group_by(HFB) %>%
-  mutate(bin = cut(corVal, breaks = seq(-1,1,.2))) %>%  # You can adjust the number of breaks
-  count(HFB, bin) %>%
-  group_by(HFB) %>%
-  mutate(proportion = n / sum(n))
 
-# Plot the histogram with proportions
-ggplot(df_hist, aes(x = bin, y = proportion, fill = HFB)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  scale_y_continuous(labels = scales::percent_format()) +
-  labs(y = "Proportion", x = "Value", title = "Histogram Scaled to Within-Group Proportion") +
-  theme_minimal() +
-  facet_wrap(~ group, scales = "free_x")
+```
+## correlation histograms broken down by timeSet
+```{r timeSet}
+
+#plot histogram by timeSet
+corTest %>% filter(type != 'HFB') %>% ggplot(aes(x = corVal, fill = type, color = type)) + 
+  geom_histogram(breaks = seq(-1,1,.2)) + facet_grid(.~timeSet) + 
+  geom_vline(xintercept = 0)
+
+# Color data frame in R
+regColors <- data.frame(
+  parahip = rgb(214, 77, 97, maxColorValue = 255),       # dark pink
+  dlPFC = rgb(145, 162, 80, maxColorValue = 255),        # light forest green
+  iTemp = rgb(145, 162, 80, maxColorValue = 255),        # light forest green
+  lTemp = rgb(145, 162, 80, maxColorValue = 255),        # light forest green
+  polarPFC = rgb(51, 102, 153, maxColorValue = 255),     # lilac
+  visual = rgb(132, 125, 212, maxColorValue = 255),      # lilac
+  ACC = rgb(204, 153, 204, maxColorValue = 255),         # dark red
+  PCC = rgb(184, 78, 83, maxColorValue = 255),          # dark red
+  Hip = rgb(61, 187, 218, maxColorValue = 255)           # dusky blue
+)
+
+hitCol = rgb(88, 113, 206, maxColorValue = 255) 
+missCol = rgb(240, 172, 99, maxColorValue = 255)
+
+hmCols = c(hitCol, missCol)
+
+# re-order regions
+reg_order <- c("hip", "mtl", "acc", "dlPFC", "pPFC")
+reg_color <- c("Hip", "parahip", "ACC", "dlPFC", "polarPFC")
+
+timeSetVals <- c('HFB', 'image')
+for(rr in 1:2){
+ 
+  tmpDat <- corTest %>% filter(timeSet == timeSetVals[rr], type != 'HFB')
+    
+  outPlot <- ggplot(tmpDat, aes(x=corVal, fill = type, color = type)) + 
+                  geom_histogram(breaks = seq(-1,1,.25)) +
+                  ylab("effect Count") +
+                  ylim(c(0,25)) + 
+                  geom_vline(xintercept = 0, linewidth = 2, linetype = 'dashed')+
+                  xlab("correlation (r)") +
+                  theme_classic() +
+                  theme(legend.position="none",
+                        panel.border = element_blank(),
+                        panel.grid.major = element_blank(),
+                        panel.grid.minor = element_blank(),
+                        axis.line = element_blank(),
+                        axis.ticks.length = unit(-0.4, "cm"),
+                        axis.line.x = element_line(linewidth = 2),  
+                        axis.line.y = element_line(linewidth = 2),
+                        axis.ticks = element_line(linewidth = 2),
+                        axis.text.y = element_text(size = 12, face = "bold", 
+                                               margin = margin(r = 10)),
+                        plot.margin = margin(l = 30)  
+                  
+                  )
+    
+  png(paste( "R:\\MSS\\Johnson_Lab\\dtf8829\\publicationFigureData\\pubFigs\\" ,
+                'fig5','_corHist_',timeSetVals[rr], '.png', 
+                sep = ''),         # File name
+      width=600, height=600)
+  print(outPlot)
+  dev.off()
+  
+  
+  
+}
+#dif in large v. small effects 
+timeSetSum <- corTest %>% filter(type != 'HFB') %>% group_by(timeSet) %>% summarize(above = sum(abs(corVal)>.2), 
+                                         below = sum(abs(corVal)<=.2)) 
+
+chisq.test(timeSetSum[,2:3])
 
 
-longDF %>% filter(reg == "hip", type == "imageITPC", regionphase=="_hip_sub1") %>% ggplot(aes(x = stat, y = memD)) + geom_point()
+```
+
+## correlation histograms broken down by region
+```{r region}
+
+#plot histogram by timeSet
+corTest %>% filter(type != 'HFB') %>% ggplot(aes(x = corVal, fill = type, color = type)) + 
+  geom_histogram(breaks = seq(-1,1,.2)) + facet_grid(reg1~.) + 
+  geom_vline(xintercept = 0)
+
+# Color data frame in R
+regColors <- data.frame(
+  parahip = rgb(214, 77, 97, maxColorValue = 255),       # dark pink
+  dlPFC = rgb(145, 162, 80, maxColorValue = 255),        # light forest green
+  iTemp = rgb(145, 162, 80, maxColorValue = 255),        # light forest green
+  lTemp = rgb(145, 162, 80, maxColorValue = 255),        # light forest green
+  polarPFC = rgb(51, 102, 153, maxColorValue = 255),     # lilac
+  visual = rgb(132, 125, 212, maxColorValue = 255),      # lilac
+  ACC = rgb(204, 153, 204, maxColorValue = 255),         # dark red
+  PCC = rgb(184, 78, 83, maxColorValue = 255),          # dark red
+  Hip = rgb(61, 187, 218, maxColorValue = 255)           # dusky blue
+)
+
+hitCol = rgb(88, 113, 206, maxColorValue = 255) 
+missCol = rgb(240, 172, 99, maxColorValue = 255)
+
+hmCols = c(hitCol, missCol)
+
+# re-order regions
+reg_order <- c("hip", "mtl", "acc", "dlPFC", "pPFC")
+reg_color <- c("Hip", "parahip", "ACC", "dlPFC", "polarPFC")
+
+timeSetVals <- c('HFB', 'image')
+for(rr in 1:5){
+ 
+  tmpDat <- corTest %>% filter(reg1 == reg_order[rr], type != 'HFB')
+    
+  outPlot <- ggplot(tmpDat, aes(x=corVal, fill = type, color = type)) + 
+                  geom_histogram(breaks = seq(-1,1,.25)) +
+                  ylab("effect Count") +
+                  ylim(c(0,10)) + 
+                  geom_vline(xintercept = 0, linewidth = 2, linetype = 'dashed')+
+                  xlab("correlation (r)") +
+                  theme_classic() +
+                  theme(legend.position="none",
+                        panel.border = element_blank(),
+                        panel.grid.major = element_blank(),
+                        panel.grid.minor = element_blank(),
+                        axis.line = element_blank(),
+                        axis.ticks.length = unit(-0.4, "cm"),
+                        axis.line.x = element_line(linewidth = 2),  
+                        axis.line.y = element_line(linewidth = 2),
+                        axis.ticks = element_line(linewidth = 2),
+                        axis.text.y = element_text(size = 12, face = "bold", 
+                                               margin = margin(r = 10)),
+                        plot.margin = margin(l = 30)  
+                  
+                  )
+    
+  png(paste( "R:\\MSS\\Johnson_Lab\\dtf8829\\publicationFigureData\\pubFigs\\" ,
+                'fig5','_corHist_',reg_color[rr], '.png', 
+                sep = ''),         # File name
+      width=600, height=600)
+  print(outPlot)
+  dev.off()
+  
+  
+  
+}
+#dif in large v. small effects 
+timeSetSum <- corTest %>% filter(type != 'HFB') %>% group_by(reg1) %>% summarize(above = sum(abs(corVal)>.2), 
+                                         below = sum(abs(corVal)<=.2)) 
+
+chisq.test(timeSetSum[,2:3])
+
+
+```
+
+## plots at subject level 
+```{r sub plots}
+longDF <- merge(longDF, corTest)
+
+longDF = longDF %>% group_by(type) %>% mutate(z = (stat - mean(stat))/ sd(stat))
+
+# Color data frame in R
+regColors <- data.frame(
+  parahip = rgb(214, 77, 97, maxColorValue = 255),       # dark pink
+  dlPFC = rgb(145, 162, 80, maxColorValue = 255),        # light forest green
+  iTemp = rgb(145, 162, 80, maxColorValue = 255),        # light forest green
+  lTemp = rgb(145, 162, 80, maxColorValue = 255),        # light forest green
+  polarPFC = rgb(51, 102, 153, maxColorValue = 255),     # lilac
+  visual = rgb(132, 125, 212, maxColorValue = 255),      # lilac
+  ACC = rgb(204, 153, 204, maxColorValue = 255),         # dark red
+  PCC = rgb(184, 78, 83, maxColorValue = 255),          # dark red
+  Hip = rgb(61, 187, 218, maxColorValue = 255)           # dusky blue
+)
+
+hitCol = rgb(88, 113, 206, maxColorValue = 255) 
+missCol = rgb(240, 172, 99, maxColorValue = 255)
+
+hmCols = c(hitCol, missCol)
+
+# re-order regions
+reg_order <- c("hip", "mtl", "acc", "dlPFC", "pPFC")
+reg_color <- c("Hip", "parahip", "ACC", "dlPFC", "polarPFC")
+
+reg_colorTab <- c("hip" = regColors$Hip, 
+                  'mtl' = regColors$parahip,
+                  'acc' = regColors$ACC,
+                  'dlPFC'=regColors$dlPFC,
+                  'pPFC' =regColors$polarPFC)
+
+timeSetVals <- c('HFB', 'image')
+
+sigCors = longDF %>% filter(corP<.05)
+sigVars = unique(sigCors$ogName)
+for(rr in 1:length(sigVars)){
+ 
+  tmpDat <- longDF %>% filter(ogName == sigVars[rr])
+  
+  #check leave one out
+  tmpDat$leftOutP = NA
+  for(ii in 1:length(tmpDat$subID)){
+    tmpDat$leftOutP[ii] = cor.test(tmpDat$stat[-ii], tmpDat$memD[-ii])[[3]]
+  }
+  if(max(tmpDat$leftOutP)<.1) {
+    rangeSize = max(tmpDat$stat) - min(tmpDat$stat)
+    xlimVals = c(min(tmpDat$stat)-rangeSize*.05, max(tmpDat$stat) + rangeSize*.05)
+  outPlot <-tmpDat %>%
+      ggplot(aes(x = stat, y = memD, colour = leftOutP>.05, shape = leftOutP>.05)) + 
+      geom_jitter(size = 12, alpha = .5) +  
+      geom_vline(xintercept = 0, linewidth = 3, linetype = 'dashed') + 
+      scale_color_manual(values=c('black', 'red')) + 
+      theme_classic() +
+      xlim(xlimVals) +
+      ylim(c(0,3)) +
+      theme(legend.position="none",
+            panel.background = element_rect(fill = alpha(reg_colorTab[tmpDat$reg1[1]], 
+                                            .3),
+                                            color = NA),
+            panel.border = element_blank(),
+            panel.grid.major = element_blank(),
+            panel.grid.minor = element_blank(),
+            axis.line = element_blank(),
+            axis.ticks.length = unit(-0.4, "cm"),
+            axis.line.x = element_line(linewidth = 2),  
+            axis.line.y = element_line(linewidth = 2),
+            axis.ticks = element_line(linewidth = 2),
+            axis.text.y = element_text(size = 12, face = "bold", 
+                                   margin = margin(r = 10)),
+            plot.margin = margin(l = 30)  
+      
+      )
+    
+  png(paste( "R:\\MSS\\Johnson_Lab\\dtf8829\\publicationFigureData\\pubFigs\\" ,
+                'fig5','_scatter_',sigVars[rr], '.png', 
+                sep = ''),         # File name
+      width=600, height=600)
+  print(outPlot)
+  dev.off()
+}
+}
+
+
+```
+
+
+
+#dif in pos v. neg effects 
+timeSetSum <- test %>% filter(type != 'HFB') %>% group_by(timeSet) %>% summarize(above = sum(corVal>0), 
+                                         below = sum(corVal<=0)) 
+
+chisq.test(timeSetSum[,2:3])
+
+#plot histogram by region
+test %>% filter(type != 'HFB') %>% ggplot(aes(x = corVal, fill = type, color = type)) + 
+  geom_histogram(breaks = seq(-1,1,.2)) + facet_grid(reg1~.) + 
+  geom_vline(xintercept = 0)
+
+#dif in large v. small effects
+timeSetSum <- test %>% filter(type != 'HFB') %>% group_by(reg1) %>% summarize(above = sum(abs(corVal)>.2), 
+                                         below = sum(abs(corVal)<=.2)) 
+
+chisq.test(timeSetSum[,2:3])
+
+#dif in pos v. neg effects
+timeSetSum <- test %>% filter(type != 'HFB') %>% group_by(reg1) %>% summarize(above = sum(corVal>0), 
+                                         below = sum(corVal<=0)) 
+
+chisq.test(timeSetSum[,2:3])
+
+
+
+#plot histogram by type
+corTest %>% filter(type != 'HFB') %>% ggplot(aes(x = corVal, fill = type, color = type)) + 
+  geom_histogram(breaks = seq(-1,1,.2)) + facet_grid(type~.) + 
+  geom_vline(xintercept = 0)
+
+#dif in large v. small effects
+timeSetSum <- test %>% filter(type != 'HFB') %>% group_by(type) %>% summarize(above = sum(abs(corVal)>.2), 
+                                         below = sum(abs(corVal)<=.2)) 
+
+chisq.test(timeSetSum[,2:3])
+
+
+
+
+
+test %>% filter(type != 'HFB') %>% group_by(timeSet) %>% summarize(n = n(), 
+                                                                   meanCor = mean(corVal))
+
+
+
+longDF %>% filter(reg == "dlPFC", type == "ppc", regionphase=="_pos_ret_image_dlPFC_mtl_1") %>% ggplot(aes(x = stat, y = memD)) + geom_point()
 
 
 age.lm = lm(age ~ as.factor(reg), data = df)
