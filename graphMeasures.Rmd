@@ -36,7 +36,7 @@ options(decorate.contr.Sum="",decorate.contrasts=c("[","]"))
 ```{r load data}
 
 # load in main data frame
-df <- read.csv("R:\\MSS\\Johnson_Lab\\dtf8829\\GitHub\\HpcAccConnectivityProject\\graphDat.csv", header = T)
+df <- read.csv("G:\\My Drive\\GitHub\\HpcAccConnectivityProject\\graphDat.csv", header = T)
 df$idx = c(1:length(df$date))
 df <- df %>% filter(!is.na(bytes))
 setwd('G:\\My Drive\\Johnson\\MTL_PFC_networkFigs\\Rfigs')
@@ -102,6 +102,9 @@ df$BCdif = df$hitBC - df$missBC
 df$STdif = df$hitST - df$missST
 df$SATdif = df$hitSaturation - df$missSaturation
 df$charDif = df$hitChar - df$missChar
+
+hitCol = rgb(88, 113, 206, maxColorValue = 255) 
+missCol = rgb(240, 172, 99, maxColorValue = 255)
 
 ```
 
@@ -330,11 +333,223 @@ for(hm in hmVals){
 
 ```
 
+## raincloud plots
+
+```{r rainclouds}
+for(er in erVals){
+outPlot <- ggplot(filter(long_df, encRet==er), aes(y = Char, x = hitMiss, fill = hitMiss)) +
+  geom_flat_violin(aes(fill =  hitMiss), position = position_nudge(x = .3, y = 0), adjust = 1.5, trim = FALSE, alpha = 1, colour = NA) +
+  #geom_line(aes(group = realID), alpha = 0.2 , colour = "gray48", size = .8, position = position_dodge(0.3)) +
+  geom_jitter(aes(fill = hitMiss, group = realID, color = hitMiss), size = 3, 
+              shape = 19, alpha = 0.1,  
+              position = position_jitterdodge(jitter.width = 0.2, jitter.height = 0, dodge.width = .1)) +
+  geom_boxplot(aes(x = hitMiss, y = Char, fill = hitMiss), outlier.shape = NA, alpha = .5, width = .2, linewidth = 2, position = position_nudge(x = 0, y = 0), colour = "black") +
+  ylab("Char path len") + xlab("hit miss") +
+  scale_color_manual(values=c(hitCol, missCol), name = "memory") +
+  scale_fill_manual(values=c(hitCol, missCol), name = "memory") +
+  theme_bw() +
+  ylim(c(0, 50)) + 
+  theme(legend.position = 'none', 
+        panel.border = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.line = element_blank(),
+        axis.ticks.length = unit(-0.4, "cm"),
+        axis.ticks.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.line.x = element_line(linewidth = 2),  
+        axis.line.y = element_line(linewidth = 2),
+        axis.ticks = element_line(linewidth = 2),
+        plot.margin = margin(l = 30)  )
+ png(paste( "R:\\MSS\\Johnson_Lab\\dtf8829\\publicationFigureData\\pubFigs\\" ,
+                  'Fig5','_','Collapsed_Char_','_', er, '.png', 
+                  sep = ''),         # File name
+        width=600, height=600)
+    print(outPlot)
+    dev.off()
+
+
+outPlot <- ggplot(filter(long_df, encRet==er), aes(y = ST, x = hitMiss, fill = hitMiss)) +
+  geom_flat_violin(aes(fill =  hitMiss), position = position_nudge(x = .3, y = 0), adjust = 1.5, trim = FALSE, alpha = .5, colour = NA) +
+  #geom_line(aes(group = realID), alpha = 0.2 , colour = "gray48", size = .8, position = position_dodge(0.3)) +
+  geom_jitter(aes(fill = hitMiss, group = realID, color = hitMiss), size = 3, 
+              shape = 19, alpha = 0.1,  
+              position = position_jitterdodge(jitter.width = 0.2, jitter.height = 0, dodge.width = .1)) +
+  geom_boxplot(aes(x = hitMiss, y = ST, fill = hitMiss), outlier.shape = NA, alpha = .5, width = .2,linewidth = 2,position = position_nudge(x = 0, y = 0), colour = "black") +
+  ylab("node strength (weighted)") + xlab("hit miss") +
+  scale_color_manual(values=c(hitCol, missCol), name = "memory") +
+  scale_fill_manual(values=c(hitCol, missCol), name = "memory") +
+  theme_bw()+
+  ylim(c(-.025, .1)) + 
+  theme(legend.position = 'none', 
+        panel.border = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.line = element_blank(),
+        axis.ticks.length = unit(-0.4, "cm"),
+        axis.ticks.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.line.x = element_line(linewidth = 2),  
+        axis.line.y = element_line(linewidth = 2),
+        axis.ticks = element_line(linewidth = 2),
+        plot.margin = margin(l = 30)  )
+ png(paste( "R:\\MSS\\Johnson_Lab\\dtf8829\\publicationFigureData\\pubFigs\\" ,
+                  'Fig5','_','Collapsed_ST_','_', er, '.png', 
+                  sep = ''),         # File name
+        width=600, height=600)
+    print(outPlot)
+    dev.off()
+
+outPlot <- ggplot(filter(long_df, encRet==er), aes(y = Saturation, x = hitMiss, fill = hitMiss)) +
+  geom_flat_violin(aes(fill =  hitMiss), position = position_nudge(x = .3, y = 0), adjust = 1.5, trim = FALSE, alpha = .5, colour = NA) +
+  #geom_line(aes(group = realID), alpha = 0.2 , colour = "gray48", size = .8, position = position_dodge(0.3)) +
+  geom_jitter(aes(fill = hitMiss, group = realID, color = hitMiss), size = 3, 
+              shape = 19, alpha = 0.1,  
+              position = position_jitterdodge(jitter.width = 0.2, jitter.height = 0, dodge.width = .1)) +
+  geom_boxplot(aes(x = hitMiss, y = Saturation, fill = hitMiss), outlier.shape = NA, alpha = .5, width = .2,linewidth = 2,position = position_nudge(x = 0, y = 0), colour = "black") +
+  ylab("node strength (binarized)") + xlab("hit miss") +
+  scale_color_manual(values=c(hitCol, missCol), name = "memory") +
+  scale_fill_manual(values=c(hitCol, missCol), name = "memory") +
+  theme_bw() +
+  ylim(c(0, .4))+
+  theme(legend.position = 'none', 
+        panel.border = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.line = element_blank(),
+        axis.ticks.length = unit(-0.4, "cm"),
+        axis.ticks.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.line.x = element_line(linewidth = 2),  
+        axis.line.y = element_line(linewidth = 2),
+        axis.ticks = element_line(linewidth = 2),
+        plot.margin = margin(l = 30)  )
+ png(paste( "R:\\MSS\\Johnson_Lab\\dtf8829\\publicationFigureData\\pubFigs\\" ,
+                  'Fig5','_','Collapsed_Saturation_','_', er, '.png', 
+                  sep = ''),         # File name
+        width=600, height=600)
+    print(outPlot)
+    dev.off()
+    
+    outPlot <- ggplot(filter(long_df, encRet==er, hitMiss == 'hit'), aes(y = Char, x = timeSet, fill = timeSet)) +
+  geom_flat_violin(aes(fill =  timeSet), position = position_nudge(x = .3, y = 0), adjust = 1.5, trim = FALSE, alpha = .5, colour = NA) +
+  #geom_line(aes(group = realID), alpha = 0.2 , colour = "gray48", size = .8, position = position_dodge(0.3)) +
+  geom_jitter(aes(fill = timeSet, group = realID, color = timeSet), size = 3, 
+              shape = 19, alpha = 0.1,  
+              position = position_jitterdodge(jitter.width = 0.2, jitter.height = 0, dodge.width = .1)) +
+  geom_boxplot(aes(x = timeSet, y = Char, fill = timeSet), outlier.shape = NA, alpha = .5, width = .2, linewidth = 2, position = position_nudge(x = 0, y = 0), colour = "black") +
+  ylab("Char path len") + xlab("HFB image") +
+  scale_color_manual(values=c("#b9e9e9", '#ffc9e4'), name = "memory") +
+  scale_fill_manual(values=c("#b9e9e9", '#ffc9e4'), name = "memory") +
+  theme_bw() +
+  ylim(c(0, 50)) + 
+  theme(legend.position = 'none', 
+        panel.border = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.line = element_blank(),
+        axis.ticks.length = unit(-0.4, "cm"),
+        axis.ticks.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.line.x = element_line(linewidth = 2),  
+        axis.line.y = element_line(linewidth = 2),
+        axis.ticks = element_line(linewidth = 2),
+        plot.margin = margin(l = 30)  )
+ png(paste( "R:\\MSS\\Johnson_Lab\\dtf8829\\publicationFigureData\\pubFigs\\" ,
+                  'Fig5','_','timeSet_Char_','_', er, '.png', 
+                  sep = ''),         # File name
+        width=600, height=600)
+    print(outPlot)
+    dev.off()
+
+
+outPlot <- ggplot(filter(long_df, encRet==er, hitMiss == 'hit'), aes(y = ST, x = timeSet, fill = timeSet)) +
+  geom_flat_violin(aes(fill =  timeSet), position = position_nudge(x = .3, y = 0), adjust = 1.5, trim = FALSE, alpha = .5, colour = NA) +
+  #geom_line(aes(group = realID), alpha = 0.2 , colour = "gray48", size = .8, position = position_dodge(0.3)) +
+  geom_jitter(aes(fill = timeSet, group = realID, color = timeSet), size = 3, 
+              shape = 19, alpha = 0.1,  
+              position = position_jitterdodge(jitter.width = 0.2, jitter.height = 0, dodge.width = .1)) +
+  geom_boxplot(aes(x = timeSet, y = ST, fill = timeSet), outlier.shape = NA, alpha = .5, width = .2,linewidth = 2,position = position_nudge(x = 0, y = 0), colour = "black") +
+  ylab("node strength (weighted)") + xlab("HFB image") +
+  scale_color_manual(values=c("#b9e9e9", '#ffc9e4'), name = "memory") +
+  scale_fill_manual(values=c("#b9e9e9", '#ffc9e4'), name = "memory") +
+  theme_bw()+
+  ylim(c(-.025, .1)) + 
+  theme(legend.position = 'none', 
+        panel.border = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.line = element_blank(),
+        axis.ticks.length = unit(-0.4, "cm"),
+        axis.ticks.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.line.x = element_line(linewidth = 2),  
+        axis.line.y = element_line(linewidth = 2),
+        axis.ticks = element_line(linewidth = 2),
+        plot.margin = margin(l = 30)  )
+ png(paste( "R:\\MSS\\Johnson_Lab\\dtf8829\\publicationFigureData\\pubFigs\\" ,
+                  'Fig5','_','timeSet_ST_','_', er, '.png', 
+                  sep = ''),         # File name
+        width=600, height=600)
+    print(outPlot)
+    dev.off()
+
+outPlot <- ggplot(filter(long_df, encRet==er, hitMiss == 'hit'), aes(y = Saturation, x = timeSet, fill = timeSet)) +
+  geom_flat_violin(aes(fill =  timeSet), position = position_nudge(x = .3, y = 0), adjust = 1.5, trim = FALSE, alpha = .5, colour = NA) +
+  #geom_line(aes(group = realID), alpha = 0.2 , colour = "gray48", size = .8, position = position_dodge(0.3)) +
+  geom_jitter(aes(fill = timeSet, group = realID, color = timeSet), size = 3, 
+              shape = 19, alpha = 0.1,  
+              position = position_jitterdodge(jitter.width = 0.2, jitter.height = 0, dodge.width = .1)) +
+  geom_boxplot(aes(x = timeSet, y = Saturation, fill = timeSet), outlier.shape = NA, alpha = .5, width = .2,linewidth = 2,position = position_nudge(x = 0, y = 0), colour = "black") +
+  ylab("node strength (binarized)") + xlab("HFB image") +
+  scale_color_manual(values=c("#b9e9e9", '#ffc9e4'), name = "memory") +
+  scale_fill_manual(values=c("#b9e9e9", '#ffc9e4'), name = "memory") +
+  theme_bw() +
+  ylim(c(0, .4))+
+  theme(legend.position = 'none', 
+        panel.border = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.line = element_blank(),
+        axis.ticks.length = unit(-0.4, "cm"),
+        axis.ticks.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.line.x = element_line(linewidth = 2),  
+        axis.line.y = element_line(linewidth = 2),
+        axis.ticks = element_line(linewidth = 2),
+        plot.margin = margin(l = 30)  )
+ png(paste( "R:\\MSS\\Johnson_Lab\\dtf8829\\publicationFigureData\\pubFigs\\" ,
+                  'Fig5','_','timeSet_Saturation_','_', er, '.png', 
+                  sep = ''),         # File name
+        width=600, height=600)
+    print(outPlot)
+    dev.off()
+    
+}
+
+
+
+
+
+
+
+
+
+```
+
 ## full hit/miss models
 
 ```{r hit miss models}
 
 long_df <- long_df %>% filter(reg1 != 'acc')
+
+ggplot(filter(long_df, encRet=='enc'), aes(x=Char, color = timeSet, fill = timeSet)) + geom_freqpoly(aes(y = ..density..)) + facet_grid(reg1~hitMiss)
+
+ggplot(filter(long_df, encRet=='enc'), aes(x=hitMiss, fill = hitMiss, y = Char)) + geom_violin()
+
+ggplot(filter(long_df, encRet=='enc'), aes(x=hitMiss, fill = hitMiss, y = ST)) + geom_violin()
+
+ggplot(filter(long_df, encRet=='enc'), aes(x=hitMiss, fill = hitMiss, y = Saturation)) + geom_violin()
 
 #CHARACTERISTIC PATH LENGTH ENCODE
 charModel <- lmer(Char ~  reg1 * timeSet * hitMiss + (1|realID) + (1|realID2), 
