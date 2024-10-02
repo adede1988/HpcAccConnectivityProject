@@ -214,8 +214,8 @@ write.csv(demoDFout, "G:\\My Drive\\GitHub\\HpcAccConnectivityProject\\demoTable
 
 #calculate correlations between physiology stats and memory performance
 corTest <- longDF  %>% group_by(type, phase, timeSet, reg1, reg2, regionphase, ogName) %>%
-  summarize(corVal = cor(memAcc, stat), 
-            corP = cor.test(memAcc, stat)[[3]],
+  summarize(corVal = cor(memD, stat), 
+            corP = cor.test(memD, stat)[[3]],
             count = n()) 
 
 
@@ -451,7 +451,7 @@ for(rr in 1:length(sigVars)){
       )
     
   png(paste( "R:\\MSS\\Johnson_Lab\\dtf8829\\publicationFigureData\\pubFigs\\" ,
-                'fig5','_scatter_',sigVars[rr], '.png', 
+                'fig5','_acatter_',sigVars[rr], '.png', 
                 sep = ''),         # File name
       width=600, height=600)
   print(outPlot)

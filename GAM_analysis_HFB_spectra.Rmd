@@ -26,25 +26,118 @@ library(emmeans)
 library(effects)
 library(mgcv)
 
+library(gamm4)
+library(splines)
+
 # set contrasts
 options(contrasts=c("contr.Sum","contr.Helmert"))
 options(decorate.contr.Sum="",decorate.contrasts=c("[","]"))
 
+
+
 ```
+
+# Linear and generalized additive mixed-effects models
+```{r lmer and gamm models}
+# load data frame
+gam_data <- read.csv("G:\\My Drive\\GitHub\\HpcAccConnectivityProject\\HFBpeakPowerSpectra.csv", header = T) %>% 
+  filter(reg == "acc" | reg == "dlPFC" | reg == "hip" 
+          | reg == "mtl" | reg == "pPFC")
+# make our variables factors
+gam_data$reg <- as.factor(gam_data$reg)
+gam_data$encRet <- as.factor(gam_data$encRet)
+gam_data$subID <- as.factor(gam_data$subID)
+# check levels
+unique(gam_data$reg)
+unique(gam_data$encRet)
+# run lmer with splines applied to frequency
+lmer_model <- lmer(power ~ ns(freq, 8) * reg * encRet + (1|subID), data = gam_data)
+summary(lmer_model)
+Anova(lmer_model)
+plot_lmer <- ggemmeans(lmer_model,terms=c("freq [all]","encRet","reg"), ci.lvl = 0.83)
+# plot the lmer
+ggplot(plot_lmer,aes(x=x,y=predicted,ymin=conf.low,ymax=conf.high)) +
+  geom_line(aes(linetype=group)) +
+  scale_linetype_manual(values=c("solid", "longdash")) +
+  scale_fill_manual(values = c("turquoise4", "tan1")) +
+  geom_ribbon(aes(fill=group),alpha=0.3) +
+  xlab("Frequency [Hz]") + ylab ("Power") +
+  theme_bw() +
+  facet_grid(~facet) +
+  theme(axis.title.x = element_text(size=14),
+        plot.title = element_text(size=14, face="bold"),
+        axis.title.y = element_text(size=14),
+        axis.text.x = element_text(size=12),
+        axis.text.y = element_text(size=12))
+
+gam_data %>% group_by(reg, subID, freq) %>%
+  summarize(powDif = power[encRet=='ret'] - power[encRet =='sub']) %>%
+  group_by(reg) %>%
+  summarize(meanShift = mean(powDif))
+
+
+# # generate data frame for each ROI for gamms
+# dlPFC_df <- gam_data %>% 
+#   filter(reg == "mtl")
+# # run gamm model for dlPFC
+# dlpfc_model <- bam(power ~ encRet +
+#                ti(freq, bs = 'tp', k = 10) +
+#                te(freq, encRet, bs = c('tp', 're'), k = 10) +
+#                s(subID, bs = "re"),
+#                data = dlPFC_df, select = TRUE)
+# # get summary statistics
+# summary(dlpfc_model)
+# gam.check(dlpfc_model)
+# # extract predicted effects
+# plot_gamm <- ggemmeans(dlpfc_model,terms=c("freq","encRet"), ci.lvl = 0.83)
+# # create new labels for plots
+# group_labels <- c("Ret", "Sub")
+# # plot for each model
+# ggplot(plot_gamm,aes(x=x,y=predicted,ymin=conf.low,ymax=conf.high)) +
+#   geom_line(aes(linetype=group)) +
+#   scale_linetype_manual(values=c("solid", "longdash")) +
+#   scale_fill_manual(values = c("turquoise4", "tan1")) +
+#   geom_ribbon(aes(fill=group),alpha=0.3) +
+#   xlab("Frequency [Hz]") + ylab ("Power") +
+#   theme_bw() +
+#   theme(axis.title.x = element_text(size=14),
+#         plot.title = element_text(size=14, face="bold"),
+#         axis.title.y = element_text(size=14),
+#         axis.text.x = element_text(size=12),
+#         axis.text.y = element_text(size=12))
+
+
+
+
+
+
+```
+
 
 ## Read in data frame
 
 ```{r load data}
 
 # load in main data frame
-df <- read.csv("R:\\MSS\\Johnson_Lab\\dtf8829\\GitHub\\HpcAccConnectivityProject\\HFBpeakPowerSpectra.csv", header = T)
+df <- read.csv("G:\\My Drive\\GitHub\\HpcAccConnectivityProject\\HFBpeakPowerSpectra.csv", header = T)
+df <- df %>% filter(reg=='hip' | reg == 'acc' | reg == 'dlPFC' | reg == 'mtl' | reg == 'pPFC')
+df$reg = as.factor(df$reg)
 setwd('G:\\My Drive\\Johnson\\MTL_PFC_networkFigs\\Rfigs')
+df$encRet = as.factor(df$encRet)
 
-model <- mgcv::bam(power ~ encRet + 
-                     s(freq, by = encRet,k = .05*600,bs = 'cr') + 
-                     s(freq, )
+model <- mgcv::bam(power ~ encRet*reg + 
+                     s(freq, by = encRet, k = .05*600,bs = 'cr') + 
+                     s(freq) + 
                      s(subID, bs = 're'), 
                    data = df, family = scat(), select = T)
+
+
+df$encRet_reg <- interaction(df$encRet, df$reg)
+model <- mgcv::bam(power ~ encRet*reg +
+                     s(freq, by = encRet, k = 8, bs = 'cr') +
+                     s(freq, by = encRet_reg, k = 8, bs = 'cr'), 
+                   data = df, family = scat(), select = TRUE)
+
 
 ```
 

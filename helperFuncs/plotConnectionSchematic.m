@@ -65,7 +65,7 @@ for ii = 1:5
         %get mean t value
         tMat = squeeze(plotMat(ii, jj, :,:, 3)); 
         meanT = mean(tMat(pMask<.05), 'all'); 
-        if meanT < 0 
+        if meanT < 0 % edit here for positive v. negative
             meanT = 0; 
             fn1
             disp(['negative connection:  ' ...

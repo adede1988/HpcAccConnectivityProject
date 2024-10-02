@@ -5,7 +5,11 @@ function [] = makeConnectivityHeatMap2(inMat, p, ss, ...
 
 imagesc(inMat')
 colorbar
-% caxis([.05, .4])
+if max(inMat(:) > 1)
+    caxis([-4, 4])
+% else
+%     caxis([.02, .1])
+end
 set(gca, 'ydir', 'normal')
 addRedOutline(p, .05, 'white'); 
 yticks([2:4:20]) %hard code that there are 20 frequencies 

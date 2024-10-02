@@ -24,7 +24,7 @@ library(car)
 library(ggeffects)
 library(emmeans)
 library(effects)
-
+path = "G:\\My Drive\\GitHub\\HpcAccConnectivityProject\\"
 # set contrasts
 options(contrasts=c("contr.Sum","contr.Helmert"))
 options(decorate.contr.Sum="",decorate.contrasts=c("[","]"))
@@ -36,7 +36,7 @@ options(decorate.contr.Sum="",decorate.contrasts=c("[","]"))
 ```{r load data}
 
 # load in main data frame
-df <- read.csv("R:\\MSS\\Johnson_Lab\\dtf8829\\GitHub\\HpcAccConnectivityProject\\trialLatDat_RTfix.csv", header = T)
+df <- read.csv(paste0( path, "trialLatDat_RTfix.csv"), header = T)
 setwd('G:\\My Drive\\Johnson\\MTL_PFC_networkFigs\\Rfigs')
 # factorise variables
 
@@ -114,7 +114,13 @@ all_data <- df %>%
 ## reactive v. total channel counts
 
 ```{r chanCounts}
-
+regColors <- data.frame(
+  parahip = rgb(214, 77, 97, maxColorValue = 255),       # dark pink 
+  polarPFC = rgb(51, 102, 153, maxColorValue = 255),     # lilac
+  dlPFC = rgb(145, 162, 80, maxColorValue = 255),        # light forest green
+  ACC = rgb(204, 153, 204, maxColorValue = 255),         # dark red
+  Hip = rgb(61, 187, 218, maxColorValue = 255)           # dusky blue
+)
 
 reactiveCounts = all_data %>% group_by(reg) %>% summarize(chanCount = length(unique(realID)))
 reactiveCounts$Totals = c(44,247,40,79,35)
@@ -128,8 +134,46 @@ reactiveCounts$nonReact = reactiveCounts$Totals - reactiveCounts$chanCount
 
 chisq.test(reactiveCounts[,c(2,5)])
 
+reactivePlotDat <- reactiveCounts %>% select(c('reg', 'chanCount', 'nonReact')) %>%
+                        pivot_longer(cols = c('chanCount', 'nonReact'), 
+                                                   names_to = 'type', 
+                                                   values_to = 'count')
+reg_order <- c("hip", "mtl", "acc", "dlPFC", "pPFC")
+reactivePlotDat <- reactivePlotDat %>% mutate(reg = factor(reg, levels = reg_order))
+outPlot <- ggplot(reactivePlotDat, aes(x = reg, y = count, group = type, color = reg, fill = type)) +
+    geom_bar(stat = "identity", position = "dodge", linewidth = 4) +
+    scale_color_manual(values=c( regColors$Hip,
+                                 regColors$parahip,
+                                 regColors$ACC, 
+                                 regColors$dlPFC,
+                                 regColors$polarPFC),
+                                 labels=reg_order) +
+    scale_fill_manual(values=c(rgb(200, 200, 200, maxColorValue = 255),
+                               rgb(60, 60, 60, maxColorValue = 255)),
+                                 labels=c('reactive', 'non-reactive')) +
+     theme_classic() +
+                    theme(legend.position="none",
+                          panel.border = element_blank(),
+                          panel.grid.major = element_blank(),
+                          panel.grid.minor = element_blank(),
+                          axis.line = element_blank(),
+                          axis.ticks.length = unit(-0.2, "cm"),
+                          
+                          axis.line.x = element_line(size = 2),  
+                          axis.line.y = element_line(size = 2),
+                          axis.ticks = element_line(size = 2),
+                          axis.text.y = element_text(size = 12, face = "bold", 
+                                                 margin = margin(r = 10)),
+                          plot.margin = margin(l = 30)  
+                    )
 
-
+ fn <- paste( "R:\\MSS\\Johnson_Lab\\dtf8829\\publicationFigureData\\pubFigs\\" ,
+                'methodsFig_reactiveChans', '.png', 
+                sep = '')
+  png(fn,         # File name
+        width=600, height=600)
+        print(outPlot)
+        dev.off()
 
 ```
 
@@ -336,6 +380,7 @@ summary(glm_test_all_adj)
 em_dat_all_adj <- emmeans(glm_test_all_adj, pairwise ~ encRet* hitMiss * reg , type="response", adjust = "holm")
 emm <- emmeans(glm_test_all_adj, ~ encRet * hitMiss * reg)
 comp <- pairs(emm, by = c("encRet", "hitMiss"), adjust = "holm")
+comp <- pairs(emm, by = c("encRet", "reg"), adjust = "holm")
 em_dat_all_adj
 plot(em_dat_all_adj)
 em_dat_all_adj = as.data.frame(em_dat_all_adj)
@@ -351,7 +396,7 @@ glm_test_all_og <- lmer(peakLatHFB ~ hitMiss * encRet * reg + (1|realID),
                   data = all_data)
 # get stats
 summary(glm_test_all_og)
-
+Anova(glm_test_all_adj)
 # use emmeans contrast for post-hoc testing
 em_dat_all_og <- emmeans(glm_test_all_og, pairwise ~ hitMiss * encRet | hitMiss * reg | 
                     encRet * reg, type="response", adjust = "holm")

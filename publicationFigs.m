@@ -1250,7 +1250,7 @@ for ii = 1:length(TF_files_HFB)
 % % %         ai = ai+100; 
 % % %     end
 
-
+% Get peak frequencies for description of power spectra 
     curSpect = mean([missSpect; hitSpect]);
 
     [val, idx] = max(curSpect(1:64));
@@ -1960,357 +1960,457 @@ allConnections2 = zeros(9,9,41,20,4,2);
 for ii = 1:length(fig3Dat)
     curDat = load([fig3Dat(ii).folder '/' fig3Dat(ii).name]).outDat; 
     ii
-     %update allSig
-    
-    subIDs = curDat.subVals; 
-    uniIDs = unique(subIDs);
-    varCodes = {'enc_image', 'ret_image', 'enc_HFB', 'ret_HFB'};
-    direction = {'pos', 'neg'}; 
-    for d = 1:2
-    for cc = 1:4
-    %do encoding image locked
-    if isfield(curDat.([varCodes{cc} '_clust']), [direction{d} '_clusters'])
-        clust = curDat.([varCodes{cc} '_clust']).([direction{d} '_clusters']); 
-        clust(:,[clust.p]>.05) = [];
-        for clu = 1:length(clust)
-            if ~isempty(clust(clu).p)
-            idx = clust(clu).inds; 
-            L = sum(idx, 'all');
-            n = size(curDat.([varCodes{cc} '_hitVals']),3);
-
-            chanMeans = []; 
-            for chan = 1:n
-                slice = squeeze(curDat.([varCodes{cc} '_hitVals'])(:,:,chan) - ...
-                    curDat.([varCodes{cc} '_missVals'])(:,:,chan));
-                chanMeans = [chanMeans, mean(slice(idx))]; 
-            end
-
-         
-            varName = ['ppc_' direction{d} '_' varCodes{cc} '_' ...
-                curDat.reg1 '_' curDat.reg2 '_' num2str(clu)];
-            altVar = ['ppc_' direction{d} '_' varCodes{cc} '_' ...
-                curDat.reg2 '_' curDat.reg1 '_' num2str(clu)];
-            allSig.(varName) = nan(length(allSig.subID),1);
-        %store raw differences for significant time periods: 
-        
-        for sub = 1:length(uniIDs)
-            %store subject means into allSig for later correlation to
-            %memory
-            if cc<3 %image connections are symmetric but HFB are not! 
-                idx = find((strcmp(allSig.reg, curDat.reg1) & ...
-                           strcmp(allSig.subID, uniIDs{sub})) |...
-                           (strcmp(allSig.reg, curDat.reg2) & ...
-                           strcmp(allSig.subID, uniIDs{sub})));
-            else
-                
-                idx = find((strcmp(allSig.reg, curDat.reg1) & ...
-                           strcmp(allSig.subID, uniIDs{sub})));
-            end
-             allSig.(varName)(idx) = ...
-                 mean(chanMeans(ismember(subIDs, uniIDs{sub})));
-
-        end
-            end
-        end
-
-
-    end
-
-    end
-    end
-    %end update allSig
-
-
-% % %     tim = curDat.enc_image_tim; 
-% % %     reg1 = find(cellfun(@(x) strcmp(x, curDat.reg1), regions)); 
-% % %     reg2 = find(cellfun(@(x) strcmp(x, curDat.reg2), regions)); 
-% % %     %ENCODING: 
-% % %     %hit vals
-% % %     tmpMat = curDat.enc_image_hitVals; 
-% % %     tmpMat(tim<-450 | tim>3000, :, :) = []; 
-% % %     allConnections(reg1, reg2, :, :, 1, 1) = mean(tmpMat,3); 
+% % %      %update allSig
+% % %     
+% % %     subIDs = curDat.subVals; 
+% % %     uniIDs = unique(subIDs);
+% % %     varCodes = {'enc_image', 'ret_image', 'enc_HFB', 'ret_HFB'};
+% % %     direction = {'pos', 'neg'}; 
+% % %     for d = 1:2
+% % %     for cc = 1:4
+% % %     %do encoding image locked
+% % %     if isfield(curDat.([varCodes{cc} '_clust']), [direction{d} '_clusters'])
+% % %         clust = curDat.([varCodes{cc} '_clust']).([direction{d} '_clusters']); 
+% % %         clust(:,[clust.p]>.05) = [];
+% % %         for clu = 1:length(clust)
+% % %             if ~isempty(clust(clu).p)
+% % %             idx = clust(clu).inds; 
+% % %             L = sum(idx, 'all');
+% % %             n = size(curDat.([varCodes{cc} '_hitVals']),3);
 % % % 
-% % %     %hit image figure
-% % %     %ss: 1 = HFB, 0 = image
-% % %     inMat = squeeze(mean(curDat.enc_image_hitVals,3)); 
-% % %     inMat(inMat<0) = 0; 
-% % %     inMat = sqrt(inMat); 
-% % %     pltim = tim(tim>=-450 & tim<=3000); 
-% % %     inMat(tim<-450 | tim>3000, :) = []; 
-% % %     ss = 0; 
-% % %     pMat = curDat.enc_image_p; 
-% % %     pMat(tim<-450 | tim>3000, :) = []; 
+% % %             chanMeans = []; 
+% % %             chanMeansHit = []; 
+% % %             chanMeansMiss = []; 
+% % %             for chan = 1:n
+% % %                 sliceHit = squeeze(curDat.([varCodes{cc} '_hitVals'])(:,:,chan));
+% % %                 sliceMiss= squeeze(curDat.([varCodes{cc} '_missVals'])(:,:,chan));
+% % %                 chanMeansHit = [chanMeansHit, mean(sliceHit(idx))];
+% % %                 chanMeansMiss = [chanMeansMiss, mean(sliceMiss(idx))]; 
+% % %                 slice = sliceHit - sliceMiss; 
+% % %                 chanMeans = [chanMeans, mean(slice(idx))]; 
+% % %             end
+% % % 
+% % % 
+% % % 
+% % % 
+% % % % make linked boxplot 
 % % %     figure('visible', false, 'position', [0,0,600,400])
-% % %     makeConnectivityHeatMap2(inMat, pMat, ...
-% % %                             ss, curDat.frex, pltim)
-% % %     export_fig([figDat 'pubFigs/' 'sup3_' 'connectionHeatmap_image_hit_'...
-% % %         regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
+% % %     hmSort = [zeros(1,n), ones(1,n)]; 
+% % %     b1 = boxchart(zeros(1,n), chanMeansMiss, 'boxfacecolor', missCol);
+% % %     hold on 
+% % %     b2 = boxchart(ones(1,n), chanMeansHit, 'boxfacecolor', hitCol);
+% % %     allChanMeans = [chanMeansMiss, chanMeansHit]; 
+% % %     b1.MarkerStyle = 'none'; 
+% % %     b2.MarkerStyle = 'none'; 
+% % %     b1.LineWidth = 3;  % This changes the outline of the box, but not the whiskers
+% % %     b2.LineWidth = 3;  % Same here
+% % %     xticks([0,1])
+% % %     xticklabels({'Miss', 'Hit'})
+% % % %             meanX = round(mean(Xidx(tmp), 'all')); 
+% % % %             meanY = round(mean(Yidx(tmp), 'all')); 
+% % % %             LLvals = -150:150; 
 % % % 
+% % %     IQR = prctile(chanMeansMiss, [25,75]);
+% % %     Q25 = IQR(1); 
+% % %     Q75 = IQR(2); 
+% % %     IQR = diff(IQR); 
+% % %     tmp = chanMeansMiss(chanMeansMiss>(Q25-1.5*IQR) & chanMeansMiss<(Q75+1.5*IQR));
+% % %     % Overlay custom error bars
+% % %     % For Miss group
+% % %     line([-.15,.15], [max(tmp), max(tmp)],  'LineWidth', 3, 'Color', missCol);
+% % %     line([0,0], [Q75, max(tmp)],  'LineWidth', 3, 'Color', missCol);
+% % %     
+% % %     line([-.15,.15], [min(tmp), min(tmp)],  'LineWidth', 3, 'Color', missCol);
+% % %     line([0,0], [Q25, min(tmp)],  'LineWidth', 3, 'Color', missCol);
+% % %     
+% % %     IQR = prctile(chanMeansHit, [25,75]);
+% % %     Q25 = IQR(1); 
+% % %     Q75 = IQR(2); 
+% % %     IQR = diff(IQR); 
+% % %     tmp = chanMeansHit(chanMeansHit>(Q25-1.5*IQR) & chanMeansHit<(Q75+1.5*IQR));
+% % %     % Overlay custom error bars
+% % %     % For hit group
+% % %     line([1-.15,1.15], [max(tmp), max(tmp)],  'LineWidth', 3, 'Color', hitCol);
+% % %     line([1,1], [Q75, max(tmp)],  'LineWidth', 3, 'Color', hitCol);
+% % %     
+% % %     line([1-.15,1.15], [min(tmp), min(tmp)],  'LineWidth', 3, 'Color', hitCol);
+% % %     line([1,1], [Q25, min(tmp)],  'LineWidth', 3, 'Color', hitCol);
+% % %     PLH = allChanMeans(hmSort==1); 
+% % %     PLM = allChanMeans(hmSort==0); 
+% % %     randVals = (rand(length(PLH),1)-.5)*.5;
+% % %     hold on 
+% % %     scatter(randVals, PLM, 10,  'blue')
+% % %     scatter(randVals+1, PLH, 10, 'blue')
+% % %     
+% % %     for ppi = 1:length(PLH)
+% % %         plot([0+randVals(ppi),1+randVals(ppi)], [PLM(ppi),PLH(ppi)], 'color', [.2,.1,.5,.2], 'linewidth', .5 )
+% % %         
 % % % 
-% % %     tmpMat = curDat.enc_HFB_hitVals; 
-% % %     allConnections2(reg1, reg2, :, :, 1, 1) = mean(tmpMat,3); 
+% % %     end
 % % % 
-% % %     %hit HFB figure
-% % %     %ss: 1 = HFB, 0 = image
-% % %     inMat = squeeze(mean(curDat.enc_HFB_hitVals,3)); 
-% % %     inMat(inMat<0) = 0; 
-% % %     inMat = sqrt(inMat); 
-% % %     pltim = tim(tim>=-450 & tim<=3000); 
-% % %     pMat = curDat.enc_HFB_p;
-% % %     ss = 1; 
-% % %     figure('visible', false, 'position', [0,0,600,400])
-% % %     makeConnectivityHeatMap2(inMat, pMat, ...
-% % %                             ss, curDat.frex, pltim)
-% % %     export_fig([figDat 'pubFigs/' 'sup3_' 'connectionHeatmap_HFB_hit_'...
-% % %         regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
+% % %     %make subject means
+% % %     subHits = zeros(length(uniIDs),1); 
+% % %     subMisses = zeros(length(uniIDs),1); 
+% % %     uniqueSubs = uniIDs; 
+% % %     regSubs = subIDs; 
+% % %     for sub = 1:length(subHits)
+% % %         subidx = cellfun(@(x) strcmp(x, uniqueSubs{sub}), regSubs); 
+% % %         subHits(sub) = mean(PLH(subidx));
+% % %         subMisses(sub) = mean(PLM(subidx));
+% % %         plot([0,1], [subMisses(sub), subHits(sub)], 'color', 'k')
 % % % 
-% % % 
-% % %     %miss vals
-% % %     tmpMat = curDat.enc_image_missVals; 
-% % %     tmpMat(tim<-450 | tim>3000, :, :) = []; 
-% % %     allConnections(reg1, reg2, :, :, 2, 1) = mean(tmpMat,3); 
-% % % 
-% % % 
-% % %     %miss image figure
-% % %      %ss: 1 = HFB, 0 = image
-% % %     inMat = squeeze(mean(curDat.enc_image_missVals,3)); 
-% % %     inMat(inMat<0) = 0; 
-% % %     inMat = sqrt(inMat); 
-% % %     pltim = tim(tim>=-450 & tim<=3000); 
-% % %     inMat(tim<-450 | tim>3000, :) = []; 
-% % %     pMat = curDat.enc_image_p; 
-% % %     pMat(tim<-450 | tim>3000, :) = []; 
-% % %     ss = 0; 
-% % %     figure('visible', false, 'position', [0,0,600,400]);
-% % %     makeConnectivityHeatMap2(inMat, pMat, ...
-% % %                             ss, curDat.frex, pltim)
-% % %     export_fig([figDat 'pubFigs/' 'sup3_' 'connectionHeatmap_image_miss_'...
-% % %         regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
-% % % 
-% % % 
-% % %     tmpMat = curDat.enc_HFB_missVals; 
-% % %     allConnections2(reg1, reg2, :, :, 2, 1) = mean(tmpMat,3);
-% % % 
-% % %     %miss HFB figure
-% % %     %ss: 1 = HFB, 0 = image
-% % %     inMat = squeeze(mean(curDat.enc_HFB_missVals,3)); 
-% % %     inMat(inMat<0) = 0; 
-% % %     inMat = sqrt(inMat); 
-% % %     pltim = tim(tim>=-450 & tim<=3000);  
-% % %     pMat = curDat.enc_HFB_p;
-% % %     ss = 1; 
-% % %     figure('visible', false, 'position', [0,0,600,400]);
-% % %     makeConnectivityHeatMap2(inMat, pMat, ...
-% % %                             ss, curDat.frex, pltim)
-% % %     export_fig([figDat 'pubFigs/' 'sup3_' 'connectionHeatmap_HFB_miss_'...
-% % %         regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
-% % % 
-% % % 
-% % %     %t vals
-% % %     tmpMat = curDat.enc_image_tVal; 
-% % %     tmpMat(tim<-450 | tim>3000, :) = []; 
-% % %     allConnections(reg1, reg2, :, :, 3, 1) = tmpMat; 
-% % % 
-% % %     %image t values
-% % %     %ss: 1 = HFB, 0 = image
-% % %     inMat = curDat.enc_image_tVal;  
-% % %     pltim = tim(tim>=-450 & tim<=3000); 
-% % %     inMat(tim<-450 | tim>3000, :) = []; 
-% % %     pMat = curDat.enc_image_p; 
-% % %     pMat(tim<-450 | tim>3000, :) = []; 
-% % %     ss = 0; 
-% % %     figure('visible', false, 'position', [0,0,600,400]);
-% % %     makeConnectivityHeatMap2(inMat, pMat, ...
-% % %                             ss, curDat.frex, pltim)
-% % %     export_fig([figDat 'pubFigs/' 'sup3_' 'connectionHeatmap_image_tVal_'...
-% % %         regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
+% % %     end
+% % %     scatter(ones(length(uniqueSubs),1), subHits, 35,  'red', 'filled')
+% % %     scatter(zeros(length(uniqueSubs),1), subMisses, 35,  'red', 'filled')
+% % %     xlim([-.5, 1.5])
+% % % %     ylim([-.05, min([.3; max([PLH, PLM])+.05])])
 % % % 
 % % % 
 % % % 
-% % %     tmpMat = curDat.enc_HFB_tVal; 
-% % %     allConnections2(reg1, reg2, :, :, 3, 1) = tmpMat;
-% % % 
-% % %     %HFB t values 
-% % %      %ss: 1 = HFB, 0 = image
-% % %     inMat = curDat.enc_HFB_tVal;  
-% % %     pMat = curDat.enc_HFB_p; 
-% % %     ss = 1; 
-% % %     figure('visible', false, 'position', [0,0,600,400]);
-% % %     makeConnectivityHeatMap2(inMat, pMat, ...
-% % %                             ss, curDat.frex, pltim)
-% % %     export_fig([figDat 'pubFigs/' 'sup3_' 'connectionHeatmap_HFB_tVal_'...
-% % %         regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
-% % % 
-% % %     %p vals
-% % %     tmpMat = curDat.enc_image_p; 
-% % %     tmpMat(tim<-450 | tim>3000, :) = []; 
-% % %     allConnections(reg1, reg2, :, :, 4, 1) = tmpMat; 
-% % % 
-% % %     tmpMat = curDat.enc_HFB_p; 
-% % %     allConnections2(reg1, reg2, :, :, 4, 1) = tmpMat;
+% % % set(gcf,'color','w');
+% % % box off;
+% % % ax=gca;ax.LineWidth=4;
+% % % export_fig([figDat 'pubFigs/' 'ppc_' direction{d} '_' varCodes{cc} '_' ...
+% % %                 curDat.reg1 '_' curDat.reg2 '_' num2str(clu) '.jpg'], '-r300')
 % % % 
 % % % 
-% % %     %update the aovDat for export IMAGE data
-% % % %     pmask = squeeze(allConnections(reg1, reg2, :,:,4,1));
-% % % %     if sum(pmask<.05, 'all') > 0 %only collecting significant connections
-% % % %         %hits
-% % % %         hitMat = curDat.enc_image_hitVals; 
-% % % %         hitMat(tim<-450 | tim>3000, :, :) = []; 
-% % % %         hitMat = reshape(hitMat, [prod(size(hitMat,[1,2])), size(hitMat,3)]);
-% % % %         %misses
-% % % %         missMat = curDat.enc_image_missVals; 
-% % % %         missMat(tim<-450 | tim>3000, :, :) = []; 
-% % % %         missMat = reshape(missMat, [prod(size(missMat,[1,2])), size(missMat,3)]);
-% % % %         %get the clusters of significance
-% % % %         pmask = pmask<.05; 
-% % % %         [L, num] = bwlabel(pmask, 8);
-% % % %         L = L(:);
-% % % %         freqMat = repmat(curDat.frex, size(pmask,1),1);
-% % % %         freqMat = freqMat(:); 
-% % % %         timMat = repmat(tim(tim>=-450 & tim<=3000)', 1,size(pmask,2));
-% % % %         timMat = timMat(:); 
-% % % %         for mi = 1:num %loop over the clusters of significance
-% % % %             N = size(hitMat, 2); 
-% % % %            
-% % % %             aovDat.PPC(ai:ai+N-1) =  mean(hitMat(L==mi, :),1); 
-% % % %             aovDat.freq(ai:ai+N-1) = mean(freqMat(L==mi)); 
-% % % %             aovDat.tim(ai:ai+N-1) = mean(timMat(L==mi)); 
-% % % %             aovDat.encRet(ai:ai+N-1) = repmat("enc", N,1); 
-% % % %             aovDat.pairID(ai:ai+N-1) = curDat.pairIDs; 
-% % % %             aovDat.hitMiss(ai:ai+N-1) = repmat("hit", N,1); 
-% % % %             aovDat.reg1(ai:ai+N-1) = repmat(curDat.reg1, N,1); 
-% % % %             aovDat.reg2(ai:ai+N-1) = repmat(curDat.reg2, N,1); 
-% % % %             aovDat.IMG_HFB(ai:ai+N-1) = repmat("IMG", N,1); 
-% % % % 
-% % % %         end
-% % % % 
-% % % %     end
-% % % 
-% % %     %RETRIEVAL: 
-% % %     tim = curDat.ret_image_tim; 
-% % %     %hit vals
-% % %     tmpMat = curDat.ret_image_hitVals; 
-% % %     tmpMat(tim<-450 | tim>3000, :, :) = []; 
-% % %     allConnections(reg1, reg2, :, :, 1, 2) = mean(tmpMat,3); 
-% % % 
-% % %     %hit image figure
-% % %     %ss: 1 = HFB, 0 = image
-% % %     inMat = squeeze(mean(curDat.ret_image_hitVals,3)); 
-% % %     inMat(inMat<0) = 0; 
-% % %     inMat = sqrt(inMat); 
-% % %     pltim = tim(tim>=-450 & tim<=3000); 
-% % %     inMat(tim<-450 | tim>3000, :) = []; 
-% % %     ss = 0; 
-% % %     pMat = curDat.ret_image_p; 
-% % %     pMat(tim<-450 | tim>3000, :) = []; 
-% % %     figure('visible', false, 'position', [0,0,600,400])
-% % %     makeConnectivityHeatMap2(inMat, pMat, ...
-% % %                             ss, curDat.frex, pltim)
-% % %     export_fig([figDat 'pubFigs/' 'sup3_' 'connectionHeatmap_ret_image_hit_'...
-% % %         regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
+% % % % end linked boxplot
 % % % 
 % % % 
-% % %     tmpMat = curDat.ret_HFB_hitVals; 
-% % %     allConnections2(reg1, reg2, :, :, 1, 2) = mean(tmpMat,3);
-% % % 
-% % %     %hit HFB figure
-% % %     %ss: 1 = HFB, 0 = image
-% % %     inMat = squeeze(mean(curDat.ret_HFB_hitVals,3)); 
-% % %     inMat(inMat<0) = 0; 
-% % %     inMat = sqrt(inMat); 
-% % %     pltim = tim(tim>=-450 & tim<=3000); 
-% % %     pMat = curDat.ret_HFB_p;
-% % %     ss = 1; 
-% % %     figure('visible', false, 'position', [0,0,600,400])
-% % %     makeConnectivityHeatMap2(inMat, pMat, ...
-% % %                             ss, curDat.frex, pltim)
-% % %     export_fig([figDat 'pubFigs/' 'sup3_' 'connectionHeatmap_ret_HFB_hit_'...
-% % %         regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
-% % % 
-% % %     %miss vals
-% % %     tmpMat = curDat.ret_image_missVals; 
-% % %     tmpMat(tim<-450 | tim>3000, :, :) = []; 
-% % %     allConnections(reg1, reg2, :, :, 2, 2) = mean(tmpMat,3); 
 % % % 
 % % % 
-% % %     %miss image figure
-% % %      %ss: 1 = HFB, 0 = image
-% % %     inMat = squeeze(mean(curDat.ret_image_missVals,3)); 
-% % %     inMat(inMat<0) = 0; 
-% % %     inMat = sqrt(inMat); 
-% % %     pltim = tim(tim>=-450 & tim<=3000); 
-% % %     inMat(tim<-450 | tim>3000, :) = []; 
-% % %     pMat = curDat.ret_image_p; 
-% % %     pMat(tim<-450 | tim>3000, :) = []; 
-% % %     ss = 0; 
-% % %     figure('visible', false, 'position', [0,0,600,400]);
-% % %     makeConnectivityHeatMap2(inMat, pMat, ...
-% % %                             ss, curDat.frex, pltim)
-% % %     export_fig([figDat 'pubFigs/' 'sup3_' 'connectionHeatmap_ret_image_miss_'...
-% % %         regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
 % % % 
-% % %     tmpMat = curDat.ret_HFB_missVals; 
-% % %     allConnections2(reg1, reg2, :, :, 2, 2) = mean(tmpMat,3); 
 % % % 
-% % %     %miss HFB figure
-% % %     %ss: 1 = HFB, 0 = image
-% % %     inMat = squeeze(mean(curDat.ret_HFB_missVals,3)); 
-% % %     inMat(inMat<0) = 0; 
-% % %     inMat = sqrt(inMat); 
-% % %     pltim = tim(tim>=-450 & tim<=3000);  
-% % %     pMat = curDat.ret_HFB_p;
-% % %     ss = 1; 
-% % %     figure('visible', false, 'position', [0,0,600,400]);
-% % %     makeConnectivityHeatMap2(inMat, pMat, ...
-% % %                             ss, curDat.frex, pltim)
-% % %     export_fig([figDat 'pubFigs/' 'sup3_' 'connectionHeatmap_ret_HFB_miss_'...
-% % %         regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
 % % % 
-% % %     %t vals
-% % %     tmpMat = curDat.ret_image_tVal; 
-% % %     tmpMat(tim<-450 | tim>3000, :) = []; 
-% % %     allConnections(reg1, reg2, :, :, 3, 2) = tmpMat; 
 % % % 
-% % %      %image t values
-% % %     %ss: 1 = HFB, 0 = image
-% % %     inMat = curDat.ret_image_tVal;  
-% % %     pltim = tim(tim>=-450 & tim<=3000); 
-% % %     inMat(tim<-450 | tim>3000, :) = []; 
-% % %     pMat = curDat.ret_image_p; 
-% % %     pMat(tim<-450 | tim>3000, :) = []; 
-% % %     ss = 0; 
-% % %     figure('visible', false, 'position', [0,0,600,400]);
-% % %     makeConnectivityHeatMap2(inMat, pMat, ...
-% % %                             ss, curDat.frex, pltim)
-% % %     export_fig([figDat 'pubFigs/' 'sup3_' 'connectionHeatmap_ret_image_tVal_'...
-% % %         regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
 % % % 
-% % %     tmpMat = curDat.ret_HFB_tVal; 
-% % %     allConnections2(reg1, reg2, :, :, 3, 2) = tmpMat; 
 % % % 
-% % %      %HFB t values 
-% % %      %ss: 1 = HFB, 0 = image
-% % %     inMat = curDat.ret_HFB_tVal;  
-% % %     pMat = curDat.ret_HFB_p; 
-% % %     ss = 1; 
-% % %     figure('visible', false, 'position', [0,0,600,400]);
-% % %     makeConnectivityHeatMap2(inMat, pMat, ...
-% % %                             ss, curDat.frex, pltim)
-% % %     export_fig([figDat 'pubFigs/' 'sup3_' 'connectionHeatmap_ret_HFB_tVal_'...
-% % %         regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
 % % % 
-% % %     %p vals
-% % %     tmpMat = curDat.ret_image_p; 
-% % %     tmpMat(tim<-450 | tim>3000, :) = []; 
-% % %     allConnections(reg1, reg2, :, :, 4, 2) = tmpMat; 
+% % %          
+% % %             varName = ['ppc_' direction{d} '_' varCodes{cc} '_' ...
+% % %                 curDat.reg1 '_' curDat.reg2 '_' num2str(clu)];
+% % %             altVar = ['ppc_' direction{d} '_' varCodes{cc} '_' ...
+% % %                 curDat.reg2 '_' curDat.reg1 '_' num2str(clu)];
+% % %             allSig.(varName) = nan(length(allSig.subID),1);
+% % %         %store raw differences for significant time periods: 
+% % %         
+% % %         for sub = 1:length(uniIDs)
+% % %             %store subject means into allSig for later correlation to
+% % %             %memory
+% % %             if cc<3 %image connections are symmetric but HFB are not! 
+% % %                 idx = find((strcmp(allSig.reg, curDat.reg1) & ...
+% % %                            strcmp(allSig.subID, uniIDs{sub})) |...
+% % %                            (strcmp(allSig.reg, curDat.reg2) & ...
+% % %                            strcmp(allSig.subID, uniIDs{sub})));
+% % %             else
+% % %                 
+% % %                 idx = find((strcmp(allSig.reg, curDat.reg1) & ...
+% % %                            strcmp(allSig.subID, uniIDs{sub})));
+% % %             end
+% % %              allSig.(varName)(idx) = ...
+% % %                  mean(chanMeans(ismember(subIDs, uniIDs{sub})));
 % % % 
-% % %     tmpMat = curDat.ret_HFB_p; 
-% % %     allConnections2(reg1, reg2, :, :, 4, 2) = tmpMat; 
+% % %         end
+% % %             end
+% % %         end
+% % % 
+% % % 
+% % %     end
+% % % 
+% % %     end
+% % %     end
+% % %     %end update allSig
+
+    tim = curDat.enc_image_tim; 
+    reg1 = find(cellfun(@(x) strcmp(x, curDat.reg1), regions)); 
+    reg2 = find(cellfun(@(x) strcmp(x, curDat.reg2), regions)); 
+    %ENCODING: 
+    %hit vals
+    tmpMat = curDat.enc_image_hitVals; 
+    tmpMat(tim<-450 | tim>3000, :, :) = []; 
+    allConnections(reg1, reg2, :, :, 1, 1) = mean(tmpMat,3); 
+
+    %hit image figure
+    %ss: 1 = HFB, 0 = image
+    inMat = squeeze(mean(curDat.enc_image_hitVals,3)); 
+    inMat(inMat<0) = 0; 
+    inMat = sqrt(inMat); 
+    pltim = tim(tim>=-450 & tim<=3000); 
+    inMat(tim<-450 | tim>3000, :) = []; 
+    ss = 0; 
+    pMat = curDat.enc_image_p; 
+    pMat(tim<-450 | tim>3000, :) = []; 
+    figure('visible', false, 'position', [0,0,600,400])
+    makeConnectivityHeatMap2(inMat, pMat, ...
+                            ss, curDat.frex, pltim)
+    export_fig([figDat 'pubFigs/' 'sup3_' 'connectionHeatmap_image_hit_'...
+        regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
+
+
+    tmpMat = curDat.enc_HFB_hitVals; 
+    allConnections2(reg1, reg2, :, :, 1, 1) = mean(tmpMat,3); 
+
+    %hit HFB figure
+    %ss: 1 = HFB, 0 = image
+    inMat = squeeze(mean(curDat.enc_HFB_hitVals,3)); 
+    inMat(inMat<0) = 0; 
+    inMat = sqrt(inMat); 
+    pltim = tim(tim>=-450 & tim<=3000); 
+    pMat = curDat.enc_HFB_p;
+    ss = 1; 
+    figure('visible', false, 'position', [0,0,600,400])
+    makeConnectivityHeatMap2(inMat, pMat, ...
+                            ss, curDat.frex, pltim)
+    export_fig([figDat 'pubFigs/' 'sup3_' 'connectionHeatmap_HFB_hit_'...
+        regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
+
+
+    %miss vals
+    tmpMat = curDat.enc_image_missVals; 
+    tmpMat(tim<-450 | tim>3000, :, :) = []; 
+    allConnections(reg1, reg2, :, :, 2, 1) = mean(tmpMat,3); 
+
+
+    %miss image figure
+     %ss: 1 = HFB, 0 = image
+    inMat = squeeze(mean(curDat.enc_image_missVals,3)); 
+    inMat(inMat<0) = 0; 
+    inMat = sqrt(inMat); 
+    pltim = tim(tim>=-450 & tim<=3000); 
+    inMat(tim<-450 | tim>3000, :) = []; 
+    pMat = curDat.enc_image_p; 
+    pMat(tim<-450 | tim>3000, :) = []; 
+    ss = 0; 
+    figure('visible', false, 'position', [0,0,600,400]);
+    makeConnectivityHeatMap2(inMat, pMat, ...
+                            ss, curDat.frex, pltim)
+    export_fig([figDat 'pubFigs/' 'sup3_' 'connectionHeatmap_image_miss_'...
+        regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
+
+
+    tmpMat = curDat.enc_HFB_missVals; 
+    allConnections2(reg1, reg2, :, :, 2, 1) = mean(tmpMat,3);
+
+    %miss HFB figure
+    %ss: 1 = HFB, 0 = image
+    inMat = squeeze(mean(curDat.enc_HFB_missVals,3)); 
+    inMat(inMat<0) = 0; 
+    inMat = sqrt(inMat); 
+    pltim = tim(tim>=-450 & tim<=3000);  
+    pMat = curDat.enc_HFB_p;
+    ss = 1; 
+    figure('visible', false, 'position', [0,0,600,400]);
+    makeConnectivityHeatMap2(inMat, pMat, ...
+                            ss, curDat.frex, pltim)
+    export_fig([figDat 'pubFigs/' 'sup3_' 'connectionHeatmap_HFB_miss_'...
+        regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
+
+
+    %t vals
+    tmpMat = curDat.enc_image_tVal; 
+    tmpMat(tim<-450 | tim>3000, :) = []; 
+    allConnections(reg1, reg2, :, :, 3, 1) = tmpMat; 
+
+    %image t values
+    %ss: 1 = HFB, 0 = image
+    inMat = curDat.enc_image_tVal;  
+    pltim = tim(tim>=-450 & tim<=3000); 
+    inMat(tim<-450 | tim>3000, :) = []; 
+    pMat = curDat.enc_image_p; 
+    pMat(tim<-450 | tim>3000, :) = []; 
+    ss = 0; 
+    figure('visible', false, 'position', [0,0,600,400]);
+    makeConnectivityHeatMap2(inMat, pMat, ...
+                            ss, curDat.frex, pltim)
+    export_fig([figDat 'pubFigs/' 'sup3_' 'connectionHeatmap_image_tVal_'...
+        regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
+
+
+
+    tmpMat = curDat.enc_HFB_tVal; 
+    allConnections2(reg1, reg2, :, :, 3, 1) = tmpMat;
+
+    %HFB t values 
+     %ss: 1 = HFB, 0 = image
+    inMat = curDat.enc_HFB_tVal;  
+    pMat = curDat.enc_HFB_p; 
+    ss = 1; 
+    figure('visible', false, 'position', [0,0,600,400]);
+    makeConnectivityHeatMap2(inMat, pMat, ...
+                            ss, curDat.frex, pltim)
+    export_fig([figDat 'pubFigs/' 'sup3_' 'connectionHeatmap_HFB_tVal_'...
+        regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
+
+    %p vals
+    tmpMat = curDat.enc_image_p; 
+    tmpMat(tim<-450 | tim>3000, :) = []; 
+    allConnections(reg1, reg2, :, :, 4, 1) = tmpMat; 
+
+    tmpMat = curDat.enc_HFB_p; 
+    allConnections2(reg1, reg2, :, :, 4, 1) = tmpMat;
+
+
+    %update the aovDat for export IMAGE data
+%     pmask = squeeze(allConnections(reg1, reg2, :,:,4,1));
+%     if sum(pmask<.05, 'all') > 0 %only collecting significant connections
+%         %hits
+%         hitMat = curDat.enc_image_hitVals; 
+%         hitMat(tim<-450 | tim>3000, :, :) = []; 
+%         hitMat = reshape(hitMat, [prod(size(hitMat,[1,2])), size(hitMat,3)]);
+%         %misses
+%         missMat = curDat.enc_image_missVals; 
+%         missMat(tim<-450 | tim>3000, :, :) = []; 
+%         missMat = reshape(missMat, [prod(size(missMat,[1,2])), size(missMat,3)]);
+%         %get the clusters of significance
+%         pmask = pmask<.05; 
+%         [L, num] = bwlabel(pmask, 8);
+%         L = L(:);
+%         freqMat = repmat(curDat.frex, size(pmask,1),1);
+%         freqMat = freqMat(:); 
+%         timMat = repmat(tim(tim>=-450 & tim<=3000)', 1,size(pmask,2));
+%         timMat = timMat(:); 
+%         for mi = 1:num %loop over the clusters of significance
+%             N = size(hitMat, 2); 
+%            
+%             aovDat.PPC(ai:ai+N-1) =  mean(hitMat(L==mi, :),1); 
+%             aovDat.freq(ai:ai+N-1) = mean(freqMat(L==mi)); 
+%             aovDat.tim(ai:ai+N-1) = mean(timMat(L==mi)); 
+%             aovDat.encRet(ai:ai+N-1) = repmat("enc", N,1); 
+%             aovDat.pairID(ai:ai+N-1) = curDat.pairIDs; 
+%             aovDat.hitMiss(ai:ai+N-1) = repmat("hit", N,1); 
+%             aovDat.reg1(ai:ai+N-1) = repmat(curDat.reg1, N,1); 
+%             aovDat.reg2(ai:ai+N-1) = repmat(curDat.reg2, N,1); 
+%             aovDat.IMG_HFB(ai:ai+N-1) = repmat("IMG", N,1); 
+% 
+%         end
+% 
+%     end
+
+    %RETRIEVAL: 
+    tim = curDat.ret_image_tim; 
+    %hit vals
+    tmpMat = curDat.ret_image_hitVals; 
+    tmpMat(tim<-450 | tim>3000, :, :) = []; 
+    allConnections(reg1, reg2, :, :, 1, 2) = mean(tmpMat,3); 
+
+    %hit image figure
+    %ss: 1 = HFB, 0 = image
+    inMat = squeeze(mean(curDat.ret_image_hitVals,3)); 
+    inMat(inMat<0) = 0; 
+    inMat = sqrt(inMat); 
+    pltim = tim(tim>=-450 & tim<=3000); 
+    inMat(tim<-450 | tim>3000, :) = []; 
+    ss = 0; 
+    pMat = curDat.ret_image_p; 
+    pMat(tim<-450 | tim>3000, :) = []; 
+    figure('visible', false, 'position', [0,0,600,400])
+    makeConnectivityHeatMap2(inMat, pMat, ...
+                            ss, curDat.frex, pltim)
+    export_fig([figDat 'pubFigs/' 'sup3_' 'connectionHeatmap_ret_image_hit_'...
+        regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
+
+
+    tmpMat = curDat.ret_HFB_hitVals; 
+    allConnections2(reg1, reg2, :, :, 1, 2) = mean(tmpMat,3);
+
+    %hit HFB figure
+    %ss: 1 = HFB, 0 = image
+    inMat = squeeze(mean(curDat.ret_HFB_hitVals,3)); 
+    inMat(inMat<0) = 0; 
+    inMat = sqrt(inMat); 
+    pltim = tim(tim>=-450 & tim<=3000); 
+    pMat = curDat.ret_HFB_p;
+    ss = 1; 
+    figure('visible', false, 'position', [0,0,600,400])
+    makeConnectivityHeatMap2(inMat, pMat, ...
+                            ss, curDat.frex, pltim)
+    export_fig([figDat 'pubFigs/' 'sup3_' 'connectionHeatmap_ret_HFB_hit_'...
+        regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
+
+    %miss vals
+    tmpMat = curDat.ret_image_missVals; 
+    tmpMat(tim<-450 | tim>3000, :, :) = []; 
+    allConnections(reg1, reg2, :, :, 2, 2) = mean(tmpMat,3); 
+
+
+    %miss image figure
+     %ss: 1 = HFB, 0 = image
+    inMat = squeeze(mean(curDat.ret_image_missVals,3)); 
+    inMat(inMat<0) = 0; 
+    inMat = sqrt(inMat); 
+    pltim = tim(tim>=-450 & tim<=3000); 
+    inMat(tim<-450 | tim>3000, :) = []; 
+    pMat = curDat.ret_image_p; 
+    pMat(tim<-450 | tim>3000, :) = []; 
+    ss = 0; 
+    figure('visible', false, 'position', [0,0,600,400]);
+    makeConnectivityHeatMap2(inMat, pMat, ...
+                            ss, curDat.frex, pltim)
+    export_fig([figDat 'pubFigs/' 'sup3_' 'connectionHeatmap_ret_image_miss_'...
+        regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
+
+    tmpMat = curDat.ret_HFB_missVals; 
+    allConnections2(reg1, reg2, :, :, 2, 2) = mean(tmpMat,3); 
+
+    %miss HFB figure
+    %ss: 1 = HFB, 0 = image
+    inMat = squeeze(mean(curDat.ret_HFB_missVals,3)); 
+    inMat(inMat<0) = 0; 
+    inMat = sqrt(inMat); 
+    pltim = tim(tim>=-450 & tim<=3000);  
+    pMat = curDat.ret_HFB_p;
+    ss = 1; 
+    figure('visible', false, 'position', [0,0,600,400]);
+    makeConnectivityHeatMap2(inMat, pMat, ...
+                            ss, curDat.frex, pltim)
+    export_fig([figDat 'pubFigs/' 'sup3_' 'connectionHeatmap_ret_HFB_miss_'...
+        regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
+
+    %t vals
+    tmpMat = curDat.ret_image_tVal; 
+    tmpMat(tim<-450 | tim>3000, :) = []; 
+    allConnections(reg1, reg2, :, :, 3, 2) = tmpMat; 
+
+     %image t values
+    %ss: 1 = HFB, 0 = image
+    inMat = curDat.ret_image_tVal;  
+    pltim = tim(tim>=-450 & tim<=3000); 
+    inMat(tim<-450 | tim>3000, :) = []; 
+    pMat = curDat.ret_image_p; 
+    pMat(tim<-450 | tim>3000, :) = []; 
+    ss = 0; 
+    figure('visible', false, 'position', [0,0,600,400]);
+    makeConnectivityHeatMap2(inMat, pMat, ...
+                            ss, curDat.frex, pltim)
+    export_fig([figDat 'pubFigs/' 'sup3_' 'connectionHeatmap_ret_image_tVal_'...
+        regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
+
+    tmpMat = curDat.ret_HFB_tVal; 
+    allConnections2(reg1, reg2, :, :, 3, 2) = tmpMat; 
+
+     %HFB t values 
+     %ss: 1 = HFB, 0 = image
+    inMat = curDat.ret_HFB_tVal;  
+    pMat = curDat.ret_HFB_p; 
+    ss = 1; 
+    figure('visible', false, 'position', [0,0,600,400]);
+    makeConnectivityHeatMap2(inMat, pMat, ...
+                            ss, curDat.frex, pltim)
+    export_fig([figDat 'pubFigs/' 'sup3_' 'connectionHeatmap_ret_HFB_tVal_'...
+        regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
+
+    %p vals
+    tmpMat = curDat.ret_image_p; 
+    tmpMat(tim<-450 | tim>3000, :) = []; 
+    allConnections(reg1, reg2, :, :, 4, 2) = tmpMat; 
+
+    tmpMat = curDat.ret_HFB_p; 
+    allConnections2(reg1, reg2, :, :, 4, 2) = tmpMat; 
 
 end
 
-writetable(allSig, ...
-    [codePre 'HpcAccConnectivityProject\allSig.csv'])
+% writetable(allSig, ...
+%     [codePre 'HpcAccConnectivityProject\allSig.csv'])
 
 %% which frequencies have the most connectivity? and when? 
 
@@ -2507,13 +2607,13 @@ plotConnectionSchematic(plotMat, curDat.frex, "tVal", ...
 
 %mid encoding
 plotMat = squeeze(allConnections(keyRegIdx, keyRegIdx,...
-                       tim>=-500 & tim<=1500, :, :, 1));
+                       tim>=500 & tim<=1500, :, :, 1));
 plotConnectionSchematic(plotMat, curDat.frex, "tVal", ...
     regions, keyRegIdx, 'freq', regColors, false, [fn 'enc2.jpg'], fn2, fn3)
 
 %late encoding
 plotMat = squeeze(allConnections(keyRegIdx, keyRegIdx,...
-                       tim>=-1500 & tim<=3000, :, :, 1));
+                       tim>=1500 & tim<=3000, :, :, 1));
 plotConnectionSchematic(plotMat, curDat.frex, "tVal", ...
     regions, keyRegIdx, 'freq', regColors, false, [fn 'enc3.jpg'], fn2, fn3)
 
@@ -2525,13 +2625,13 @@ plotConnectionSchematic(plotMat, curDat.frex, "tVal", ...
 
 %mid retrieval
 plotMat = squeeze(allConnections(keyRegIdx, keyRegIdx,...
-                       tim>=-500 & tim<=1500, :, :, 2));
+                       tim>=500 & tim<=1500, :, :, 2));
 plotConnectionSchematic(plotMat, curDat.frex, "tVal", ...
     regions, keyRegIdx, 'freq', regColors, false, [fn 'ret2.jpg'], fn2, fn3)
 
 %late retrieval
 plotMat = squeeze(allConnections(keyRegIdx, keyRegIdx,...
-                       tim>=-1500 & tim<=3000, :, :, 2));
+                       tim>=1500 & tim<=3000, :, :, 2));
 plotConnectionSchematic(plotMat, curDat.frex, "tVal", ...
     regions, keyRegIdx, 'freq', regColors, false, [fn 'ret3.jpg'], fn2, fn3)
 
@@ -2873,34 +2973,33 @@ end
 
 %% EXAMPLE 2! HIP PHG
 
-hip_enc_HFB_files = {'hip_mtl_enc_HFB_1_1.mat',...
-                      'hip_mtl_enc_HFB_1_2.mat',...
-                      'hip_mtl_enc_HFB_1_3.mat',...
-                      'hip_mtl_enc_HFB_1_4.mat',...
-                      'hip_mtl_enc_HFB_1_5.mat',...
-                      'hip_mtl_enc_HFB_1_6.mat',...
-                      'hip_mtl_enc_HFB_1_7.mat',...
-                      'hip_mtl_enc_HFB_1_8.mat',...
-                      'hip_mtl_enc_HFB_1_9.mat',...
-                      'hip_mtl_enc_HFB_1_10.mat',...
-                      'hip_mtl_enc_HFB_1_11.mat',...
-                      'hip_mtl_enc_HFB_1_21.mat',...
-                      'hip_mtl_enc_HFB_1_31.mat',...
-                      'hip_mtl_enc_HFB_1_41.mat',...
-                      'hip_mtl_enc_HFB_1_51.mat',...
-                      'hip_mtl_enc_image_1_52.mat',... %using an image example! 
-                      'hip_mtl_enc_HFB_1_52.mat'};
+hip_enc_HFB_files = {'hip_acc_ret_HFB_2_1.mat',...
+                      'hip_acc_ret_HFB_2_2.mat',...
+                      'hip_acc_ret_HFB_2_3.mat',...
+                      'hip_acc_ret_HFB_2_5.mat',...
+                      'hip_acc_ret_HFB_2_7.mat',...
+                      'hip_acc_ret_HFB_2_9.mat',...
+                      'hip_acc_ret_HFB_2_11.mat',...
+                      'hip_acc_ret_HFB_2_13.mat',...
+                      'hip_acc_ret_HFB_2_15.mat',...
+                      'hip_acc_ret_HFB_2_17.mat',...
+                      'hip_acc_ret_HFB_2_19.mat',...
+                      'hip_acc_ret_HFB_2_21.mat',...
+                      'hip_acc_ret_HFB_2_23.mat',...
+                      'hip_acc_ret_HFB_2_25.mat',...
+                      'hip_acc_ret_HFB_2_26.mat',...
+                      'hip_acc_ret_HFB_2_27.mat',... %using an image example! 
+                      'hip_acc_ret_HFB_3_1.mat'};
 
 for ii = 1:length(hip_enc_HFB_files)
-% ii = 16 is used in figure for image locked
-%ii = 17 for HFB locked
+% ii = 12 is used in figure
 exampDat = load(['R:\MSS\Johnson_Lab\dtf8829\QuestConnect\graphAnalysis\out\'...
                  hip_enc_HFB_files{ii}]).outDat;
 
-missName = ['Fig4_miss_' num2str(ii) '_hip_phg_' exampDat.subID];
-hitName = ['Fig4_hit_' num2str(ii) '_hip_phg_' exampDat.subID]; 
+missName = ['Fig4_miss_' num2str(ii) '_hip_acc_ret_HFB_' exampDat.subID];
+hitName = ['Fig4_hit_' num2str(ii) '_hip_acc_ret_HFB_' exampDat.subID]; 
 
-hipModel =  stlread('R:\MSS\Johnson_Lab\dtf8829\GitHub\HpcAccConnectivityProject\bilatHippo.stl');
+hipModel =  stlread('G:\My Drive\GitHub\HpcAccConnectivityProject\bilatHippo.stl');
 %get the 3d locations of the electrodes: 
 chanDat = load(['R:\MSS\Johnson_Lab\dtf8829\QuestConnect\CHANDAT\finished\chanDat_'...
                 exampDat.subID '_001.mat']).chanDat;
@@ -2917,20 +3016,20 @@ test = yeo7.tissue>0;
 indices = zeros(1003785, 3); 
 vals = zeros(1003785, 1); 
 indi = 1; 
-for ii = 1:256
+for nn = 1:256
     for jj = 1:256
         for kk = 1:256
-            if test(ii,jj,kk)
-                indices(indi, :) = [ii*-1+127,...
+            if test(nn,jj,kk)
+                indices(indi, :) = [nn*-1+127,...
                                     kk*-1+145,...
                                     jj*-1+147]; 
-                vals(indi) = yeo7.tissue(ii, jj, kk); 
+                vals(indi) = yeo7.tissue(nn, jj, kk); 
                 indi = indi + 1; 
             end
         end
     end
 end
-figure('position', [50,50,1000,1000])
+figure('visible', false, 'position', [50,50,1000,1000])
 test = randsample(1:indi, 10000, false); 
 hold off
 scatter3(indices(test,1), indices(test,2), indices(test,3), 1, 'k', 'MarkerEdgeAlpha', .3)
@@ -2968,12 +3067,12 @@ axis off;
 hitBin = exampDat.hitMat>.10; 
 missBin = exampDat.missMat>.10; 
 
-for ii = 1:size(hitBin,1)
+for nn = 1:size(hitBin,1)
     for jj = 1:size(hitBin,1)
-        if hitBin(ii,jj)
-            plot3([exampDat.chanpos(ii,1), exampDat.chanpos(jj,1)], ...
-                  [-exampDat.chanpos(ii,2), -exampDat.chanpos(jj,2)], ...
-                  [exampDat.chanpos(ii,3), exampDat.chanpos(jj,3)], ...
+        if hitBin(nn,jj)
+            plot3([exampDat.chanpos(nn,1), exampDat.chanpos(jj,1)], ...
+                  [-exampDat.chanpos(nn,2), -exampDat.chanpos(jj,2)], ...
+                  [exampDat.chanpos(nn,3), exampDat.chanpos(jj,3)], ...
                   'color', 'k')
         end
 
@@ -3005,12 +3104,12 @@ plot3([exampDat.chanpos(chi,1), exampDat.chanpos(chi2,1)], ...
       [exampDat.chanpos(chi,3), exampDat.chanpos(chi2,3)], ...
       'color', 'red', 'linewidth', 3)
 
-for ii = 1:size(missBin,1)
+for nn = 1:size(missBin,1)
     for jj = 1:size(missBin,1)
-        if missBin(ii,jj)
-            plot3([exampDat.chanpos(ii,1), exampDat.chanpos(jj,1)], ...
-                  [-exampDat.chanpos(ii,2), -exampDat.chanpos(jj,2)], ...
-                  [exampDat.chanpos(ii,3), exampDat.chanpos(jj,3)], ...
+        if missBin(nn,jj)
+            plot3([exampDat.chanpos(nn,1), exampDat.chanpos(jj,1)], ...
+                  [-exampDat.chanpos(nn,2), -exampDat.chanpos(jj,2)], ...
+                  [exampDat.chanpos(nn,3), exampDat.chanpos(jj,3)], ...
                   'color', 'k')
         end
 
@@ -3031,7 +3130,7 @@ end
 %% example hip - PHG connections summary 
 
 
-ii = 16;
+ii = 12;
 exampDat = load(['R:\MSS\Johnson_Lab\dtf8829\QuestConnect\graphAnalysis\out\'...
                  hip_enc_HFB_files{ii}]).outDat;
 hitVal = triu(exampDat.hitMat,1); 
@@ -3042,22 +3141,24 @@ hitVal(hitVal==0) = [];
 missVal(missVal==0) = []; 
 hitValSIG = hitVal; 
 missValSIG = missVal; 
-figure
-histogram(hitVal, [0:.01:1], 'facecolor', hitCol)
-hold on 
-histogram(missVal, [0:.01:1], 'facecolor', missCol)
-hitVal(hitVal<0) = 0;  
-missVal(missVal<0) = 0; 
+% figure
+% histogram(hitVal, [min([hitVal; missVal]):.01:1], 'facecolor', hitCol)
+% hold on 
+% histogram(missVal, [min([hitVal; missVal]):.01:1], 'facecolor', missCol)
+% hitVal(hitVal<0) = 0;  
+% missVal(missVal<0) = 0; 
 
 figure
-histogram((hitVal - missVal) ./ (hitVal + missVal))
-
-
+histogram((hitVal - missVal))  %./ (hitVal + missVal))
+set(gcf,'color','w');
+box off;
+ax=gca;ax.LineWidth=4;
+xline(0, 'linewidth', 3, 'linestyle', '--')
 
 
 %% EXAMPLE 2 IMAGE LOCKED
 subID = 'SLCH010'; 
-hipModel =  stlread('R:\MSS\Johnson_Lab\dtf8829\GitHub\HpcAccConnectivityProject\bilatHippo.stl');
+hipModel =  stlread('G:\My Drive\GitHub\HpcAccConnectivityProject\bilatHippo.stl');
 ftpath = [codePre 'fieldtrip-20230118']; 
 yeo7 = ft_read_atlas(...
     fullfile(ftpath, ...
@@ -3087,13 +3188,14 @@ test = randsample(1:indi, 10000, false);
 
 
 subChans = dir('R:\MSS\Johnson_Lab\dtf8829\QuestConnect\CHANDAT\finished'); 
-subi = cellfun(@(x) isempty(strfind(x, subID)), {subChans.name});
+subi = cellfun(@(x) ~contains(x, subID), {subChans.name});
 subChans(subi,:) = []; 
 
 imHit = zeros(length(subChans));
 imMiss = imHit; 
 
 parfor ii = 1:length(subChans)
+    ii
     chanDat = load([subChans(ii).folder '/' subChans(ii).name]).chanDat;
     imHit(ii,:) = mean(chanDat.ISPC.hit_on(:, chanDat.HFB.onMulTim>=0 &...
                            chanDat.HFB.onMulTim<=1500, 5:11, 2), [2,3]);
@@ -3102,6 +3204,7 @@ parfor ii = 1:length(subChans)
 
 
 end
+chanDat = load([subChans(1).folder '/' subChans(1).name]).chanDat;
 imHit = imHit - eye(size(imHit)); 
 imMiss = imMiss - eye(size(imMiss)); 
 
@@ -3139,7 +3242,7 @@ for ii = 1:size(hitBin,1)
 end
 view([250,-130, 140])
 axis([-100, 100, -90, 90, -80, 80])
-export_fig([figDat 'pubFigs/' 'Fig4_' 'ExampleConnectionsHIT_image.jpg'], '-r300')
+% export_fig([figDat 'pubFigs/' 'Fig4_' 'ExampleConnectionsHIT_image.jpg'], '-r300')
 
 
 figure('position', [50,50,1000,1000])
@@ -3187,7 +3290,7 @@ for ii = 1:size(hitBin,1)
 end
 view([250,-130, 140])
 axis([-100, 100, -90, 90, -80, 80])
-export_fig([figDat 'pubFigs/' 'Fig4_' 'ExampleConnectionsMISS_image.jpg'], '-r300')
+% export_fig([figDat 'pubFigs/' 'Fig4_' 'ExampleConnectionsMISS_image.jpg'], '-r300')
 
 
 %% example image locked full graph connection 
@@ -3220,6 +3323,7 @@ set(gcf,'color','w');
 box off;
 ax=gca;ax.LineWidth=4;
 export_fig([figDat 'pubFigs/' 'Fig4_' 'hitMiss_overallScatter.jpg'], '-r300')
+corr(hitVal, missVal)
 
 figure('position', [50,50,500,500])
 scatter(missValSIG, hitValSIG, 'filled', 'markeredgealpha', .1, ...
@@ -3233,6 +3337,7 @@ set(gcf,'color','w');
 box off;
 ax=gca;ax.LineWidth=4;
 export_fig([figDat 'pubFigs/' 'Fig4_' 'hitMiss_SIGScatter.jpg'], '-r300')
+corr(hitValSIG, missValSIG)
 % 
 % figure
 % scatter(missValz, missValSIGz, 'markeredgealpha', .3)
@@ -3243,17 +3348,48 @@ export_fig([figDat 'pubFigs/' 'Fig4_' 'hitMiss_SIGScatter.jpg'], '-r300')
 % hold on 
 % plot([-.1, .8], [-.1, .8])
 
+% figure
+% histogram(hitValSIG - hitVal, [-1.6:.025:1.7], 'facecolor', hitCol, ...
+%     'normalization', 'probability')
+% hold on 
+% histogram(missValSIG - missVal, [-1.6:.025:1.7], 'facecolor', missCol, ...
+%     'normalization', 'probability')
+
 figure
-histogram(hitValSIG - hitVal, [-1.6:.025:1.7], 'facecolor', hitCol, ...
-    'normalization', 'probability')
+histogram(hitVal, [-.1:.01:.2], 'facecolor', hitCol)
 hold on 
-histogram(missValSIG - missVal, [-1.6:.025:1.7], 'facecolor', missCol, ...
-    'normalization', 'probability')
+histogram(missVal, [-.1:.01:.2], 'facecolor', missCol)
+xline(0, 'linewidth', 3, 'linestyle', '--')
+set(gcf,'color','w');
+box off;
+ax=gca;ax.LineWidth=4;
+
+export_fig([figDat 'pubFigs/' 'Fig4_' 'longTimeHist.jpg'], '-r300')
+
+figure
+histogram(hitVal, [-.1:.02:.7], 'facecolor', hitCol)
+hold on 
+histogram(missVal, [-.1:.02:.7], 'facecolor', missCol)
+xline(0, 'linewidth', 3, 'linestyle', '--')
+set(gcf,'color','w');
+box off;
+ax=gca;ax.LineWidth=4;
+xlim([.025, .7])
+ylim([0,10])
+export_fig([figDat 'pubFigs/' 'Fig4_' 'longTimeHist2.jpg'], '-r300')
+
+figure
+histogram(hitVal, [-.1:.01:.7], 'facecolor', hitCol)
+hold on 
+histogram(missVal, [-.1:.01:.7], 'facecolor', missCol)
+xline(0, 'linewidth', 3, 'linestyle', '--')
+set(gcf,'color','w');
+box off;
+ax=gca;ax.LineWidth=4;
+xlim([-.025, .025])
+export_fig([figDat 'pubFigs/' 'Fig4_' 'longTimeHist3.jpg'], '-r300')
 
 
-histogram(hitVal - missVal, [-.4:.01:.4], 'facecolor', hitCol)
-hold on 
-histogram(missVal, [0:.01:1], 'facecolor', missCol)
 hitVal = hitVal - min([hitVal; missVal]); 
 missVal = missVal - min([missVal; hitVal]);
 

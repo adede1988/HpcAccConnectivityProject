@@ -36,7 +36,7 @@ options(decorate.contr.Sum="",decorate.contrasts=c("[","]"))
 ```{r load data}
 
 # load in main data frame
-df <- read.csv("R:\\MSS\\Johnson_Lab\\dtf8829\\GitHub\\HpcAccConnectivityProject\\HFB_IMG_index.csv", header = T)
+df <- read.csv("G:\\My Drive\\GitHub\\HpcAccConnectivityProject\\HFB_IMG_index.csv", header = T)
 setwd('G:\\My Drive\\Johnson\\MTL_PFC_networkFigs\\Rfigs')
 # factorise variables
 

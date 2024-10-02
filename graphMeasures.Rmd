@@ -128,7 +128,7 @@ regColors <- data.frame(
 
 reg_order <- c("hip", "mtl", "acc", "dlPFC", "pPFC")
 
-timeSet_colors <- c("HFB" = "#b9e9e9", "image" = '#ffc9e4')  # For boxplots
+timeSet_colors <- c("HFB" = '#068a9c', "image" = '#770f10')  # For boxplots
 reg2_colors <- c("acc" = regColors$ACC, 
                  "dlPFC" = regColors$dlPFC, 
                  "hip" = regColors$Hip, 
@@ -431,6 +431,8 @@ outPlot <- ggplot(filter(long_df, encRet==er), aes(y = Saturation, x = hitMiss, 
     print(outPlot)
     dev.off()
     
+    tsColors = c('#068a9c', '#770f10')
+    
     outPlot <- ggplot(filter(long_df, encRet==er, hitMiss == 'hit'), aes(y = Char, x = timeSet, fill = timeSet)) +
   geom_flat_violin(aes(fill =  timeSet), position = position_nudge(x = .3, y = 0), adjust = 1.5, trim = FALSE, alpha = .5, colour = NA) +
   #geom_line(aes(group = realID), alpha = 0.2 , colour = "gray48", size = .8, position = position_dodge(0.3)) +
@@ -439,8 +441,8 @@ outPlot <- ggplot(filter(long_df, encRet==er), aes(y = Saturation, x = hitMiss, 
               position = position_jitterdodge(jitter.width = 0.2, jitter.height = 0, dodge.width = .1)) +
   geom_boxplot(aes(x = timeSet, y = Char, fill = timeSet), outlier.shape = NA, alpha = .5, width = .2, linewidth = 2, position = position_nudge(x = 0, y = 0), colour = "black") +
   ylab("Char path len") + xlab("HFB image") +
-  scale_color_manual(values=c("#b9e9e9", '#ffc9e4'), name = "memory") +
-  scale_fill_manual(values=c("#b9e9e9", '#ffc9e4'), name = "memory") +
+  scale_color_manual(values=tsColors, name = "memory") +
+  scale_fill_manual(values=tsColors, name = "memory") +
   theme_bw() +
   ylim(c(0, 50)) + 
   theme(legend.position = 'none', 
@@ -471,8 +473,8 @@ outPlot <- ggplot(filter(long_df, encRet==er, hitMiss == 'hit'), aes(y = ST, x =
               position = position_jitterdodge(jitter.width = 0.2, jitter.height = 0, dodge.width = .1)) +
   geom_boxplot(aes(x = timeSet, y = ST, fill = timeSet), outlier.shape = NA, alpha = .5, width = .2,linewidth = 2,position = position_nudge(x = 0, y = 0), colour = "black") +
   ylab("node strength (weighted)") + xlab("HFB image") +
-  scale_color_manual(values=c("#b9e9e9", '#ffc9e4'), name = "memory") +
-  scale_fill_manual(values=c("#b9e9e9", '#ffc9e4'), name = "memory") +
+  scale_color_manual(values=tsColors, name = "memory") +
+  scale_fill_manual(values=tsColors, name = "memory") +
   theme_bw()+
   ylim(c(-.025, .1)) + 
   theme(legend.position = 'none', 
@@ -502,8 +504,8 @@ outPlot <- ggplot(filter(long_df, encRet==er, hitMiss == 'hit'), aes(y = Saturat
               position = position_jitterdodge(jitter.width = 0.2, jitter.height = 0, dodge.width = .1)) +
   geom_boxplot(aes(x = timeSet, y = Saturation, fill = timeSet), outlier.shape = NA, alpha = .5, width = .2,linewidth = 2,position = position_nudge(x = 0, y = 0), colour = "black") +
   ylab("node strength (binarized)") + xlab("HFB image") +
-  scale_color_manual(values=c("#b9e9e9", '#ffc9e4'), name = "memory") +
-  scale_fill_manual(values=c("#b9e9e9", '#ffc9e4'), name = "memory") +
+  scale_color_manual(values=tsColors, name = "memory") +
+  scale_fill_manual(values=tsColors, name = "memory") +
   theme_bw() +
   ylim(c(0, .4))+
   theme(legend.position = 'none', 
