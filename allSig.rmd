@@ -214,8 +214,8 @@ write.csv(demoDFout, "G:\\My Drive\\GitHub\\HpcAccConnectivityProject\\demoTable
 
 #calculate correlations between physiology stats and memory performance
 corTest <- longDF  %>% group_by(type, phase, timeSet, reg1, reg2, regionphase, ogName) %>%
-  summarize(corVal = cor(memAcc, stat), 
-            corP = cor.test(memAcc, stat)[[3]],
+  summarize(corVal = cor(memD, stat), 
+            corP = cor.test(memD, stat)[[3]],
             count = n()) 
 
 

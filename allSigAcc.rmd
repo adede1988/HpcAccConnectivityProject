@@ -451,7 +451,7 @@ for(rr in 1:length(sigVars)){
       )
     
   png(paste( "R:\\MSS\\Johnson_Lab\\dtf8829\\publicationFigureData\\pubFigs\\" ,
-                'fig5','_acatter_',sigVars[rr], '.png', 
+                'fig5_NEW','_scatter_',sigVars[rr], '.png', 
                 sep = ''),         # File name
       width=600, height=600)
   print(outPlot)
