@@ -903,57 +903,68 @@ chanDat = load(['R:\MSS\Johnson_Lab\dtf8829\QuestConnect\CHANDAT\finished\' ...
         during = mean(abs(hilbert(HFBpeaksHITS(1400:1600,nn))));
         before = mean(abs(hilbert(HFBpeaksHITS(1200:1400,nn))));
         allRatios = [allRatios during/before];
-%         if during/before > 2 && ~exist([figDat 'pubFigs/exampleTrials/' ...
-%                  'highRatio_'  panelDat.reg '_'...
-%                  panelDat.phase '_' num2str(nn)  '.jpg'])
-%             fig = figure('visible', false);
-%             subplot 211
-%             plot(BroadBandPeaksHITS(:,nn) - BroadBandPeaksHITS(1501,nn))
-%             hold on 
-%             plot(HFBpeaksHITS(:,nn).*2)
-%             xlim([0,3001])
-%             xline(1501)
-% 
-%             title([num2str(round(during/before, 2)) ' during/before power'])
-% 
-%             subplot 212
-%             plot(BroadBandPeaksHITS(1200:1800,nn) - BroadBandPeaksHITS(1501,nn))
-%             hold on 
-%             plot(HFBpeaksHITS(1200:1800,nn).*2)
-%             xlim([0,600])
-%             xline(301)
-%             saveas(fig, [figDat 'pubFigs/exampleTrials/' ...
-%                  'highRatio_'  panelDat.reg '_'...
-%                  panelDat.phase '_' num2str(nn)  '.jpg'])
-% 
-%             
-%         end
-% 
-%         if during/before < 1.5 && ~exist([figDat 'pubFigs/exampleTrials/' ...
-%                  'lowRatio_'  panelDat.reg '_'...
-%                  panelDat.phase '_' num2str(nn)  '.jpg'])
-%             fig = figure('visible', false);
-%             subplot 211
-%             plot(BroadBandPeaksHITS(:,nn) - BroadBandPeaksHITS(1501,nn))
-%             hold on 
-%             plot(HFBpeaksHITS(:,nn).*2)
-%             xlim([0,3001])
-%             xline(1501)
-% 
-%             title([num2str(round(during/before, 2)) ' during/before power'])
-% 
-%             subplot 212
-%             plot(BroadBandPeaksHITS(1200:1800,nn) - BroadBandPeaksHITS(1501,nn))
-%             hold on 
-%             plot(HFBpeaksHITS(1200:1800,nn).*2)
-%             xlim([0,600])
-%             xline(301)
-%             saveas(fig, [figDat 'pubFigs/exampleTrials/' ...
-%                  'lowRatio_'  panelDat.reg '_'...
-%                  panelDat.phase '_' num2str(nn)  '.jpg'])
-% 
-%             
-%         end
+
+        %plotting individual events: 
+        if during/before > 2 && ~exist([figDat 'pubFigs/exampleTrials/' ...
+                 'highRatio_'  panelDat.reg '_'...
+                 panelDat.phase '_' num2str(nn)  '.jpg'])
+            fig = figure('visible', false);
+            subplot 211
+            plot(BroadBandPeaksHITS(:,nn) - BroadBandPeaksHITS(1501,nn),...
+                'color', 'k')
+            hold on 
+            plot(HFBpeaksHITS(:,nn).*2,...
+                'color', [191, 64, 191]./255)
+            xlim([0,3001])
+            xline(1501)
+
+            title([num2str(round(during/before, 2)) ' during/before power'])
+
+            subplot 212
+            plot(BroadBandPeaksHITS(1200:1800,nn) - BroadBandPeaksHITS(1501,nn),...
+                'color', 'k')
+            hold on 
+            plot(HFBpeaksHITS(1200:1800,nn).*2,...
+                'color', [191, 64, 191]./255)
+            xlim([0,600])
+            xline(301)
+            saveas(fig, [figDat 'pubFigs/exampleTrials/' ...
+                 'highRatio_'  panelDat.reg '_'...
+                 panelDat.phase '_' num2str(nn)  '.jpg'])
+
+
+        end
+
+        if during/before < 1.5 && ~exist([figDat 'pubFigs/exampleTrials/' ...
+                 'lowRatio_'  panelDat.reg '_'...
+                 panelDat.phase '_' num2str(nn)  '.jpg'])
+            fig = figure('visible', false);
+            subplot 211
+             plot(BroadBandPeaksHITS(:,nn) - BroadBandPeaksHITS(1501,nn),...
+                'color', 'k')
+             hold on 
+            plot(HFBpeaksHITS(:,nn).*2,...
+                'color', [191, 64, 191]./255)
+            xlim([0,3001])
+            xline(1501)
+
+            title([num2str(round(during/before, 2)) ' during/before power'])
+
+            subplot 212
+            plot(BroadBandPeaksHITS(1200:1800,nn) - ...
+                BroadBandPeaksHITS(1501,nn),'color', 'k')
+            hold on 
+            plot(HFBpeaksHITS(1200:1800,nn).*2,...
+                'color', [191, 64, 191]./255)
+            xlim([0,600])
+            xline(301)
+            saveas(fig, [figDat 'pubFigs/exampleTrials/' ...
+                 'lowRatio_'  panelDat.reg '_'...
+                 panelDat.phase '_' num2str(nn)  '.jpg'])
+
+
+        end
+        %end plotting individual events
     end
 
 
@@ -2143,8 +2154,8 @@ for ii = 1:length(fig3Dat)
     figure('visible', false, 'position', [0,0,600,400])
     makeConnectivityHeatMap2(inMat, pMat, ...
                             ss, curDat.frex, pltim)
-    export_fig([figDat 'pubFigs/' 'sup3_' 'connectionHeatmap_image_hit_'...
-        regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
+    % % % export_fig([figDat 'pubFigs/' 'sup3_' 'connectionHeatmap_image_hit_'...
+    % % %     regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
 
 
     tmpMat = curDat.enc_HFB_hitVals; 
@@ -2161,8 +2172,8 @@ for ii = 1:length(fig3Dat)
     figure('visible', false, 'position', [0,0,600,400])
     makeConnectivityHeatMap2(inMat, pMat, ...
                             ss, curDat.frex, pltim)
-    export_fig([figDat 'pubFigs/' 'sup3_' 'connectionHeatmap_HFB_hit_'...
-        regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
+    % % % export_fig([figDat 'pubFigs/' 'sup3_' 'connectionHeatmap_HFB_hit_'...
+    % % %     regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
 
 
     %miss vals
@@ -2181,11 +2192,11 @@ for ii = 1:length(fig3Dat)
     pMat = curDat.enc_image_p; 
     pMat(tim<-450 | tim>3000, :) = []; 
     ss = 0; 
-    figure('visible', false, 'position', [0,0,600,400]);
-    makeConnectivityHeatMap2(inMat, pMat, ...
-                            ss, curDat.frex, pltim)
-    export_fig([figDat 'pubFigs/' 'sup3_' 'connectionHeatmap_image_miss_'...
-        regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
+    % % % figure('visible', false, 'position', [0,0,600,400]);
+    % % % makeConnectivityHeatMap2(inMat, pMat, ...
+    % % %                         ss, curDat.frex, pltim)
+    % % % export_fig([figDat 'pubFigs/' 'sup3_' 'connectionHeatmap_image_miss_'...
+    % % %     regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
 
 
     tmpMat = curDat.enc_HFB_missVals; 
@@ -2199,11 +2210,11 @@ for ii = 1:length(fig3Dat)
     pltim = tim(tim>=-450 & tim<=3000);  
     pMat = curDat.enc_HFB_p;
     ss = 1; 
-    figure('visible', false, 'position', [0,0,600,400]);
-    makeConnectivityHeatMap2(inMat, pMat, ...
-                            ss, curDat.frex, pltim)
-    export_fig([figDat 'pubFigs/' 'sup3_' 'connectionHeatmap_HFB_miss_'...
-        regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
+    % % % figure('visible', false, 'position', [0,0,600,400]);
+    % % % makeConnectivityHeatMap2(inMat, pMat, ...
+    % % %                         ss, curDat.frex, pltim)
+    % % % export_fig([figDat 'pubFigs/' 'sup3_' 'connectionHeatmap_HFB_miss_'...
+    % % %     regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
 
 
     %t vals
@@ -2219,11 +2230,11 @@ for ii = 1:length(fig3Dat)
     pMat = curDat.enc_image_p; 
     pMat(tim<-450 | tim>3000, :) = []; 
     ss = 0; 
-    figure('visible', false, 'position', [0,0,600,400]);
-    makeConnectivityHeatMap2(inMat, pMat, ...
-                            ss, curDat.frex, pltim)
-    export_fig([figDat 'pubFigs/' 'sup3_' 'connectionHeatmap_image_tVal_'...
-        regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
+    % % % figure('visible', false, 'position', [0,0,600,400]);
+    % % % makeConnectivityHeatMap2(inMat, pMat, ...
+    % % %                         ss, curDat.frex, pltim)
+    % % % export_fig([figDat 'pubFigs/' 'sup3_' 'connectionHeatmap_image_tVal_'...
+    % % %     regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
 
 
 
@@ -2235,11 +2246,11 @@ for ii = 1:length(fig3Dat)
     inMat = curDat.enc_HFB_tVal;  
     pMat = curDat.enc_HFB_p; 
     ss = 1; 
-    figure('visible', false, 'position', [0,0,600,400]);
-    makeConnectivityHeatMap2(inMat, pMat, ...
-                            ss, curDat.frex, pltim)
-    export_fig([figDat 'pubFigs/' 'sup3_' 'connectionHeatmap_HFB_tVal_'...
-        regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
+    % % % figure('visible', false, 'position', [0,0,600,400]);
+    % % % makeConnectivityHeatMap2(inMat, pMat, ...
+    % % %                         ss, curDat.frex, pltim)
+    % % % export_fig([figDat 'pubFigs/' 'sup3_' 'connectionHeatmap_HFB_tVal_'...
+    % % %     regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
 
     %p vals
     tmpMat = curDat.enc_image_p; 
@@ -2303,11 +2314,11 @@ for ii = 1:length(fig3Dat)
     ss = 0; 
     pMat = curDat.ret_image_p; 
     pMat(tim<-450 | tim>3000, :) = []; 
-    figure('visible', false, 'position', [0,0,600,400])
-    makeConnectivityHeatMap2(inMat, pMat, ...
-                            ss, curDat.frex, pltim)
-    export_fig([figDat 'pubFigs/' 'sup3_' 'connectionHeatmap_ret_image_hit_'...
-        regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
+    % % % figure('visible', false, 'position', [0,0,600,400])
+    % % % makeConnectivityHeatMap2(inMat, pMat, ...
+    % % %                         ss, curDat.frex, pltim)
+    % % % export_fig([figDat 'pubFigs/' 'sup3_' 'connectionHeatmap_ret_image_hit_'...
+    % % %     regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
 
 
     tmpMat = curDat.ret_HFB_hitVals; 
@@ -2321,11 +2332,11 @@ for ii = 1:length(fig3Dat)
     pltim = tim(tim>=-450 & tim<=3000); 
     pMat = curDat.ret_HFB_p;
     ss = 1; 
-    figure('visible', false, 'position', [0,0,600,400])
-    makeConnectivityHeatMap2(inMat, pMat, ...
-                            ss, curDat.frex, pltim)
-    export_fig([figDat 'pubFigs/' 'sup3_' 'connectionHeatmap_ret_HFB_hit_'...
-        regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
+    % % % figure('visible', false, 'position', [0,0,600,400])
+    % % % makeConnectivityHeatMap2(inMat, pMat, ...
+    % % %                         ss, curDat.frex, pltim)
+    % % % export_fig([figDat 'pubFigs/' 'sup3_' 'connectionHeatmap_ret_HFB_hit_'...
+    % % %     regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
 
     %miss vals
     tmpMat = curDat.ret_image_missVals; 
@@ -2343,11 +2354,11 @@ for ii = 1:length(fig3Dat)
     pMat = curDat.ret_image_p; 
     pMat(tim<-450 | tim>3000, :) = []; 
     ss = 0; 
-    figure('visible', false, 'position', [0,0,600,400]);
-    makeConnectivityHeatMap2(inMat, pMat, ...
-                            ss, curDat.frex, pltim)
-    export_fig([figDat 'pubFigs/' 'sup3_' 'connectionHeatmap_ret_image_miss_'...
-        regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
+    % % % figure('visible', false, 'position', [0,0,600,400]);
+    % % % makeConnectivityHeatMap2(inMat, pMat, ...
+    % % %                         ss, curDat.frex, pltim)
+    % % % export_fig([figDat 'pubFigs/' 'sup3_' 'connectionHeatmap_ret_image_miss_'...
+    % % %     regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
 
     tmpMat = curDat.ret_HFB_missVals; 
     allConnections2(reg1, reg2, :, :, 2, 2) = mean(tmpMat,3); 
@@ -2360,11 +2371,11 @@ for ii = 1:length(fig3Dat)
     pltim = tim(tim>=-450 & tim<=3000);  
     pMat = curDat.ret_HFB_p;
     ss = 1; 
-    figure('visible', false, 'position', [0,0,600,400]);
-    makeConnectivityHeatMap2(inMat, pMat, ...
-                            ss, curDat.frex, pltim)
-    export_fig([figDat 'pubFigs/' 'sup3_' 'connectionHeatmap_ret_HFB_miss_'...
-        regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
+    % % % figure('visible', false, 'position', [0,0,600,400]);
+    % % % makeConnectivityHeatMap2(inMat, pMat, ...
+    % % %                         ss, curDat.frex, pltim)
+    % % % export_fig([figDat 'pubFigs/' 'sup3_' 'connectionHeatmap_ret_HFB_miss_'...
+    % % %     regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
 
     %t vals
     tmpMat = curDat.ret_image_tVal; 
@@ -2379,11 +2390,11 @@ for ii = 1:length(fig3Dat)
     pMat = curDat.ret_image_p; 
     pMat(tim<-450 | tim>3000, :) = []; 
     ss = 0; 
-    figure('visible', false, 'position', [0,0,600,400]);
-    makeConnectivityHeatMap2(inMat, pMat, ...
-                            ss, curDat.frex, pltim)
-    export_fig([figDat 'pubFigs/' 'sup3_' 'connectionHeatmap_ret_image_tVal_'...
-        regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
+    % % % figure('visible', false, 'position', [0,0,600,400]);
+    % % % makeConnectivityHeatMap2(inMat, pMat, ...
+    % % %                         ss, curDat.frex, pltim)
+    % % % export_fig([figDat 'pubFigs/' 'sup3_' 'connectionHeatmap_ret_image_tVal_'...
+    % % %     regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
 
     tmpMat = curDat.ret_HFB_tVal; 
     allConnections2(reg1, reg2, :, :, 3, 2) = tmpMat; 
@@ -2393,11 +2404,11 @@ for ii = 1:length(fig3Dat)
     inMat = curDat.ret_HFB_tVal;  
     pMat = curDat.ret_HFB_p; 
     ss = 1; 
-    figure('visible', false, 'position', [0,0,600,400]);
-    makeConnectivityHeatMap2(inMat, pMat, ...
-                            ss, curDat.frex, pltim)
-    export_fig([figDat 'pubFigs/' 'sup3_' 'connectionHeatmap_ret_HFB_tVal_'...
-        regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
+    % % % figure('visible', false, 'position', [0,0,600,400]);
+    % % % makeConnectivityHeatMap2(inMat, pMat, ...
+    % % %                         ss, curDat.frex, pltim)
+    % % % export_fig([figDat 'pubFigs/' 'sup3_' 'connectionHeatmap_ret_HFB_tVal_'...
+    % % %     regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
 
     %p vals
     tmpMat = curDat.ret_image_p; 
@@ -2613,7 +2624,7 @@ plotConnectionSchematic(plotMat, curDat.frex, "tVal", ...
 
 %late encoding
 plotMat = squeeze(allConnections(keyRegIdx, keyRegIdx,...
-                       tim>=1500 & tim<=3000, :, :, 1));
+                       tim>=1500 & tim<=2500, :, :, 1));
 plotConnectionSchematic(plotMat, curDat.frex, "tVal", ...
     regions, keyRegIdx, 'freq', regColors, false, [fn 'enc3.jpg'], fn2, fn3)
 
@@ -2631,7 +2642,7 @@ plotConnectionSchematic(plotMat, curDat.frex, "tVal", ...
 
 %late retrieval
 plotMat = squeeze(allConnections(keyRegIdx, keyRegIdx,...
-                       tim>=1500 & tim<=3000, :, :, 2));
+                       tim>=1500 & tim<=2500, :, :, 2));
 plotConnectionSchematic(plotMat, curDat.frex, "tVal", ...
     regions, keyRegIdx, 'freq', regColors, false, [fn 'ret3.jpg'], fn2, fn3)
 
