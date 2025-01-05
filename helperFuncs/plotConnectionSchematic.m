@@ -1,5 +1,5 @@
 function [] = plotConnectionSchematic(plotMat, frex, plotOpt, regions, ...
-    keyRegIdx, colOpt, regColors, wantLegend, fn1, fn2, fn3)
+    keyRegIdx, colOpt, regColors, wantLegend, fn1, fn2, fn3, datPre)
 
 s = [85,25,86];
 m = [186,21,77]; 
@@ -25,7 +25,7 @@ rad = .15;
 rad2 = 3.5; 
 circAngles = [2.3, 1.3, 3.2, 4.6, 0];
 figure('visible', false, 'position', [0,0,800,500]) %try to draw one connection at a time
-img = imread('R:\MSS\Johnson_Lab\dtf8829\publicationFigureData\brain.png');
+img = imread([datPre 'brain.png']);
 img(img==0) = 255; 
 hold off
 image([-4.15, 1.85],[2.15, -2.75], img)

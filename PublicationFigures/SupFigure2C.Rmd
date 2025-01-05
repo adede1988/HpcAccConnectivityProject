@@ -1,0 +1,254 @@
+---
+title: "Supplemental Figure 2C: within participant HFB timing"
+author: "Zachariah Cross & Adam Dede"
+date: "2023-10-24"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+## Load packages and set up environment
+
+```{r message = FALSE, warning = FALSE}
+
+knitr::opts_chunk$set(message = FALSE, warning = FALSE)
+
+# load packages
+library(tidyverse)
+library(RColorBrewer)
+library(hrbrthemes)
+library(lme4)
+# library(lmerOut)
+library(lmerTest)
+library(car)
+library(ggeffects)
+library(emmeans)
+library(effects)
+path = "G:\\My Drive\\GitHub\\HpcAccConnectivityProject\\"
+figSavePath = 'R:\\MSS\\Johnson_Lab\\dtf8829\\Pubdat\\FiguresOut\\'
+# set contrasts
+options(contrasts=c("contr.Sum","contr.Helmert"))
+options(decorate.contr.Sum="",decorate.contrasts=c("[","]"))
+
+```
+
+## Read in data frame
+
+```{r load data}
+
+# load in main data frame
+df <- read.csv(paste0( path, "trialLatDat_RTfix.csv"), header = T)
+setwd(figSavePath)
+# factorise variables
+
+df$adjTime = df$peakLatHFB / df$RT
+df$adjTime[df$adjTime<0] = 0
+df$adjTime[df$adjTime>1] = 1
+
+df <- df %>%
+  mutate(subID= as.factor(subID),
+         encRet = as.factor(encRet),
+         hitMiss = as.factor(hitMiss),
+         reg = as.factor(reg),
+         chi = as.factor(chi)) %>% 
+  filter(peakLatHFB != -1)
+
+regLabs = unique(df$reg)
+cr = regLabs[[1]]
+
+
+
+
+
+df$realID = paste(df$subID, df$chi)
+
+
+# data for our five regions
+all_data <- df %>% 
+  filter(reg == "mtl" | reg == "hip" | reg == "acc" | 
+         reg == "dlPFC" | reg == "pPFC")
+
+```
+
+
+## Get within trial timing differences one reg pair at a time
+
+```{r within trial difs}
+
+#don't save everything, instead just go one pair at a time and get just the 
+#necessary information for making the target figure and doing the target stats
+
+#This code generates the histograms in supplemental figure 1
+
+regColors <- data.frame(
+  parahip = rgb(214, 77, 97, maxColorValue = 255),       # dark pink 
+  polarPFC = rgb(51, 102, 153, maxColorValue = 255),     # lilac
+  dlPFC = rgb(145, 162, 80, maxColorValue = 255),        # light forest green
+  ACC = rgb(204, 153, 204, maxColorValue = 255),         # dark red
+  Hip = rgb(61, 187, 218, maxColorValue = 255)           # dusky blue
+)
+
+regions = unique(all_data$reg)
+hmVals = c("Hit", "Miss")
+erVals = c("Enc", "Ret")
+#loop on reg 1 and reg 2 and on hit/miss and enc/ret
+for(reg1 in 1:length(regions)){
+  for(reg2 in 1:length(regions)){
+    if(reg1 != reg2){
+    for(hm in 1:2){
+      for(er in 1:2){
+        
+        fn <- paste( figSavePath ,
+                'supFig2C_wiTrial_',regions[reg1], '_', regions[reg2],'_',
+                hmVals[hm],'_', erVals[er], '.png', 
+                sep = '')
+        print(fn)
+        
+        reg1Dat = all_data %>% filter(reg==regions[reg1], 
+                                      hitMiss==hmVals[hm],
+                                      encRet ==erVals[er])
+        reg2Dat = all_data %>% filter(reg==regions[reg2], 
+                                      hitMiss==hmVals[hm],
+                                      encRet ==erVals[er])
+        reg1Subs = unique(reg1Dat$subID)
+        reg2Subs = unique(reg2Dat$subID)
+        #these are the subs with simultaneous recordings:
+        sharedSubs = intersect(reg1Subs, reg2Subs)
+        pairDat = data.frame( 'latDif' = rep(0,1000000))
+        pairi = 1
+        shufi = 1
+        shufDat = data.frame('latDif' = rep(0,100000000))
+        
+        for(ii in 1:length(sharedSubs)){
+       
+          reg1Cur <- reg1Dat %>% filter(subID == sharedSubs[ii])
+          reg2Cur <- reg2Dat %>% filter(subID == sharedSubs[ii])
+          chanVals1 = unique(reg1Cur$chi)
+          chanVals2 = unique(reg2Cur$chi)
+          #loop chan1 and chan2
+          for(chan1 in 1:length(chanVals1)){
+            for(chan2 in 1:length(chanVals2)){
+              if(chanVals1[chan1] != chanVals2[chan2]){
+                c1Dat <- reg1Cur %>% filter(chi == chanVals1[chan1])
+                c2Dat <- reg2Cur %>% filter(chi == chanVals2[chan2])
+                L = length(c1Dat$subID)
+                pairDat$latDif[pairi:(pairi+L-1)] <- c1Dat$peakLatHFB - 
+                                                     c2Dat$peakLatHFB
+                for(si in 1:10){
+                  allVals = c(c1Dat$peakLatHFB, c2Dat$peakLatHFB)
+                  allVals = sample(allVals)
+                
+                  shufDat$latDif[shufi:(shufi+L-1)] <- allVals[1:L] - 
+                                                       allVals[(L+1):(L*2)]
+                  shufi = shufi+L
+                }
+                
+                # pairDat$encRet[pairi:(pairi+L-1)] <- hmVals[hm]
+                # pairDat$hitMiss[pairi:(pairi+L-1)] <- erVals[er]
+                
+                pairi = pairi + L
+              }
+            }
+          }
+        }
+        pairDat = pairDat[1:pairi-1,]
+        shufDat = shufDat[1:shufi-1,]
+        binVals = rep(seq(-2500, 2500, 75), 2)
+        seqL = length(binVals)/2
+        plotDat = data.frame('latDif' = binVals,
+                             'propVal'= length(binVals),
+                             'shuf' = rep('zz', length(binVals)))
+        #populate the plot data
+        for(idx in 1:(length(binVals)/2-1)){
+         plotDat$propVal[idx] <- sum(pairDat >= binVals[idx] & 
+                                     pairDat < binVals[idx+1]) / 
+                                     length(pairDat)
+         plotDat$shuf[idx] = 'obs' 
+         plotDat$propVal[idx+seqL] <- sum(shufDat >= binVals[idx] & 
+                                     shufDat < binVals[idx+1]) / 
+                                     length(shufDat)
+         plotDat$shuf[idx+seqL] = 'shuf'
+          
+          
+        }
+        plotDat <- plotDat[!plotDat$shuf=='zz',]
+        
+        
+        if(sum(pairDat>0) > sum(pairDat<0)){ #reg2
+          outCol = regColors[reg2][[1]] 
+        }else{
+          outCol = regColors[reg1][[1]]
+            
+        }
+        
+        reg2Leads = paste(as.character(round(100*sum(pairDat>0) / 
+                                         length(pairDat))), '%',
+                          sep = '')
+        reg1Leads = paste(as.character(round(100*sum(pairDat<0) / 
+                                         length(pairDat))), '%',
+                          sep = '')
+         stats =  ks.test(pairDat, shufDat)
+        
+         outPlot <- plotDat %>% ggplot(aes(x = latDif, y = propVal, 
+                                           group = shuf,
+                                           linetype = shuf, linewidth = shuf,
+                                           color = shuf)) + 
+          geom_line() +
+          xlim(c(-1500, 1500)) +
+          ylim(c(0,.11)) +
+          scale_linetype_manual(values = c("solid", "dashed")) +
+          scale_linewidth_manual(values = c(3, 1)) +
+           scale_color_manual(values = c(outCol, 'black')) + 
+          geom_vline(xintercept = 0, size = 3, linetype = 'dashed') + 
+          xlab(paste(regions[reg1], ' leads                      ',
+                     regions[reg2], ' leads')) + 
+          ggtitle(paste(erVals[er], hmVals[hm], regions[reg1], 
+                          regions[reg2]))+
+          theme_classic() +
+                  theme(legend.position="none",
+                        panel.border = element_blank(),
+                        panel.grid.major = element_blank(),
+                        panel.grid.minor = element_blank(),
+                        axis.line = element_blank(),
+                        axis.ticks.length = unit(-0.4, "cm"),
+                        
+                        axis.line.x = element_line(size = 2),  
+                        axis.line.y = element_line(size = 2),
+                        axis.ticks = element_line(size = 2),
+                        axis.text.y = element_text(size = 12, face = "bold", 
+                                               margin = margin(r = 10)),
+                        plot.margin = margin(l = 30)  
+                  ) +
+          geom_text(x = -1000, y = .10, label = reg1Leads, 
+                    color = 'black', size = 20) +
+          geom_text(x = 1000, y = .10, label = reg2Leads, 
+                    color = 'black', size = 20) #+
+          # geom_text(x = -750, y = 0.01, label = paste('ks:', round(stats[[1]],2)),
+          #           color = 'black', size = 15) + 
+          #  geom_text(x = 450, y = 0.01, label = paste('p:', round(stats[[2]],2)),
+          #            color = 'black', size = 15)
+         
+
+        
+        
+        png(fn,         # File name
+      width=600, height=600)
+      print(outPlot)
+      dev.off()
+        
+        }
+      
+        
+        
+        
+        
+        
+      }
+    }
+  }
+}
+
+
+
+```
+

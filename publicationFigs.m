@@ -165,7 +165,7 @@ for ii = 9:12
     hitIdx = find(reactChan.hits & reactChan.use); 
     RT = reactChan.encInfo(hitIdx(ii),4);
     plot(tim, allTrials(:,ii)+ii*spread, ...
-        'color', purpleYellow((13-9)*60+1,:), 'linewidth', 2)
+        'color', [.5,.5,.5], 'linewidth', 2)
     scatter(repmat(RT,[50,1]), ii*linspace(spread-1.25,spread+1.25,50), 10, ...
         'red', 'filled')
     trial = allTrials(:,ii);            
@@ -175,7 +175,7 @@ for ii = 9:12
     smoothT = conv(trial, test, 'valid'); 
     coli = 14-ii;
     plot(tim, smoothT+ii*spread, ...
-        'color', purpleYellow((1-1)*60+1,:), 'linewidth', 2)
+        'color', 'k', 'linewidth', 2)
     [maxVal, idx] = max(smoothT(find(tim==0):find(tim>=RT,1))); 
     testTim = tim(find(tim==0):find(tim>=RT,1));
     scatter(testTim(idx), smoothT(tim==testTim(idx))+ii*spread,...

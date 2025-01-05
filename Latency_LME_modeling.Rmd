@@ -1,5 +1,5 @@
 ---
-title: "Adam's Analysis"
+title: "HFB latency modeling with linear mixed effects models"
 author: "Zachariah Cross & Adam Dede"
 date: "2023-10-24"
 output: html_document
@@ -25,6 +25,7 @@ library(ggeffects)
 library(emmeans)
 library(effects)
 path = "G:\\My Drive\\GitHub\\HpcAccConnectivityProject\\"
+figSavePath = 'R:\\MSS\\Johnson_Lab\\dtf8829\\Pubdat\\FiguresOut\\'
 # set contrasts
 options(contrasts=c("contr.Sum","contr.Helmert"))
 options(decorate.contr.Sum="",decorate.contrasts=c("[","]"))
@@ -37,10 +38,12 @@ options(decorate.contr.Sum="",decorate.contrasts=c("[","]"))
 
 # load in main data frame
 df <- read.csv(paste0( path, "trialLatDat_RTfix.csv"), header = T)
-setwd('G:\\My Drive\\Johnson\\MTL_PFC_networkFigs\\Rfigs')
+setwd(figSavePath)
 # factorise variables
 
 df$adjTime = df$peakLatHFB / df$RT
+df$adjTime[df$adjTime<0] = 0
+df$adjTime[df$adjTime>1] = 1
 
 df <- df %>%
   mutate(subID= as.factor(subID),
@@ -52,58 +55,13 @@ df <- df %>%
 
 regLabs = unique(df$reg)
 cr = regLabs[[1]]
-# breakVals = seq(-500, 500, 50) ####
-# for(cr in regLabs){
-#   temp = filter(df, reg == cr)
-#   #get hits encoding
-#   cur = temp %>% filter(encRet=='Enc', hitMiss =='Hit')
-#   latDif = cur$peakLatHFB - cur$peakLatLow
-#   hits = lapply(seq(1,length(breakVals)-1, 1), function(x) sum(latDif>breakVals[x] & latDif<=breakVals[x+1] ) )
-#   cur = temp %>% filter(encRet=='Enc', hitMiss =='Miss')
-#   latDif = cur$peakLatHFB - cur$peakLatLow
-#   misses = lapply(seq(1,length(breakVals)-1, 1), function(x) sum(latDif>breakVals[x] & latDif<=breakVals[x+1] ) )
-#   
-#   plotVals = data.frame('x' = c(breakVals[1:length(breakVals)-1] + 25, breakVals[1:length(breakVals)-1] + 25),
-#                         'freq' = c(unlist(hits) / sum(unlist(hits)), unlist(misses)/ sum(unlist(misses))), 
-#                         'hitMiss' = c(replicate(length(hits), 'Hits'), replicate(length(hits), 'Misses') ) ) 
-#   # plotVals$hits = plotVals$hits/ sum(plotVals$hits)
-#   # plotVals$misses = plotVals$misses / sum(plotVals$misses)
-#   png(paste(cr, '_Encoding', '.png', sep = ''),         # File name
-#     width=1024, height=768)# Color
-#   print(
-#     ggplot(plotVals, aes(x = x, y = freq, color = hitMiss)) + 
-#     geom_line(size = 3) + 
-#     theme_classic() +
-#     ggtitle(paste(cr, ' Encoding')) + 
-#     xlab('low first        HFB - low peak (ms))        HFB first') 
-#   )
-# 
-#   dev.off()
-# }
-# 
-# ggplot(df, aes(x = peakLatHFB - peakLatLow, color = hitMiss)) + 
-#   geom_histogram(breaks = seq(-500,500,50), aes(y=after_stat(count) / sum(after_stat(count) ) )) + 
-#                    facet_wrap(~reg)
-#### section break ####
 
 
-df$adjTime[df$adjTime<0] = 0
-df$adjTime[df$adjTime>1] = 1
+
+
 
 df$realID = paste(df$subID, df$chi)
 
-
-# data frame for pfc
-df_pfc <- df %>% 
-  filter(reg == "acc" | reg == "dlPFC" | reg == "pPFC" & encRet == "Enc")
-
-# data frame for mtl
-df_mtl <- df %>% 
-  filter(reg == "mtl" | reg == "hip" & encRet == "Enc")
-
-# data frame for encoding
-df_enc <- df %>% 
-  filter(encRet == "Enc")
 
 # data for our five regions
 all_data <- df %>% 
@@ -140,7 +98,7 @@ reactivePlotDat <- reactiveCounts %>% select(c('reg', 'chanCount', 'nonReact')) 
                                                    values_to = 'count')
 reg_order <- c("hip", "mtl", "acc", "dlPFC", "pPFC")
 reactivePlotDat <- reactivePlotDat %>% mutate(reg = factor(reg, levels = reg_order))
-outPlot <- ggplot(reactivePlotDat, aes(x = reg, y = count, group = type, color = reg, fill = type)) +
+outPlot <- ggplot(reactivePlotDat, aes(x = reg, y = count, group = type, fill = type)) +
     geom_bar(stat = "identity", position = "dodge", linewidth = 4) +
     scale_color_manual(values=c( regColors$Hip,
                                  regColors$parahip,
