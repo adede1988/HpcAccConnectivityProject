@@ -26,10 +26,17 @@ fftDat = fft(reshape(padDat,1,numel(padDat)),n_conv_pow2);
     for fi = 1:numfrex
 
         f  = frex(fi); % frequency of wavelet in Hz
-        s  = stds(fi); 
+        s  = stds(fi) / (2*pi*f); 
+        
+
+        %gaussian: 
+        GaussWin = exp(-(time.^2)/(2*s^2));
+        SinWave = exp(1i*2*pi*f.*time);
+        %scaling factor (only important if you're not going to normalize or
+        %z score: 
+        A = 1 / sqrt(s*sqrt(pi)); 
         % and together they make a wavelet
-        wavelet = sqrt(1/(s*sqrt(pi))) * ...
-            exp(2*1i*pi*f.*time) .* exp(-time.^2./(2*(s^2))); 
+        wavelet = GaussWin .* SinWave * A; 
         
         wavelet = fft(wavelet, n_conv_pow2); 
 
