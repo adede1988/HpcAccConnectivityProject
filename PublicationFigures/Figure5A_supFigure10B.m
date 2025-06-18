@@ -163,6 +163,8 @@ axis off;
 
 hitBin = exampDat.hitMat>.10; 
 missBin = exampDat.missMat>.10; 
+disp(sum(hitBin, 'all'))
+sum(missBin, 'all')
 
 for nn = 1:size(hitBin,1)
     for jj = 1:size(hitBin,1)
@@ -250,9 +252,10 @@ set(gca, 'color', 'none');
 axis off; 
 
 
-hitBin = imHit>.1; 
-missBin = imMiss>.1; 
-
+hitBin = imHit>.0686; 
+missBin = imMiss>.0686; 
+sum(hitBin, 'all')
+sum(missBin, 'all')
 for ii = 1:size(hitBin,1)
     for jj = 1:size(hitBin,1)
         if hitBin(ii,jj)

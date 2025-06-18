@@ -1,0 +1,157 @@
+---
+title: "Figure 1D: reactive and non reactive channel counts"
+author: "Zachariah Cross & Adam Dede"
+date: "2023-10-24"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+## Load packages and set up environment
+
+```{r message = FALSE, warning = FALSE}
+
+knitr::opts_chunk$set(message = FALSE, warning = FALSE)
+
+# load packages
+library(tidyverse)
+library(RColorBrewer)
+library(hrbrthemes)
+library(lme4)
+# library(lmerOut)
+library(lmerTest)
+library(car)
+library(ggeffects)
+library(emmeans)
+library(effects)
+path = "G:\\My Drive\\GitHub\\HpcAccConnectivityProject\\"
+figSavePath = 'R:\\MSS\\Johnson_Lab\\dtf8829\\Pubdat\\FiguresOut\\'
+# set contrasts
+options(contrasts=c("contr.Sum","contr.Helmert"))
+options(decorate.contr.Sum="",decorate.contrasts=c("[","]"))
+
+```
+
+## Read in data frame
+
+```{r load data}
+
+# load in main data frame
+df <- read.csv(paste0( path, "trialLatDat_RTfix.csv"), header = T)
+setwd(figSavePath)
+# factorise variables
+
+df$adjTime = df$peakLatHFB / df$RT
+df$adjTime[df$adjTime<0] = 0
+df$adjTime[df$adjTime>1] = 1
+
+df <- df %>%
+  mutate(subID= as.factor(subID),
+         encRet = as.factor(encRet),
+         hitMiss = as.factor(hitMiss),
+         reg = as.factor(reg),
+         chi = as.factor(chi)) %>% 
+  filter(peakLatHFB != -1)
+
+regLabs = unique(df$reg)
+cr = regLabs[[1]]
+
+
+df$realID = paste(df$subID, df$chi)
+
+
+# data for our five regions
+all_data <- df %>% 
+  filter(reg == "mtl" | reg == "hip" | reg == "acc" | 
+         reg == "dlPFC" | reg == "pPFC")
+
+```
+## reactive v. total channel counts
+
+```{r chanCounts}
+regColors <- data.frame(
+  parahip = rgb(214, 77, 97, maxColorValue = 255),       # dark pink 
+  polarPFC = rgb(51, 102, 153, maxColorValue = 255),     # lilac
+  dlPFC = rgb(145, 162, 80, maxColorValue = 255),        # light forest green
+  ACC = rgb(204, 153, 204, maxColorValue = 255),         # dark red
+  Hip = rgb(61, 187, 218, maxColorValue = 255)           # dusky blue
+)
+
+reactiveCounts = all_data %>% group_by(reg) %>% summarize(chanCount = length(unique(realID)))
+reactiveCounts$Totals = c(44,247,40,79,35)
+
+Total = sum(reactiveCounts$Totals) #total chan count
+totalReact = sum(reactiveCounts$chanCount) #total reactive
+propExp = totalReact / Total
+
+reactiveCounts$exp = reactiveCounts$Totals * propExp
+reactiveCounts$nonReact = reactiveCounts$Totals - reactiveCounts$chanCount
+
+chisq.test(reactiveCounts[,c(2,5)])
+
+reactiveCounts = all_data %>% group_by(reg, encRet) %>% summarize(chanCount = length(unique(realID)))
+reactiveCounts$Totals = c(44,44,247,247,40,40,79,79,35,35)
+
+Total = sum(reactiveCounts$Totals) #total chan count
+totalReact = sum(reactiveCounts$chanCount) #total reactive
+propExp = totalReact / Total
+
+reactiveCounts$exp = reactiveCounts$Totals * propExp
+reactiveCounts$nonReact = reactiveCounts$Totals - reactiveCounts$chanCount
+reactivePlotDat <- reactiveCounts %>% select(c('reg', 'chanCount', 'nonReact', 'encRet')) %>%
+                        pivot_longer(cols = c('chanCount', 'nonReact'), 
+                                                   names_to = 'type', 
+                                                   values_to = 'count')
+reg_order <- c("hip", "mtl", "acc", "dlPFC", "pPFC")
+reactivePlotDat <- reactivePlotDat %>% mutate(reg = factor(reg, levels = reg_order))
+
+reactivePlotDat <- read.csv(paste0('G:\\My Drive\\GitHub\\HpcAccConnectivityProject',
+    '\\reactivityPlotDat_encRetSplit.csv'))
+
+reactivePlotDat <- reactivePlotDat %>% 
+  filter(reg == "mtl" | reg == "hip" | reg == "acc" | 
+         reg == "dlPFC" | reg == "pPFC")
+reg_order <- c("hip", "mtl", "acc", "dlPFC", "pPFC")
+reactivePlotDat <- reactivePlotDat %>% mutate(reg = factor(reg, levels = reg_order))
+reactivePlotDat$encRet <- factor(reactivePlotDat$encRet, 
+                                 levels = c("encReact", "retReact", "bothReact", "noReact"))
+
+outPlot <- ggplot(reactivePlotDat, aes(x = reg, y = count, group = encRet, fill = encRet)) +
+    geom_bar(stat = "identity", position = "dodge", linewidth = 4) +
+    scale_color_manual(values=c( regColors$Hip,
+                                 regColors$parahip,
+                                 regColors$ACC, 
+                                 regColors$dlPFC,
+                                 regColors$polarPFC),
+                                 labels=reg_order) +
+scale_fill_manual(values = c("encReact" = "grey80",
+                               "retReact" = "grey60",
+                               "bothReact" = "grey20",
+                               "noReact" = "grey10"))  +
+     theme_classic() +
+                    theme(legend.position="none",
+                          panel.border = element_blank(),
+                          panel.grid.major = element_blank(),
+                          panel.grid.minor = element_blank(),
+                          axis.line = element_blank(),
+                          axis.ticks.length = unit(-0.2, "cm"),
+                          
+                          axis.line.x = element_line(size = 2),  
+                          axis.line.y = element_line(size = 2),
+                          axis.ticks = element_line(size = 2),
+                          axis.text.y = element_text(size = 12, face = "bold", 
+                                                 margin = margin(r = 10)),
+                          plot.margin = margin(l = 30)  
+                    ) 
+
+ fn <- paste( figSavePath ,
+                'Fig1D_reactiveChans', '.png', 
+                sep = '')
+  png(fn,         # File name
+        width=600, height=600)
+        print(outPlot)
+        dev.off()
+
+```
+
+

@@ -89,7 +89,7 @@ end
 
 
 
-hip_enc_HFB_file = 'hip_acc_ret_HFB_2_21.mat';
+hip_enc_file = 'hip_acc_ret_HFB_2_21.mat';
 
 
 exampDat = load([datPre...

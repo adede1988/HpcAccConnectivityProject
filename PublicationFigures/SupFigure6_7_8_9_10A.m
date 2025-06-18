@@ -14,6 +14,7 @@ codePre = 'G:\My Drive\GitHub\';
 datPre = 'R:\MSS\Johnson_Lab\dtf8829\Pubdat\';
 figDat = datPre;
 figSavePath = 'R:\MSS\Johnson_Lab\dtf8829\Pubdat\FiguresOut\';
+figSavePath = 'R:\MSS\Johnson_Lab\dtf8829\publicationFigureData\pubFigs\';
 
 % set paths
 
@@ -243,6 +244,7 @@ export_fig([figSavePath 'supFig10A_' 'ppc_' direction{d} '_' varCodes{cc} '_' ..
     figure('visible', false, 'position', [0,0,600,400])
     makeConnectivityHeatMap2(inMat, pMat, ...
                             ss, curDat.frex, pltim)
+    set(gca, 'FontSize', 14);
     export_fig([figSavePath 'supFig6A_' 'enc_' 'connectionHeatmap_image_hit_'...
         regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
 
@@ -261,6 +263,7 @@ export_fig([figSavePath 'supFig10A_' 'ppc_' direction{d} '_' varCodes{cc} '_' ..
     figure('visible', false, 'position', [0,0,600,400])
     makeConnectivityHeatMap2(inMat, pMat, ...
                             ss, curDat.frex, pltim)
+    set(gca, 'FontSize', 14);
     export_fig([figSavePath 'supFig7A_' 'enc_' 'connectionHeatmap_HFB_hit_'...
         regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
 
@@ -284,6 +287,7 @@ export_fig([figSavePath 'supFig10A_' 'ppc_' direction{d} '_' varCodes{cc} '_' ..
     figure('visible', false, 'position', [0,0,600,400]);
     makeConnectivityHeatMap2(inMat, pMat, ...
                             ss, curDat.frex, pltim)
+    set(gca, 'FontSize', 14);
     export_fig([figSavePath 'supFig6B_' 'enc_' 'connectionHeatmap_image_miss_'...
         regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
 
@@ -302,6 +306,7 @@ export_fig([figSavePath 'supFig10A_' 'ppc_' direction{d} '_' varCodes{cc} '_' ..
     figure('visible', false, 'position', [0,0,600,400]);
     makeConnectivityHeatMap2(inMat, pMat, ...
                             ss, curDat.frex, pltim)
+    set(gca, 'FontSize', 14);
     export_fig([figSavePath 'supFig7B_' 'enc_' 'connectionHeatmap_HFB_miss_'...
         regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
 
@@ -322,6 +327,7 @@ export_fig([figSavePath 'supFig10A_' 'ppc_' direction{d} '_' varCodes{cc} '_' ..
     figure('visible', false, 'position', [0,0,600,400]);
     makeConnectivityHeatMap2(inMat, pMat, ...
                             ss, curDat.frex, pltim)
+    set(gca, 'FontSize', 14);
     export_fig([figSavePath 'supFig6C_' 'enc_' 'connectionHeatmap_image_tVal_'...
         regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
 
@@ -338,6 +344,7 @@ export_fig([figSavePath 'supFig10A_' 'ppc_' direction{d} '_' varCodes{cc} '_' ..
     figure('visible', false, 'position', [0,0,600,400]);
     makeConnectivityHeatMap2(inMat, pMat, ...
                             ss, curDat.frex, pltim)
+    set(gca, 'FontSize', 14);
     export_fig([figSavePath 'supFig7C_' 'enc_' 'connectionHeatmap_HFB_tVal_'...
         regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
 
@@ -370,6 +377,7 @@ export_fig([figSavePath 'supFig10A_' 'ppc_' direction{d} '_' varCodes{cc} '_' ..
     figure('visible', false, 'position', [0,0,600,400])
     makeConnectivityHeatMap2(inMat, pMat, ...
                             ss, curDat.frex, pltim)
+    set(gca, 'FontSize', 14);
     export_fig([figSavePath 'supFig8A_' 'ret_' 'connectionHeatmap_ret_image_hit_'...
         regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
 
@@ -388,6 +396,7 @@ export_fig([figSavePath 'supFig10A_' 'ppc_' direction{d} '_' varCodes{cc} '_' ..
     figure('visible', false, 'position', [0,0,600,400])
     makeConnectivityHeatMap2(inMat, pMat, ...
                             ss, curDat.frex, pltim)
+    set(gca, 'FontSize', 14);
     export_fig([figSavePath 'supFig9A_' 'ret_' 'connectionHeatmap_ret_HFB_hit_'...
         regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
 
@@ -410,6 +419,7 @@ export_fig([figSavePath 'supFig10A_' 'ppc_' direction{d} '_' varCodes{cc} '_' ..
     figure('visible', false, 'position', [0,0,600,400]);
     makeConnectivityHeatMap2(inMat, pMat, ...
                             ss, curDat.frex, pltim)
+    set(gca, 'FontSize', 14);
     export_fig([figSavePath 'supFig8B_' 'ret_' 'connectionHeatmap_ret_image_miss_'...
         regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
 
@@ -427,6 +437,7 @@ export_fig([figSavePath 'supFig10A_' 'ppc_' direction{d} '_' varCodes{cc} '_' ..
     figure('visible', false, 'position', [0,0,600,400]);
     makeConnectivityHeatMap2(inMat, pMat, ...
                             ss, curDat.frex, pltim)
+    set(gca, 'FontSize', 14);
     export_fig([figSavePath 'supFig9B_' 'ret_' 'connectionHeatmap_ret_HFB_miss_'...
         regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
 
@@ -446,6 +457,7 @@ export_fig([figSavePath 'supFig10A_' 'ppc_' direction{d} '_' varCodes{cc} '_' ..
     figure('visible', false, 'position', [0,0,600,400]);
     makeConnectivityHeatMap2(inMat, pMat, ...
                             ss, curDat.frex, pltim)
+    set(gca, 'FontSize', 14);
     export_fig([figSavePath 'supFig8C_' 'ret_' 'connectionHeatmap_ret_image_tVal_'...
         regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
 
@@ -460,6 +472,7 @@ export_fig([figSavePath 'supFig10A_' 'ppc_' direction{d} '_' varCodes{cc} '_' ..
     figure('visible', false, 'position', [0,0,600,400]);
     makeConnectivityHeatMap2(inMat, pMat, ...
                             ss, curDat.frex, pltim)
+    set(gca, 'FontSize', 14);
     export_fig([figSavePath 'supFig9C_' 'ret_' 'connectionHeatmap_ret_HFB_tVal_'...
         regions{reg1} '_' regions{reg2} '.jpg'], '-r300')
 
